@@ -1,0 +1,7 @@
+interface:
+  display_name: "Spec Kit Orchestrator"
+  short_description: "Orchestrate complex Spec Kit feature worktrees"
+  default_prompt: "Use $speckit-orchestrate to decompose and deliver this multi-component initiative through dependency-gated worktrees and audited integration."
+
+policy:
+  allow_implicit_invocation: true
