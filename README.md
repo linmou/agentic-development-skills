@@ -1,8 +1,8 @@
 # Agentic Development Skills
 
-Intent: store the ten skills used for agentic coding and skill development in one public repository, while exposing each skill as an independent directory.
+Intent: store the eleven skills used for agentic coding and skill development in one public repository, while exposing each skill as an independent directory.
 Updated: 2026-08-26
-Commit: 261a2d6 (conversion)
+Commit: cfafd19 (speckit-orchestrate import)
 
 ## Layout
 
@@ -26,6 +26,7 @@ Included skills:
 - `skill-extract-verify`
 - `writing-great-skills`
 - `handoff-context`
+- `speckit-orchestrate`
 
 ## Runtime links
 

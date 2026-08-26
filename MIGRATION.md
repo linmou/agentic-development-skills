@@ -3,7 +3,7 @@
 Intent: record where each skill came from when the former submodule umbrella became the flat `agentic-development-skills` monorepo.
 Updated: 2026-08-26
 
-All ten skills now live under `skills/` and share this repository's Git history. The entries below preserve the source provenance used for the import.
+All eleven skills now live under `skills/` and share this repository's Git history. The entries below preserve the source provenance used for the import.
 
 | Skill | Source | Imported revision |
 | --- | --- | --- |
@@ -17,5 +17,6 @@ All ten skills now live under `skills/` and share this repository's Git history.
 | `parallelize-workflow` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
 | `writing-great-skills` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
 | `handoff-context` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
+| `speckit-orchestrate` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
 
 Standalone repositories remain untouched by this local migration. Archive or delete them separately only after confirming redirects and any consumers.
