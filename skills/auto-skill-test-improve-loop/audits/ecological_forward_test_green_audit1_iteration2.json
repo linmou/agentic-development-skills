@@ -1,0 +1,191 @@
+{
+  "feature_name": "ecological_forward_test",
+  "phase": "green",
+  "iteration": 2,
+  "reviewer_id": "audit1",
+  "claim": "The ecological-forward-test skill is complete enough to run ecological case generation, forward testing, failure summarizing, root-reason analysis, and continued improvement (surgical patch loop) across agent harnesses, without critical missing procedure.",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.8,
+  "criteria": [
+    {
+      "id": "c1",
+      "text": "Ecological case generation is defined and required as the primary suite (not lab-only explicit $skill prompts).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:31: Do not invent synthetic “use $skill …” probes as the primary case.",
+        "SKILL.md:37-53: Ecological case defined; Do/Do not table bans single-shot “Use $skill-x…” as main suite; Done when: lab/explicit invoke optional control only, never the primary suite.",
+        "SKILL.md:128-130: Hard gate Primary evidence = ecological/session-like cases, not easy explicit $skill lab prompts.",
+        "references/ecological-cases.md:7-16: Lab vs Ecological table; lab allowed only as control, never alone proves auto-invoke."
+      ],
+      "reasoning": "Unchanged from iteration 1: primary-suite requirement is repeated in step 1, step 2 done-when, hard gates, and ecological-cases.md. Not re-disputed this round.",
+      "counterevidence": []
+    },
+    {
+      "id": "c2",
+      "text": "Forward-test integrity is specified (fresh threads, no gold leakage, runner not told it is testing).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:57: Run cases on a fresh agent thread per case.",
+        "SKILL.md:61-63: Subagent/runner must not know it is testing; prompt like a user; raw probe/prefix only — no expected answer, intended fix, or prior diagnosis.",
+        "SKILL.md:131: Hard gate Forward integrity = no gold leakage into the runner prompt.",
+        "references/ecological-cases.md:12: Gold only in meta score sheet (not in prompt)."
+      ],
+      "reasoning": "Unchanged from iteration 1: fresh thread, no gold leakage, runner unaware—all present. Side-effect isolation is out of c2’s stated text (see c7). Mild path+task vs ecological wording tension noted under c7 residual, not a c2 flip.",
+      "counterevidence": []
+    },
+    {
+      "id": "c3",
+      "text": "Failure labeling rules are complete, checkable, and ban invented jargon / overloaded bare nouns.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:74-82: Five failure-label rules including reject invented scoring jargon and bare overloaded nouns; Done when: every fail has label + one-line surface; no invented taxonomy tokens.",
+        "references/failure-labels.md:5-11: Quality tests (all must pass).",
+        "references/failure-labels.md:35-48: Good/bad examples.",
+        "references/failure-labels.md:50-57: Required pairing of failure_label with what_happened."
+      ],
+      "reasoning": "Unchanged from iteration 1. Not re-disputed this round.",
+      "counterevidence": []
+    },
+    {
+      "id": "c4",
+      "text": "Root-reason analysis covers layered causes and maps to caller vs callee vs harness.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:86-98: Layer table Harness/discovery, Caller, Callee, Goal conflict, False done; Done when primary root linked to caller vs callee file to patch first.",
+        "references/root-reason.md:13-30: Layer checklist top-down.",
+        "references/root-reason.md:32-39: Patch order default.",
+        "references/root-reason.md:41-43: One layer per loop."
+      ],
+      "reasoning": "Unchanged from iteration 1: layered model and caller/callee/harness mapping exist. Mono-skill force-fit is a usability residual under c7, not a missing layer model under c4.",
+      "counterevidence": []
+    },
+    {
+      "id": "c5",
+      "text": "Continued improvement includes surgical edition scope limits that prevent brutal full-skill rewrites.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.96,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:19: Edition scope (anti-brutal): only surgical patches; full skill rewrites out of scope.",
+        "SKILL.md:109-120: Edition limits Allowed vs Forbidden; one layer per loop; stop and ask human before redesign.",
+        "SKILL.md:133: Hard gate Edition scope: surgical only.",
+        "references/root-reason.md:45-81: Edition scope anti-brutal detail."
+      ],
+      "reasoning": "Unchanged from iteration 1. will_change vs patch naming slip is polish under c7, not a collapse of surgical limits under c5.",
+      "counterevidence": []
+    },
+    {
+      "id": "c6",
+      "text": "Guidance is harness-agnostic enough to apply beyond a single CLI (Codex/Grok/others).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.86,
+      "unchanged_from": "audit1_iteration1",
+      "evidence": [
+        "SKILL.md:17: Stay harness-agnostic: same method on Codex, Grok, Claude, Cursor, or headless CLIs.",
+        "SKILL.md:49: Case field harness: codex|grok|…|any.",
+        "references/ecological-cases.md:52-61: Cross-harness mapping; method same, paths/flags in case not core steps.",
+        "SKILL.md:6-7: description lists multiple products."
+      ],
+      "reasoning": "Unchanged from iteration 1. Spawn recipes remain harness packaging, not a missing method step.",
+      "counterevidence": [
+        "No concrete invocation recipes (flags/APIs) for any harness beyond conceptual mapping rows in ecological-cases.md:52-61."
+      ]
+    },
+    {
+      "id": "c7",
+      "text": "No critical operational gap remains for a competent agent to finish a full loop (cases → score → label → root → patch → re-run → handoff).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.8,
+      "evidence": [
+        "SKILL.md:21-124: Ordered steps 1–6 cover capture → ecological cases → forward test/score → failure labels → root reason → surgical patch + re-run same cases, each with Done when.",
+        "SKILL.md:66-68: Record pass/fail per gold observable, session/run id, artifacts paths; Done when baseline scores exist for every case.",
+        "SKILL.md:100-107: Patch one layer; re-run same ecological cases; lab-only pass ≠ fixed; stop when ecological positives and negatives pass.",
+        "SKILL.md:136-150: Handoff template with miss_id, cases, baseline, root, patch layer, will change/not, patch files, re-run, remaining.",
+        "references/ecological-cases.md:18-34: Case record fields (id, setup, probe, gold_observables, precondition, harness, negative).",
+        "references/ecological-cases.md:12: Gold only in meta score sheet (named store concept; content = gold, not runner prompt).",
+        "references/root-reason.md:67-75: Before/after edit checklist (root, will change, will not, layer, checkable criterion).",
+        "references/root-reason.md:83-88: When to stop (ecological positives/negatives, remaining risk, surgical scope).",
+        "SKILL.md:29: callee/caller paths if split — mono layouts acknowledged.",
+        "references/root-reason.md:54: File list up front before edit; do not expand mid-loop without human OK."
+      ],
+      "reasoning": "Re-audit of c7 only under the strict bar: fail if a competent agent must invent primary procedure to finish the loop; pass if the skill supplies the loop procedure and agent judgment may fill paths/packaging.\n\nEvery stage of cases → score → label → root → patch → re-run → handoff has an explicit step, Done-when, and (where needed) a reference. Scoring procedure is defined (per gold_observable pass/fail + run id + artifact paths; baseline must exist; re-run compares same probes). Case content schema is defined. Handoff is the structured durable comparison surface for baseline vs re-run. Edition and stop criteria close the loop.\n\nAudit3’s blocking list mostly elevates (a) default path conventions, (b) write-test hygiene, (c) optional quality depth, and (d) naming slips to ‘critical missing procedure.’ Those increase risk and variance; they do not omit a loop stage or force inventing the method itself. Verdict remains pass; residual risks recorded; confidence modestly constrained by real write-side hygiene under-specification.",
+      "counterevidence": [
+        "No prescribed default directory layout or file format for case fixtures or the named ‘meta score sheet’ beyond field lists and handoff lines.",
+        "No FS isolation, restore, or cleanup procedure for write-capable gold (must/must-not write) despite ecological preference for real project roots.",
+        "No dry-run / temp-cwd / forbid-list pre-flight for destructive paths.",
+        "Edition Allowed table cites handoff `patch:` as touch allowlist while template defines `patch:` as post-edit files and `will change` as pre-edit intent (naming inconsistency).",
+        "Negative depth is a minimum of one non-fire; no matrix of false-trigger / post-write non-fire classes.",
+        "Mild runner wording tension: §3 ‘path + task, or natural multi-turn resume’ vs §2 ban on single-shot path-invoke as main suite."
+      ],
+      "audit3_points": [
+        {
+          "point": "No score store path/schema",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as residual risk (no default relative layout). REJECT as critical gap. Skill requires baseline scores for every case, records pass/fail per gold_observable + session/run id + artifact paths, places gold in a named meta score sheet (not the runner prompt), and carries baseline/re-run in the handoff template. That is enough scoring procedure. Default path/format is agent judgment filling paths (allowed under the adjudication rule), not inventing primary procedure."
+        },
+        {
+          "point": "No FS isolation/cleanup between cases or re-runs",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as residual operational risk when gold includes writes on shared trees (case N can poison N+1 or re-run). REJECT as blocking missing loop procedure. Loop integrity is specified via fresh threads, same probes, and per-observable scoring; case `setup` is explicitly how context is built and is the packaging hook for disposable/realistic fixtures. A competent agent finishes the loop without a skill-mandated sandbox design; inventing isolation is situational hygiene, not a missing method stage."
+        },
+        {
+          "point": "No write-safety procedure (dry-run, temp cwd, COW, forbid-list)",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as residual safety risk for write-capable ecological suites. REJECT as critical for c7 as written (‘finish a full loop’). Write gold is optional example content, not a mandatory suite property; the skill’s primary job is method (score/label/root/patch/re-run), not a general eval harness sandbox. Safety pre-flight is polish a competent agent supplies when gold demands it."
+        },
+        {
+          "point": "Human gate only for redesign, not before patch or write re-runs",
+          "disposition": "reject_as_blocking",
+          "detail": "REJECT. Human OK is intentionally scoped to redesign / edition expansion (c5). Autonomous surgical patch + re-run is the product of the skill. Requiring human checkpoints before baseline patches would not be a missing operational step of the stated loop; it would be a different safety policy. Not a critical operational gap for finishing cases→…→handoff."
+        },
+        {
+          "point": "Callee/caller binary underspecified for mono-skill",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as usability residual (force-fit of roles inside one file). REJECT as blocking. Step 1 lists callee/caller ‘if split’; root-reason maps never-loaded → caller/harness and loaded-wrong → callee; handoff still needs one patch layer. Competent agent patches the single SKILL.md under the role that matches the primary root. Loop completes without inventing a new layer model."
+        },
+        {
+          "point": "Shallow negatives (≥1 non-fire only)",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as quality residual (thin boundary coverage). REJECT as blocking. Done-when requires ≥1 negative and re-run must keep negatives passing. Insufficient depth weakens suite strength; it does not prevent finishing a full loop."
+        },
+        {
+          "point": "will change vs patch: wording contradiction",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as real inconsistency: Allowed table says touch only files in handoff `patch:` while template uses `will change` pre-edit and `patch:` post-edit; root-reason.md correctly requires file list up front and will-change checklist. REJECT as critical: a competent agent reading §6 prose + root-reason checklist states will_change before edit and records patch after. Naming slip, not missing blast-radius procedure."
+        },
+        {
+          "point": "Mild lab prompt tension (path+task vs ecological suite)",
+          "disposition": "reject_as_blocking",
+          "detail": "ACCEPT as mild wording tension under runner packaging. REJECT for c7. Ecological case construction (prefix+verbatim probe, anti-lab table, primary-evidence hard gate) dominates; §3’s ‘path + task, or natural multi-turn resume’ is user-shaped packaging, not permission to replace the primary suite with lab invokes. Does not block finishing the loop."
+        }
+      ]
+    }
+  ],
+  "open_questions": [
+    "Should a default relative layout for cases + meta score sheet be recommended as convention (not required procedure)?",
+    "Should write-capable gold trigger a short isolation/restore note under case setup, without expanding the skill into a sandbox product?",
+    "Should Allowed edition table say ‘will change’ instead of ‘patch:’ for the pre-edit allowlist?"
+  ],
+  "disputed_points_if_any": [
+    {
+      "point": "c7: audit3 fail vs audit1/audit2 pass",
+      "position": "Audit3 correctly spots residual risks (score layout unspecified, write isolation unspecified, will_change/patch name slip, shallow negatives, mono-skill force-fit). It incorrectly elevates those to critical operational gaps that block a competent agent from finishing the loop. Primary procedure for every loop stage is present; path conventions and write hygiene are agent judgment / residual risk.",
+      "resolution": "c7 pass on re-audit; all eight audit3 c7 points rejected as blocking; several accepted as residual risks in counterevidence and audit3_points."
+    }
+  ]
+}

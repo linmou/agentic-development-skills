@@ -1,0 +1,6 @@
+# Ignore local interpreter and test caches.
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.codex/

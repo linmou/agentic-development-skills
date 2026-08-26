@@ -1,0 +1,4 @@
+interface:
+  display_name: "Code Smell Monitor"
+  short_description: "Objective scoped code quality reports"
+  default_prompt: "Use $code-smell-monitor to run scoped code quality feedback for this repository."

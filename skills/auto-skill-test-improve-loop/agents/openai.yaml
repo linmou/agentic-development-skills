@@ -1,0 +1,7 @@
+interface:
+  display_name: "Auto Skill Test-Improve Loop"
+  short_description: "Real miss → ecological cases → minimum worktree fix → RESULTS"
+  default_prompt: "Use $auto-skill-test-improve-loop on this real agent miss through RESULTS (fix, comparison, cost rate)."
+
+policy:
+  allow_implicit_invocation: false

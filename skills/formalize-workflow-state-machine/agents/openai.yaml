@@ -1,0 +1,4 @@
+interface:
+  display_name: "Formalize Workflow State Machine"
+  short_description: "Formalize workflows with source evidence"
+  default_prompt: "Use $formalize-workflow-state-machine to turn this written workflow into a source-verified state-machine proposal."

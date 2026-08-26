@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fast Multi-Agent TDD"
+  short_description: "Outcome-first TDD with mandatory debates"
+  default_prompt: "Use $fast-multi-agent-tdd to re-check requirements, isolate the executable slice, and implement it with strict red-green-refactor, a monitor agent, mandatory Red and cumulative Refactor debates, and regression checks."

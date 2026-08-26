@@ -1,0 +1,14 @@
+interface:
+  display_name: Agentic Coding Root-Cause Diagnosis
+  short_description: Diagnose agentic coding failures through causal competition
+  default_prompt: Use $diagnose-agentic-coding to identify and test the root causes
+    of this agentic coding failure.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

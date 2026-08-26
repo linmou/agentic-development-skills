@@ -1,0 +1,95 @@
+{
+  "skill_name": "fast-multi-agent-tdd",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use $fast-multi-agent-tdd to add idempotent Stripe webhook handling for `invoice.paid` in this FastAPI service.\n\nRequirements:\n- Start in Red: write one failing Gherkin acceptance test for the end-to-end webhook flow, then the lowest-level failing integration or unit tests needed beneath it.\n- Confirm each new test fails for the expected reason before writing implementation.\n- Keep implementation ownership with one main agent and a non-editing monitor only.\n- After Red and Refactor, run a structured 3-reviewer audit and save JSON outputs under `audits/stripe_webhook_<phase>_auditN_iterationM.json`.\n- At Green, run the deterministic gate and save the production diff for cumulative Refactor review.\n- After Green and after Refactor, run the full test suite as the regression check.\n- Keep the implementation minimal. No fallback logic, no speculative abstractions.",
+      "expected_output": "A workflow that preserves strict red-green-refactor, keeps one implementing agent plus the monitor, audits Red and cumulative Refactor with $review-with-multi-debate, and uses a deterministic Green gate.",
+      "files": [],
+      "expectations": [
+        "Workflow: The response starts with request mapping before Red and keeps red, green, regression, and refactor in sequence.",
+        "Workflow: The workflow names a monitor agent that does not edit files and checks phase boundaries.",
+        "Workflow: The red phase is test-first and the green or refactor phases do not edit tests.",
+        "Workflow: Red and cumulative Refactor are audited with $review-with-multi-debate and use the requested audit file naming pattern.",
+        "Workflow: Green uses a deterministic gate and saves the production diff for cumulative Refactor review.",
+        "Quality: The response keeps implementation ownership with one main agent rather than parallel workers.",
+        "Quality: The green plan is minimal and rejects fallback logic or speculative abstractions."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use $fast-multi-agent-tdd to build a CSV user-import feature in this Next.js app and Python API.\n\nRequirements:\n- Begin with Red: write a failing `.feature` file for the core admin journey, then add failing integration tests for API or database boundaries and unit tests for CSV validation edge cases.\n- Before implementation, inspect nearby docs and existing import or auth code to map constraints.\n- Keep implementation ownership with one main agent and use the monitor only for phase enforcement.\n- Green must be the minimum code required to pass the new tests.\n- After Red and cumulative Refactor, run a 3-reviewer audit with disagreement handling and save results to `audits/user_import_<phase>_auditN_iterationM.json`.\n- At Green, run the deterministic gate and save the production diff for cumulative Refactor review.\n- After Green and Refactor, run the entire suite as the regression check.\n- If existing tests conflict with the new requirement, identify and refactor them explicitly rather than silently working around them.",
+      "expected_output": "A workflow that reads local guidance first, chooses test levels deliberately, preserves phase boundaries, and does not let green or refactor mutate tests.",
+      "files": [],
+      "expectations": [
+        "Workflow: The response starts with docs and dependency analysis before writing tests.",
+        "Workflow: The response picks deliberate test levels across feature, integration, and unit layers instead of collapsing everything into one layer.",
+        "Workflow: The response still starts implementation with the next failing test and requires a full-suite regression check after code changes.",
+        "Quality: The response handles conflicting existing tests explicitly instead of silently bypassing them.",
+        "Quality: The response avoids overbuilding import infrastructure or configuration not demanded by the failing tests."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use $fast-multi-agent-tdd to add expiring invitation links to this monorepo.\n\nRequirements:\n- Start with a failing acceptance test in Gherkin for the invite lifecycle, then write failing tests for token expiry and single-use behavior at the lowest sensible levels.\n- Confirm Red-phase failures are due to missing behavior, not broken fixtures or environment issues.\n- Keep implementation ownership with one main agent and use the monitor only for phase enforcement.\n- During Green, implement only what the failing tests require and save the production diff.\n- During Refactor, clean duplication in invite or token handling if and only if behavior is already locked by passing tests.\n- After Red and cumulative Refactor, run a multi-review audit with saved JSON artifacts and deterministic convergence rules.\n- After Green and Refactor, run the full suite and treat flaky results as failures.",
+      "expected_output": "A workflow that resists turning a feature request into a broad auth rewrite and treats refactor as a separate post-green activity.",
+      "files": [],
+      "expectations": [
+        "Workflow: The red phase verifies that failures come from missing behavior rather than fixture or environment breakage.",
+        "Workflow: The response separates green from refactor and keeps the suite green before any cleanup starts.",
+        "Workflow: The Refactor audit reviews the cumulative production diff rather than only the cleanup diff.",
+        "Workflow: The response treats flaky results as failures during regression checking.",
+        "Quality: The response does not smuggle in a broad auth rewrite while implementing invitation expiry.",
+        "Quality: The response only refactors duplication after behavior is locked by passing tests."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Use $fast-multi-agent-tdd to fix a small parser bug in a CLI tool.\n\nRequirements:\n- Keep the process lean.\n- Start with the next failing test.\n- Use a monitor agent but do not spawn any parallel workers.\n- After Green, run the full available suite.\n- If the fix is trivial, do not inflate the workflow or the test pyramid beyond what the bug needs.",
+      "expected_output": "A slim workflow that still preserves strict TDD and regression discipline without adding unnecessary process.",
+      "files": [],
+      "expectations": [
+        "Workflow: The response still starts with the next failing test and keeps red, green, and regression in order.",
+        "Workflow: The response still includes the monitor boundary check, Red audit handoff, Green gate, and cumulative Refactor audit handoff when refactor is needed.",
+        "Quality: The response does not spawn parallel workers for a small parser bug.",
+        "Quality: The response chooses the lowest sensible test level for a small parser bug.",
+        "Quality: The response stays lean and does not turn a tiny fix into ceremonial overhead."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "Review this pull request for bugs, regressions, and missing tests. Focus on findings with file references.",
+      "expected_output": "A review-oriented response that does not activate the TDD implementation workflow.",
+      "files": [],
+      "expectations": [
+        "Trigger: The response does not force red-green-refactor, monitor-agent setup, or phase audits onto a review-only task.",
+        "Trigger: The response stays in code-review mode and prioritizes findings over implementation planning.",
+        "Quality: The response avoids process overhead that is irrelevant to a pure review request."
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "Explain why this test is flaky and suggest likely causes.\n\nObserved behavior:\n- It fails about 1 in 20 runs.\n- The failure seems related to timing around token expiry.\n- I only want diagnosis and next debugging steps for now.",
+      "expected_output": "A diagnostic response that does not activate implementation-oriented TDD orchestration.",
+      "files": [],
+      "expectations": [
+        "Trigger: The response does not launch a TDD feature workflow for a diagnosis-only request.",
+        "Trigger: The response does not introduce monitor agents, review debates, or phase contracts when the user only asked for explanation.",
+        "Quality: The response stays focused on diagnosis, likely causes, and next debugging steps."
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "Use $fast-multi-agent-tdd to create a local Codex skill with a SKILL.md workflow, a scoring rubric, a small Python metric calculator, and a recorded evaluation result. Keep the process lean.",
+      "expected_output": "A requirement re-check that defines the complete usable deliverable, separates non-executable artifacts from executable behavior, and applies TDD only to the metric calculator.",
+      "files": [],
+      "expectations": [
+        "Requirements: The response defines user-visible done and maps requirements to artifacts and acceptance evidence before selecting TDD.",
+        "Scope: SKILL.md, the rubric, and the recorded result stay outside TDD; only executable calculator behavior enters Red-Green-Refactor.",
+        "Workflow: The first executable slice supports a usable vertical result rather than presenting an isolated scoring engine as the whole deliverable.",
+        "Workflow: Planned paths are semantically classified against phase contracts before Red starts.",
+        "Audit: The executable calculator's Red and cumulative Refactor phases use mandatory multi-agent debate audits."
+      ]
+    }
+  ]
+}

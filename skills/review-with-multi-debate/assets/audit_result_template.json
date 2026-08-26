@@ -1,0 +1,23 @@
+{
+  "feature_name": "replace-me",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit1",
+  "claim": "Replace with the claim under review.",
+  "overall_verdict": "insufficient_evidence",
+  "overall_confidence": 0.0,
+  "criteria": [
+    {
+      "id": "c1",
+      "text": "Replace with a checkable criterion.",
+      "blocking": true,
+      "verdict": "insufficient_evidence",
+      "confidence": 0.0,
+      "evidence": [],
+      "reasoning": "Replace with short evidence-bound reasoning.",
+      "counterevidence": []
+    }
+  ],
+  "open_questions": [],
+  "disputed_points_if_any": []
+}

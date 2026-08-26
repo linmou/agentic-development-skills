@@ -1,0 +1,7 @@
+# Intent: Keep generated caches and unrelated local audit artifacts out of the skill repository.
+
+.mypy_cache/
+.ruff_cache/
+__pycache__/
+audits/*
+!audits/natural_language_semantic_fidelity_validation.md

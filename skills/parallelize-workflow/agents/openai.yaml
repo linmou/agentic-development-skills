@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parallel Workflow"
+  short_description: "Generate resumable monitor-worker workflows from serial skills"
+  default_prompt: "Use $parallelize-workflow to turn this single-process skill or workflow into a runnable parallel monitor-worker workflow with persistent prompts, state-machine scripts, and transition tests."

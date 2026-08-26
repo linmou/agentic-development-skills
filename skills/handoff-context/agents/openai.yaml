@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff Context"
+  short_description: "Create concise agent handoff documents"
+  default_prompt: "Use $handoff-context to prepare a concise handoff document for the next agent."

@@ -1,0 +1,229 @@
+{
+  "feature_name": "ecological_forward_test",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit3",
+  "claim": "The ecological-forward-test skill is complete enough to run ecological case generation, forward testing, failure summarizing, root-reason analysis, and continued improvement (surgical patch loop) across agent harnesses, without critical missing procedure.",
+  "overall_verdict": "fail",
+  "overall_confidence": 0.88,
+  "criteria": [
+    {
+      "id": "c1",
+      "text": "Ecological case generation is defined and required as the primary suite (not lab-only explicit $skill prompts).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "source": "SKILL.md §2 Build ecological cases + Done when",
+          "quote": "An ecological case is a session-like next turn... Lab/explicit invoke is optional control only, never the primary suite. Done when: ≥1 positive ecological case + ≥1 negative case written"
+        },
+        {
+          "source": "SKILL.md Hard gates",
+          "quote": "Primary evidence | Ecological / session-like cases, not easy explicit `$skill` lab prompts"
+        },
+        {
+          "source": "references/ecological-cases.md Against lab cases",
+          "quote": "Lab explicit invoke is allowed as a control... It never alone proves auto-invoke or caller discipline."
+        }
+      ],
+      "gaps": [
+        "Negative-case depth is thin: only a boolean `negative: true if skill must NOT run` (ecological-cases.md) and a minimum of one case. No classes of non-fire (wrong domain, already-done, ambiguous probe, competing skill), no required boundary coverage—weak for primary-suite quality but does not falsify that ecological generation is defined and required."
+      ],
+      "suggestion": "Keep c1 as-is for generation/primary-suite; deepen negatives under case design (types + minimum matrix) so the primary suite is not one shallow non-fire."
+    },
+    {
+      "id": "c2",
+      "text": "Forward-test integrity is specified (fresh threads, no gold leakage, runner not told it is testing).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "source": "SKILL.md §3 Forward test",
+          "quote": "Run cases on a fresh agent thread per case. Subagent / runner must not know it is testing... Pass raw probe and prefix artifacts; no expected answer, intended fix, or prior diagnosis"
+        },
+        {
+          "source": "SKILL.md Hard gates",
+          "quote": "Forward integrity | No gold leakage into the runner prompt"
+        },
+        {
+          "source": "references/ecological-cases.md Against lab cases",
+          "quote": "Gold answers in the prompt | Gold only in meta score sheet"
+        }
+      ],
+      "gaps": [
+        "Integrity of the runner prompt is specified; isolation of side effects is not (see c7). That is a different gap than gold/fresh-thread integrity.",
+        "Mild tension: §3 says 'Prompt like a user: path + task, or natural multi-turn resume' while §2 forbids single-shot path-invoke as the main suite—competent agents may reintroduce lab-shaped runner prompts."
+      ],
+      "suggestion": "Split runner packaging: ecological runner = prefix+verbatim probe only; lab control = path+task. Keep gold exclusively in a named score sheet location (also c7)."
+    },
+    {
+      "id": "c3",
+      "text": "Failure labeling rules are complete, checkable, and ban invented jargon / overloaded bare nouns.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "source": "SKILL.md §4 Failure summarize",
+          "quote": "Reject labels that invent scoring jargon... Reject bare overloaded nouns even if they appear once... Test: would a reader map this label to the skill meaning without a glossary?"
+        },
+        {
+          "source": "references/failure-labels.md Quality tests",
+          "quote": "1. Repeated in skill... 2. Daily glue only... 3. No new concepts... 4. Disambiguation... 5. Reader test"
+        }
+      ],
+      "gaps": [
+        "Rules are checkable for a human reviewer; no machine-checkable schema beyond prose tests—acceptable for this skill class."
+      ],
+      "suggestion": "None required for c3 claim text."
+    },
+    {
+      "id": "c4",
+      "text": "Root-reason analysis covers layered causes and maps to caller vs callee vs harness.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.78,
+      "evidence": [
+        {
+          "source": "SKILL.md §5 Root reason analyse",
+          "quote": "Harness / discovery | Caller | Callee | Goal conflict | False done ... linked to which skill file (caller vs callee) to patch first"
+        },
+        {
+          "source": "references/root-reason.md Layer checklist + Patch order",
+          "quote": "if never loaded target skill → caller or harness first; else if loaded but wrong outcome → callee"
+        }
+      ],
+      "gaps": [
+        "Callee/caller binary is structural: §1 allows 'if split', but handoff and edition limits only allow patch layer: caller | callee | harness. Mono-skill (single SKILL.md is both invoke discipline and body) has no explicit layer name; agents must force-fit 'caller' or 'callee'.",
+        "Analysis layers include Goal conflict and False done, but patch-layer enum does not; root-reason.md remaps them to caller/callee edits—OK if read, easy to miss if only using handoff template.",
+        "Assumes host/callee split is the main miss geometry; misses that are pure catalog text, description, or progressive-disclosure routing are only weakly covered under harness/discovery."
+      ],
+      "suggestion": "Add explicit mono-skill mapping: treat invoke/timing gates as 'caller role' and contract body as 'callee role' even inside one file; allow patch layer: skill_body with still one concern per loop."
+    },
+    {
+      "id": "c5",
+      "text": "Continued improvement includes surgical edition scope limits that prevent brutal full-skill rewrites.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "source": "SKILL.md Edition scope (anti-brutal) + §6 Edition limits",
+          "quote": "only surgical patches tied to the stated root reason... One of: caller or callee or harness config per loop... If the fix seems to need a full redesign → stop and ask the human"
+        },
+        {
+          "source": "references/root-reason.md Edition scope",
+          "quote": "Root-tied only... One layer... Prefer local surgery... No drive-bys... Ask before redesign"
+        }
+      ],
+      "gaps": [
+        "Internal naming slip: §6 Allowed table says 'Touch only files named in the handoff `patch:` list' while the handoff template defines `patch:` as files actually touched (post-edit) and `will change` as the pre-edit list—contradicts pre-bound blast radius unless agents treat will_change as the allowlist."
+      ],
+      "suggestion": "Rename consistently: pre-edit allowlist = will_change; post-edit record = patch. Forbid expanding will_change mid-loop without human OK."
+    },
+    {
+      "id": "c6",
+      "text": "Guidance is harness-agnostic enough to apply beyond a single CLI (Codex/Grok/others).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.84,
+      "evidence": [
+        {
+          "source": "SKILL.md intro",
+          "quote": "Stay harness-agnostic: same method on Codex, Grok, Claude, Cursor, or headless CLIs."
+        },
+        {
+          "source": "references/ecological-cases.md Cross-harness mapping",
+          "quote": "Method stays the same; only file paths and CLI flags change. Put harness-specific paths in the case, not in this skill's core steps."
+        },
+        {
+          "source": "SKILL.md case minimum fields",
+          "quote": "harness (codex|grok|…|any)"
+        }
+      ],
+      "gaps": [
+        "Examples lean Codex/Grok resume flags and session files; Claude/Cursor/headless are named but not operationalized beyond the mapping table—enough for method transfer, not plug-and-play runners."
+      ],
+      "suggestion": "Optional: one-line 'how to spawn fresh thread' per harness in the case record only—do not hardcode in core steps."
+    },
+    {
+      "id": "c7",
+      "text": "No critical operational gap remains for a competent agent to finish a full loop (cases → score → label → root → patch → re-run → handoff).",
+      "blocking": true,
+      "verdict": "fail",
+      "confidence": 0.91,
+      "evidence": [
+        {
+          "source": "SKILL.md §3 Forward test Done when",
+          "quote": "Record: pass/fail per gold observable, session/run id, artifacts paths. Done when: baseline scores exist for every case"
+        },
+        {
+          "source": "references/ecological-cases.md Against lab cases + Case record",
+          "quote": "Gold only in meta score sheet ... Case record fields listed ... (no path, store, or score-sheet schema)"
+        },
+        {
+          "source": "SKILL.md §2 + ecological-cases.md gold_observables",
+          "quote": "Score observables (tool loads, files, Response shape) ... must / must not write path X ... Real project root / realistic files"
+        },
+        {
+          "source": "SKILL.md §3 + Hard gates",
+          "quote": "fresh agent thread per case ... No gold leakage — (no workspace isolation, sandbox, restore, or cleanup)"
+        },
+        {
+          "source": "SKILL.md §6 + root-reason.md When to stop / human OK",
+          "quote": "stop and ask the human only for redesign / expanding edition scope — not for write-capable forward tests or accepting baseline→patch"
+        },
+        {
+          "source": "SKILL.md Handoff template",
+          "quote": "miss_id / cases / baseline / root reason / patch layer / re-run / remaining — narrative only; no score store path, no case fixture path, no side-effect log"
+        },
+        {
+          "source": "SKILL.md §6 Edition limits vs Handoff template",
+          "quote": "Touch only files named in the handoff `patch:` list vs patch: (files actually touched) — pre/post list contradiction"
+        },
+        {
+          "source": "SKILL.md §1 vs §6 patch layer",
+          "quote": "callee and caller ... if split vs patch layer: caller | callee | harness only — mono-skill and non-split layouts underspecified for the full loop"
+        },
+        {
+          "source": "SKILL.md §2 negative minimum",
+          "quote": "≥1 negative case ... (no side-effect regression cases, no isolation between cases that write)"
+        }
+      ],
+      "gaps": [
+        "BLOCKING — No score/case persistence contract: skill requires baseline scores and gold in a 'meta score sheet' but never defines where cases, gold, baselines, or re-run comparisons live (path convention, file format, ownership).",
+        "BLOCKING — No isolation of test side effects: ecological setup prefers real project roots and gold includes must/must-not write; loop re-runs same probes on fresh threads only—filesystem/state left by case N can poison case N+1 or the skill under test.",
+        "BLOCKING — No safety procedure for write-capable forward tests: no dry-run, temp cwd, copy-on-write fixture, restore checkpoint, or forbid-list for destructive paths before spawning the runner.",
+        "BLOCKING — Human gate is only for redesign scope expansion; loop has no required human checkpoint before applying patches after a baseline, or before re-running tests that may write production-like trees.",
+        "Negative-case depth is a minimum of one non-fire; no requirement that negatives cover false-trigger and no-write obligations after a positive would have written—insufficient to claim a closed quality loop.",
+        "Step contradiction: record scores / compare re-runs, but no durable comparison artifact beyond free-text handoff lines.",
+        "Operational spawn gap: how the evaluating agent launches an unaware subagent/fresh thread is harness-left entirely to improvisation (acceptable as agnostic detail) but combined with missing score store makes 'finish a full loop' non-deterministic across agents."
+      ],
+      "suggestion": "Add a minimal ops contract: (1) case+gold+scores paths under a fixed relative layout; (2) workspace isolation/restore rules for any gold that mentions writes; (3) pre-flight safety checklist for forward tests; (4) human OK only when needed for redesign already—extend optional 'human review baseline' when writes touch non-fixture trees; (5) fix will_change vs patch allowlist naming; (6) mono-skill patch-layer guidance."
+    }
+  ],
+  "open_questions": [
+    "Is the intended durable artifact store the handoff blob alone, or an implied external eval harness the skill forgot to name?",
+    "Are forward tests expected to run only against disposable fixtures, despite ecological-cases.md preferring real project roots?",
+    "For mono-skills, is 'callee' the default patch layer for body failures by convention?"
+  ],
+  "disputed_points_if_any": [
+    {
+      "point": "Whether c2 should fail because side-effect isolation is part of 'forward-test integrity'",
+      "position": "c2 text only requires fresh threads, no gold leakage, runner not told it is testing—those are present. Isolation and write safety are operational completeness under c7, not c2 as written.",
+      "resolution": "Failed c7 only; left c2 pass with noted tension on path+task runner wording."
+    },
+    {
+      "point": "Whether callee/caller binary fails c4",
+      "position": "c4 asks that root analysis cover layers and map to caller vs callee vs harness—the skill does. Binary force-fit for mono-skills is a completeness/usability gap (c7/c4 gaps), not a missing layer model.",
+      "resolution": "c4 pass with gaps; c7 carries the operational miss."
+    },
+    {
+      "point": "Whether shallow negatives fail c1",
+      "position": "c1 is about ecological generation defined and required as primary suite—yes. Depth insufficiency is a loop-quality gap under c7.",
+      "resolution": "c1 pass; negative depth listed under c1 gaps and c7 fail evidence."
+    }
+  ]
+}

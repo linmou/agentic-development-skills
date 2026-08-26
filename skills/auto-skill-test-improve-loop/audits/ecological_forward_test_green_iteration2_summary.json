@@ -1,0 +1,122 @@
+{
+  "feature_name": "ecological_forward_test",
+  "phase": "green",
+  "iteration": 2,
+  "reviewer_count": 3,
+  "status": "converged",
+  "disputed_criteria": [],
+  "criteria": {
+    "c1": {
+      "criterion_text": "Ecological case generation is defined and required as the primary suite (not lab-only explicit $skill prompts).",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.95,
+        0.95,
+        0.9
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c2": {
+      "criterion_text": "Forward-test integrity is specified (fresh threads, no gold leakage, runner not told it is testing).",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.93,
+        0.94,
+        0.86
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c3": {
+      "criterion_text": "Failure labeling rules are complete, checkable, and ban invented jargon / overloaded bare nouns.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.92,
+        0.92,
+        0.92
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c4": {
+      "criterion_text": "Root-reason analysis covers layered causes and maps to caller vs callee vs harness.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.94,
+        0.9,
+        0.78
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c5": {
+      "criterion_text": "Continued improvement includes surgical edition scope limits that prevent brutal full-skill rewrites.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.96,
+        0.95,
+        0.9
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c6": {
+      "criterion_text": "Guidance is harness-agnostic enough to apply beyond a single CLI (Codex/Grok/others).",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.86,
+        0.9,
+        0.84
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "c7": {
+      "criterion_text": "No critical operational gap remains for a competent agent to finish a full loop (cases \u2192 score \u2192 label \u2192 root \u2192 patch \u2192 re-run \u2192 handoff).",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.8,
+        0.84,
+        0.84
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    }
+  }
+}

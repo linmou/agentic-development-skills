@@ -1,0 +1,34 @@
+{
+  "skill_name": "review-with-multi-debate",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use $review-with-multi-debate to audit whether a product requirement document satisfies the claim that it fully specifies password reset behavior. Save reviewer outputs under audits/password-reset_green_auditN_iteration1.json and recurse only on disputed criteria.",
+      "expected_output": "A workflow that decomposes the claim, runs three independent reviewers, writes audit JSON files with the requested naming, aggregates them, and starts a second round only for disputed criteria.",
+      "expectations": [
+        "The response decomposes the claim into explicit criteria before running reviewers",
+        "The response writes reviewer outputs to audits/password-reset_green_auditN_iteration1.json",
+        "The response uses deterministic aggregation rather than free-form debate to decide convergence"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use $review-with-multi-debate on a design artifact and the claim 'the API spec enforces tenant isolation.' The first-round audits disagree on criterion c2. Show how the second round should be scoped.",
+      "expected_output": "A disagreement-focused second round that reuses the artifact, claim, disputed criteria, and prior audit files while avoiding a full re-audit.",
+      "expectations": [
+        "The response limits round 2 to disputed criteria only",
+        "The response keeps reviewer ids stable across iterations",
+        "The response stops after a hard maximum iteration count instead of forcing consensus"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Summarize this architecture note in five bullets.",
+      "expected_output": "The skill should recognize that multi-review debate is unnecessary and avoid invoking the full audit workflow.",
+      "expectations": [
+        "The response states that the skill is out of scope for a simple summary request",
+        "The response does not launch multiple reviewers for a non-audit task"
+      ]
+    }
+  ]
+}

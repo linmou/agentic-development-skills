@@ -1,0 +1,4 @@
+interface:
+  display_name: "Skill Extract Verify"
+  short_description: "Audit host vs extracted skill split"
+  default_prompt: "Use $skill-extract-verify to audit this host/extracted skill split (one-way dep, dual writers, call contract)."

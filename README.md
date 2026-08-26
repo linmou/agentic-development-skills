@@ -1,71 +1,56 @@
-# Robust TDD Skills
+# Agentic Development Skills
 
-Intent: keep closely related TDD, audit, and code-quality monitoring skills together in one umbrella repository while preserving each skill as an independent repository.
-Updated: 2026-07-01
-Commit: pending local change from c3baf2b
+Intent: store the ten skills used for agentic coding and skill development in one public repository, while exposing each skill as an independent directory.
+Updated: 2026-08-26
+Commit: pending local change
 
-## Overview
-
-This repository groups related skills that are commonly used together:
-
-- `fast-multi-agent-tdd/`: strict Red-Green-Refactor workflow orchestration with monitor discipline
-- `review-with-multi-debate/`: structured audit workflow for phase claims and artifacts
-- `code-smell-monitor/`: scoped objective code-quality feedback for repositories
-
-The top-level repository exists to make the skill set easier to clone, inspect, and manage as one unit. The child skills remain independent repositories and are tracked here as git submodules.
-
-## Repository Layout
+## Layout
 
 ```text
-robust-tdd-skills/
-  code-smell-monitor/
-  fast-multi-agent-tdd/
-  review-with-multi-debate/
+agentic-development-skills/
+  skills/<skill-name>/SKILL.md
+  scripts/link_skills.sh
 ```
 
-## Git Model
+The repository has one Git history. Each skill remains self-contained under `skills/<name>/`, including optional resources.
 
-- The umbrella repo tracks only the parent structure and submodule pointers.
-- Each child skill keeps its own git history, remote, and release cadence.
-- Changes inside a child skill must be committed in that child repo first.
-- The umbrella repo should then commit the updated submodule pointer.
-- `review-with-multi-debate` tracks upstream `main` through `.gitmodules`.
-- `.github/workflows/sync-review-with-multi-debate.yml` runs hourly and on manual dispatch to update and commit the `review-with-multi-debate` pointer when upstream `main` moves.
+Included skills:
 
-Submodules are still exact commit pins. The workflow keeps the pin current; git does not make a submodule float automatically inside an already committed parent revision.
+- `fast-multi-agent-tdd`
+- `code-smell-monitor`
+- `diagnose-agentic-coding`
+- `review-with-multi-debate`
+- `auto-skill-test-improve-loop`
+- `formalize-workflow-state-machine`
+- `parallelize-workflow`
+- `skill-extract-verify`
+- `writing-great-skills`
+- `handoff-context`
 
-## Clone And Update
+## Runtime links
 
-Clone with submodules:
+Codex loads skills from `~/.codex/skills`. Build or refresh links with:
 
 ```bash
-git clone --recurse-submodules https://github.com/linmou/robust-tdd-skills.git
+scripts/link_skills.sh ~/.codex/skills
 ```
 
-If already cloned:
+The destination is configurable; an optional second argument selects another source checkout:
 
 ```bash
-git submodule update --init --recursive
+scripts/link_skills.sh /path/to/runtime/skills /path/to/agentic-development-skills
 ```
 
-To pull the latest child skill changes after they are pushed upstream:
+The linker scans only direct children of `skills/` that contain `SKILL.md`. It is idempotent, never overwrites a real path or conflicting symlink, and rejects destinations inside the source tree.
+
+## GitHub migration
+
+The former `robust-tdd-skills` submodule umbrella has been converted to this flat monorepo. Standalone source repositories are documented in [MIGRATION.md](MIGRATION.md); they are not deleted by this local conversion.
+
+Clone normally:
 
 ```bash
-git submodule update --remote --merge
+git clone https://github.com/linmou/agentic-development-skills.git
 ```
 
-To update only `review-with-multi-debate` locally:
-
-```bash
-scripts/sync_review_with_multi_debate_submodule.sh
-```
-
-## Skill Locations
-
-- `code-smell-monitor` upstream: `https://github.com/linmou/code-smell-monitor.git`
-- `fast-multi-agent-tdd` upstream: `https://github.com/linmou/fast-multi-agent-tdd.git`
-- `review-with-multi-debate` upstream: `https://github.com/linmou/review-with-multi-debate.git`
-
-## When To Use This Repo
-
-Use this repository when you want one parent checkout for the full TDD-plus-audit workflow without collapsing the skills into one mixed codebase.
+Then create runtime links from the clone as shown above.

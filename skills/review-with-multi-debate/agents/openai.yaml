@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review with Multi Debate"
+  short_description: "Iterative multi-review audit workflow"
+  default_prompt: "Use $review-with-multi-debate to audit whether an artifact satisfies a claim with multiple independent reviewers and targeted follow-up rounds."

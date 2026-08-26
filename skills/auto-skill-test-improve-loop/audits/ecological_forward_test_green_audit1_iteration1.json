@@ -1,0 +1,130 @@
+{
+  "feature_name": "ecological_forward_test",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit1",
+  "claim": "The ecological-forward-test skill is complete enough to run ecological case generation, forward testing, failure summarizing, root-reason analysis, and continued improvement (surgical patch loop) across agent harnesses, without critical missing procedure.",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.84,
+  "criteria": [
+    {
+      "id": "c1",
+      "text": "Ecological case generation is defined and required as the primary suite (not lab-only explicit $skill prompts).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "evidence": [
+        "SKILL.md:31: Do not invent synthetic “use $skill …” probes as the primary case.",
+        "SKILL.md:37-53: Ecological case defined; Do/Do not table bans single-shot “Use $skill-x…” as main suite; Done when: lab/explicit invoke optional control only, never the primary suite.",
+        "SKILL.md:128-130: Hard gate Primary evidence = ecological/session-like cases, not easy explicit $skill lab prompts.",
+        "references/ecological-cases.md:7-16: Lab vs Ecological table; lab allowed only as control, never alone proves auto-invoke."
+      ],
+      "reasoning": "Primary-suite requirement is repeated in step 1, step 2 done-when, hard gates, and ecological-cases.md. Generation shape (session-like prefix+probe, required fields, ≥1 positive + ≥1 negative) is explicit.",
+      "counterevidence": []
+    },
+    {
+      "id": "c2",
+      "text": "Forward-test integrity is specified (fresh threads, no gold leakage, runner not told it is testing).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        "SKILL.md:57: Run cases on a fresh agent thread per case.",
+        "SKILL.md:61-63: Subagent/runner must not know it is testing; prompt like a user; raw probe/prefix only — no expected answer, intended fix, or prior diagnosis.",
+        "SKILL.md:131: Hard gate Forward integrity = no gold leakage into the runner prompt.",
+        "references/ecological-cases.md:12: Gold only in meta score sheet (not in prompt)."
+      ],
+      "reasoning": "All three integrity pillars (fresh thread, no gold leakage, runner not told testing) appear in step 3 and hard gates; gold placement reinforced in ecological-cases.md.",
+      "counterevidence": []
+    },
+    {
+      "id": "c3",
+      "text": "Failure labeling rules are complete, checkable, and ban invented jargon / overloaded bare nouns.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        "SKILL.md:74-82: Five failure-label rules including reject invented scoring jargon and bare overloaded nouns; Done when: every fail has label + one-line surface; no invented taxonomy tokens.",
+        "references/failure-labels.md:5-11: Quality tests (all must pass): repeated-in-skill, daily glue, no new concepts, disambiguation of overloaded nouns, reader test.",
+        "references/failure-labels.md:35-48: Good/bad examples (e.g. ban no_skill_no_unit, prose_only_*, grain-fail).",
+        "references/failure-labels.md:50-57: Required pairing of failure_label with what_happened."
+      ],
+      "reasoning": "Rules are enumerated, testable, and backed by good/bad examples plus a reader test. Invented jargon and bare overloaded nouns are explicitly banned in both SKILL.md and failure-labels.md.",
+      "counterevidence": []
+    },
+    {
+      "id": "c4",
+      "text": "Root-reason analysis covers layered causes and maps to caller vs callee vs harness.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        "SKILL.md:86-98: Layer table Harness/discovery, Caller, Callee, Goal conflict, False done; Done when primary root linked to caller vs callee file to patch first.",
+        "references/root-reason.md:13-30: Layer checklist top-down including harness discovery, caller, callee.",
+        "references/root-reason.md:32-39: Patch order: never loaded → caller or harness first; loaded wrong outcome → callee.",
+        "references/root-reason.md:41-43: One layer per loop; do not mix caller+callee+harness."
+      ],
+      "reasoning": "Layered causes are defined in step 5 and expanded in root-reason.md with explicit mapping from symptom class to caller vs callee vs harness and default patch order.",
+      "counterevidence": []
+    },
+    {
+      "id": "c5",
+      "text": "Continued improvement includes surgical edition scope limits that prevent brutal full-skill rewrites.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.96,
+      "evidence": [
+        "SKILL.md:19: Edition scope (anti-brutal): only surgical patches; full skill rewrites out of scope.",
+        "SKILL.md:109-120: Edition limits Allowed vs Forbidden table; one layer per loop; stop and ask human before redesign.",
+        "SKILL.md:133: Hard gate Edition scope: surgical only; no full-skill rewrite without human OK.",
+        "references/root-reason.md:45-81: Edition scope anti-brutal: root-tied only, one layer, local surgery, no drive-bys, ask before redesign; size heuristic avoid replace entire SKILL.md."
+      ],
+      "reasoning": "Surgical limits are front-and-center (intro, step 6 table, hard gate, dedicated root-reason section). Brutal full rewrites are forbidden unless human authorizes redesign.",
+      "counterevidence": []
+    },
+    {
+      "id": "c6",
+      "text": "Guidance is harness-agnostic enough to apply beyond a single CLI (Codex/Grok/others).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.86,
+      "evidence": [
+        "SKILL.md:17: Stay harness-agnostic: same method on Codex, Grok, Claude, Cursor, or headless CLIs.",
+        "SKILL.md:49: Case field harness: codex|grok|…|any.",
+        "references/ecological-cases.md:52-61: Cross-harness mapping (Codex-like / Grok-like / Others) for transcript SoT, discovery, multi-turn, fresh thread; method same, paths/flags in case not core steps.",
+        "SKILL.md:6-7: description lists Codex, Grok, Claude, Cursor, or others."
+      ],
+      "reasoning": "Core steps avoid single-CLI commands; harness variance is pushed into case fields and a cross-harness concept map. Enough for a competent agent on another product; not a per-CLI runbook (see open_questions).",
+      "counterevidence": [
+        "No concrete invocation recipes (flags/APIs) for any harness beyond conceptual mapping rows in ecological-cases.md:52-61."
+      ]
+    },
+    {
+      "id": "c7",
+      "text": "No critical operational gap remains for a competent agent to finish a full loop (cases → score → label → root → patch → re-run → handoff).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.78,
+      "evidence": [
+        "SKILL.md:21-124: Ordered steps 1–6 cover capture → ecological cases → forward test/score → failure labels → root reason → surgical patch + re-run same cases.",
+        "SKILL.md:105-107: Re-run same ecological cases; lab-only pass ≠ fixed; stop when ecological positives and negatives pass.",
+        "SKILL.md:136-150: Handoff template with miss_id, cases, baseline, root, patch layer, will change/not, re-run, remaining.",
+        "SKILL.md:33,53,68,82,98,124: Explicit Done-when gates per phase.",
+        "references/ecological-cases.md:18-34: Case record fields for setup/probe/gold/precondition.",
+        "references/root-reason.md:67-75: Before/after edit checklist; When to stop (lines 83-88)."
+      ],
+      "reasoning": "End-to-end loop procedure exists with done-when gates and handoff. Residual gaps (case-level multi-observable pass aggregation; fixture/score-sheet layout; concrete runner spawn per harness) require local judgment but do not block a competent agent from finishing the loop as specified. Not graded as critical missing procedure.",
+      "counterevidence": [
+        "No explicit rule whether case pass requires all gold_observables vs any/partial (SKILL.md:66 records per-observable pass/fail only).",
+        "No prescribed paths/formats for case fixtures or meta score sheet beyond field lists and handoff template.",
+        "No end-to-end worked example artifact set (only label examples and abstract case record)."
+      ]
+    }
+  ],
+  "open_questions": [
+    "Should case-level pass require every gold_observable, and how should partial multi-observable results be recorded?",
+    "Is a minimal harness-specific runner appendix (or one worked full-loop example) required for agents without prior skill-creator / multi-agent runner experience?",
+    "Where should ecological case files and score sheets live by default relative to the skill under test?"
+  ],
+  "disputed_points_if_any": []
+}
