@@ -29,7 +29,8 @@ Each positive eval should check these dimensions where relevant:
 - TDD applies only to the executable rows in the requirement map
 - the first executable slice is the smallest vertical slice that contributes to the complete outcome
 - planned paths are preflighted against phase contracts before Red
-- phase order is explicit: request map, red, green, regression, refactor
+- phase scope is published at each transition from a Git snapshot containing the scope artifact; the old caller-supplied `--changed` interface is not used
+- phase order is explicit: request map, red, green, regression, production refactor, test refactor
 - red starts with the next failing test
 - green does not edit tests
 - refactor starts only after green plus regression are clean
@@ -38,6 +39,7 @@ Each positive eval should check these dimensions where relevant:
 - Red hands off to `$review-with-multi-debate`
 - Green uses a deterministic gate instead of a debate by default
 - Refactor hands off to `$review-with-multi-debate` with the cumulative production diff from pre-Green to post-Refactor
+- Test Refactor follows the converged production Refactor audit, edits only test-like paths, and hands off to `$review-with-multi-debate`
 - implementation ownership stays with one main agent rather than parallel workers
 
 ## Output Quality Dimensions
@@ -49,6 +51,8 @@ Each positive eval should also check:
 - conflicting existing tests are handled explicitly
 - refactor does not become a second implementation phase
 - the cumulative Refactor audit checks final code smell, overreach, hidden fallbacks, and behavior drift
+- the Test Refactor audit checks behavior-map coverage, independent oracles, boundary evidence, assertion strength, test selection, and regression preservation
+- an empty Test Refactor diff records a no-op artifact and skips debate; any changed test diff requires the mandatory audit
 - the response stays concrete and actionable rather than writing process theater
 
 ## Failure Patterns To Penalize

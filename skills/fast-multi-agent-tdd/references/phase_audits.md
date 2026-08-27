@@ -85,6 +85,25 @@ Suggested criteria:
 - no test files were edited
 - the executable slice did not displace required non-TDD artifacts or the user-visible definition of done
 
+## Test Refactor Claim
+
+Claim:
+`The Test Refactor changes only test-like files, preserves the Red behavior map, independent oracles, assertion strength, test selection, and required execution boundaries, and leaves targeted and full regression results unchanged.`
+
+Suggested criteria:
+
+- changed files belong to test_refactor
+- every changed test or fixture remains within the selected test-like scope
+- the behavior map still has coverage for each mapped requirement and control
+- expected values come from an independent oracle rather than the implementation under test
+- assertion strength and boundary evidence are preserved; a required integration or external boundary is not replaced with a lower-level mock
+- no skips, `xfail`, weakened assertions, silent deselection, or test-selection/configuration changes were introduced
+- targeted and full-suite regression pass after the test changes, with repeated runs free of new flakiness
+- the original Red behavior is replayed against the pre-Green production revision and still fails for the expected missing-behavior reason
+- the test smell assessment and before/after reports support the change, or a documented no-op artifact explains why no demonstrated smell and no test diff warranted edits; closeout cites the audit or that no-op artifact
+- missing cases, wrong expectations, changed boundaries, or requirement conflicts are returned to Red rather than fixed in Test Refactor
+- the mandatory `$review-with-multi-debate` audit reaches `converged`
+
 ## Docs Claim
 
 Claim:
