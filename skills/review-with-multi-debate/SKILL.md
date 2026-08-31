@@ -156,6 +156,25 @@ Mechanical convergence rule:
 
 Full convergence also requires that no new counterevidence remains unanswered. The aggregator does not judge evidence quality or blocking status; the main agent must check those from the reviewer JSON files before declaring the audit converged.
 
+Before advancing to the next phase, run the strict phase gate after the
+summary has been written:
+
+```bash
+python <skill_dir>/scripts/validate_audit_transition.py advance_phase \
+  --feature-name <feature_name> \
+  --from-phase <phase> \
+  --to-phase <next_phase> \
+  --iteration <iteration> \
+  --audit-dir <audit_dir>
+```
+
+This gate fails closed unless all three reviewer files have valid metadata and
+criterion contracts, the current iteration summary exists, and every blocking
+criterion is converged with a final verdict of `pass`. A missing, malformed, or
+`not_converged` blocking result must trigger a targeted follow-up round before
+the next phase. Non-blocking disputes may remain only when the blocking gate
+passes and must be reported explicitly.
+
 If all blocking criteria fully converge, the final result may be treated as converged even if only non-blocking criteria still differ slightly. State that explicitly in the final answer.
 
 ### 5. Re-audit disputed criteria only
