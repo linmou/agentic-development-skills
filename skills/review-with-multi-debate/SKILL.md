@@ -84,6 +84,20 @@ Each reviewer writes exactly one file:
 - `audits/<feature_name>_<phase>_audit2_iteration1.json`
 - `audits/<feature_name>_<phase>_audit3_iteration1.json`
 
+Before advancing from reviewer execution, validate that all three expected
+result files exist:
+
+```bash
+python <skill_dir>/scripts/validate_audit_transition.py record_round \
+  --feature-name <feature_name> \
+  --phase <phase> \
+  --iteration <iteration> \
+  --audit-dir <audit_dir>
+```
+
+The validator is a coarse artifact-presence gate. It does not judge evidence
+quality, blocking status, counterevidence, or convergence.
+
 Every criterion verdict must cite evidence or explicitly record missing evidence. No unsupported verdicts.
 
 Reviewer JSON contract:
