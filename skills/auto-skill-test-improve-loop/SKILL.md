@@ -44,7 +44,7 @@ Detail: `references/ecological-cases.md`.
 
 ### 4. Baseline forward test
 
-Fresh agent thread per case; runner must **not** know it is a test; raw probe + prefix only; skill paths = **worktree** paths; cwd = **project_worktree_path** when set. Record pass/fail + artifacts + usage if reported.
+Delegate each case to a fresh forward-test subagent; use the same rule for every Step 8 re-run. If a case requires that subagent to spawn further subagents but its model cannot, stop and ask the user to choose the subagent model. The runner must **not** know it is a test; give it the raw probe + prefix only; skill paths = **worktree** paths; cwd = **project_worktree_path** when set. Record pass/fail + artifacts + usage if reported.
 
 **Done when:** every case has a score file under `.eft/<miss_id>/`.
 
