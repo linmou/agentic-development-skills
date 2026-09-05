@@ -66,11 +66,12 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 
 ## Outputs
 
-The script writes reports under `--out` or `.codex/code_smell_monitor/<timestamp>/`:
+The script writes reports under `--out` or `code_smell_monitor/<timestamp>/`:
 
 - `code_smell_report.md`: human-readable summary, commands, exit codes, and ranked signals.
 - `summary.json`: stack detection, tool availability, command metadata, and extracted headline metrics.
 - `raw/`: exact tool outputs for auditability.
+- add output folder to .git/info/exclude
 
 ## Tool Policy
 
