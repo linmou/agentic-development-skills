@@ -224,7 +224,7 @@ def _changed_paths(baseline_ref: str, scope_relative: str, repo: Path) -> list[s
     if verify.returncode != 0:
         raise ScopeError(f"baseline ref does not resolve to a commit: {baseline_ref}")
     ignored = _status_untracked_and_ignored(repo)
-    index_dir = Path(tempfile.mkdtemp(prefix="codex-tdd-guard-index-"))
+    index_dir = Path(tempfile.mkdtemp(prefix="tdd-phase-guard-index-"))
     try:
         env = os.environ.copy()
         env["GIT_INDEX_FILE"] = str(index_dir / "index")

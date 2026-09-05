@@ -3,7 +3,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +16,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 GUARD = ROOT / "scripts" / "phase_guard.py"
 SNAPSHOT = ROOT / "scripts" / "tdd_snapshot.py"
+SKILL = ROOT / "SKILL.md"
 
 
 def git(cwd: Path, *args: str) -> str:
@@ -61,6 +64,162 @@ def run_guard(repo: Path, phase: str, scope: Path) -> subprocess.CompletedProces
         capture_output=True,
         check=False,
     )
+
+
+def role_receipt(repo: Path, expected_feature: str, **overrides: object) -> Path:
+    payload: dict[str, object] = {
+        "schema": 2,
+        "feature": expected_feature,
+        "route": "compact",
+        "monitor_agent_id": "agent:monitor",
+        "monitor_source": "test.delegate",
+        "red_reviewer_agent_ids": ["agent:reviewer-1", "agent:reviewer-2", "agent:reviewer-3"],
+        "reviewer_source": "test.delegate",
+    }
+    payload.update(overrides)
+    path = repo / f"{expected_feature}-roles.json"
+    path.write_text(json.dumps(payload))
+    return path
+
+
+def portable_role_receipt(
+    repo: Path,
+    expected_feature: str,
+    *,
+    include_reviewers: bool,
+) -> Path:
+    payload: dict[str, object] = {
+        "schema": 2,
+        "feature": expected_feature,
+        "route": "compact",
+        "monitor_agent_id": "mcp://multi-agent/monitor-17",
+        "monitor_source": "multi_agent_v1.delegate",
+    }
+    if include_reviewers:
+        payload.update(
+            {
+                "red_reviewer_agent_ids": [
+                    "task:reviewer-a",
+                    "task:reviewer-b",
+                    "task:reviewer-c",
+                ],
+                "reviewer_source": "task.delegate",
+            }
+        )
+    path = repo / f"{expected_feature}-portable-roles.json"
+    path.write_text(json.dumps(payload))
+    return path
+
+
+def provenance_receipt(repo: Path, feature: str, roles: Path, *, iteration: int = 1) -> Path:
+    receipt = json.loads(roles.read_text())
+    reviewer_ids = receipt.get("red_reviewer_agent_ids", [])
+    if not isinstance(reviewer_ids, list):
+        reviewer_ids = []
+    reviewers: list[dict[str, object]] = []
+    for index, reviewer_id in enumerate(reviewer_ids, start=1):
+        audit_path = repo / f"{feature}_red_audit{index}_iteration{iteration}.json"
+        audit_path.write_text(json.dumps({"reviewer_agent_id": reviewer_id}))
+        reviewers.append(
+            {
+                "reviewer_id": f"audit{index}",
+                "reviewer_agent_id": reviewer_id,
+                "reviewer_source": receipt.get("reviewer_source"),
+                "audit_path": str(audit_path.resolve()),
+                "audit_sha256": hashlib.sha256(audit_path.read_bytes()).hexdigest(),
+            }
+        )
+    path = repo / f"{feature}-provenance.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "decision": "provenance_valid",
+                "feature": feature,
+                "phase": "red",
+                "iteration": iteration,
+                "monitor_agent_id": receipt.get("monitor_agent_id"),
+                "monitor_source": receipt.get("monitor_source"),
+                "role_receipt_path": str(roles.resolve()),
+                "role_receipt_sha256": hashlib.sha256(roles.read_bytes()).hexdigest(),
+                "reviewers": reviewers,
+            }
+        )
+    )
+    return path
+
+
+def focused_provenance_receipt(repo: Path, feature: str, roles: Path) -> Path:
+    eligibility = repo / f"{feature}-focused-eligibility.json"
+    eligibility.write_text(json.dumps({"decision": "focused_re_review"}))
+    focused_audit = repo / f"{feature}_red_focused_iteration2.json"
+    focused_audit.write_text(json.dumps({"reviewer_agent_id": "agent:focused-reviewer"}))
+    path = repo / f"{feature}-focused-gate.json"
+    path.write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "decision": "advance_green",
+                "feature": feature,
+                "phase": "red",
+                "iteration": 2,
+                "focused_reviewer_agent_id": "agent:focused-reviewer",
+                "reviewer_source": "focused.delegate",
+                "focused_audit_path": str(focused_audit.resolve()),
+                "focused_audit_sha256": hashlib.sha256(focused_audit.read_bytes()).hexdigest(),
+                "role_receipt_path": str(roles.resolve()),
+                "role_receipt_sha256": hashlib.sha256(roles.read_bytes()).hexdigest(),
+                "eligibility_path": str(eligibility.resolve()),
+                "eligibility_sha256": hashlib.sha256(eligibility.read_bytes()).hexdigest(),
+            }
+        )
+    )
+    return path
+
+
+def documented_pre_red_role_receipt(repo: Path, feature: str) -> tuple[Path, dict[str, object]]:
+    contract = SKILL.read_text().split("<!-- pre-red-role-receipt-contract -->", 1)[1]
+    contract = contract.split("<!-- /pre-red-role-receipt-contract -->", 1)[0]
+    payload = cast(dict[str, object], json.loads(contract.split("```json", 1)[1].split("```", 1)[0]))
+    payload["feature"] = feature
+    payload["route"] = "compact"
+    payload["monitor_agent_id"] = "agent:monitor"
+    payload["monitor_source"] = "test.delegate"
+    path = repo / f"{feature}-documented-roles.json"
+    path.write_text(json.dumps(payload))
+    return path, payload
+
+
+def run_snapshot_create(
+    repo: Path,
+    feature: str,
+    phase: str,
+    *,
+    roles: Path | None = None,
+    round_number: int | None = None,
+    auto_provenance: bool = True,
+    provenance: Path | None = None,
+    review_iteration: int | None = None,
+    focused_provenance: Path | None = None,
+) -> subprocess.CompletedProcess[str]:
+    command = [sys.executable, str(SNAPSHOT), "create", "--feature", feature, "--phase", phase]
+    if roles is not None:
+        command.extend(["--roles", str(roles)])
+        if provenance is not None:
+            command.extend(["--provenance", str(provenance)])
+            if review_iteration is None:
+                review_iteration = int(json.loads(provenance.read_text())["iteration"])
+        elif auto_provenance and (phase != "pre_red" or round_number not in {None, 1}):
+            provenance = provenance_receipt(repo, feature, roles)
+            command.extend(["--provenance", str(provenance)])
+            review_iteration = 1
+        if review_iteration is not None:
+            command.extend(["--review-iteration", str(review_iteration)])
+        if focused_provenance is not None:
+            command.extend(["--focused-provenance", str(focused_provenance)])
+    if round_number is not None:
+        command.extend(["--round", str(round_number)])
+    return subprocess.run(command, cwd=repo, text=True, capture_output=True, check=False)
 
 
 def test_guard_derives_tracked_and_untracked_changes(tmp_path: Path) -> None:
@@ -171,7 +330,7 @@ def test_guard_handles_rename_and_deletion_from_baseline(tmp_path: Path) -> None
 
 def test_guard_rejects_missing_or_mismatched_baseline(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
-    missing = scope_file(repo, commit=False, baseline_ref="refs/codex/tdd/missing")
+    missing = scope_file(repo, commit=False, baseline_ref="refs/tdd/missing")
     assert run_guard(repo, "green", missing).returncode == 1
     mismatch = scope_file(repo, phase="red")
     assert run_guard(repo, "green", mismatch).returncode == 1
@@ -348,13 +507,7 @@ def test_snapshot_create_replay_and_cleanup_preserve_index(tmp_path: Path) -> No
     (repo / "src" / "app.py").write_text("value = 2\n")
     git(repo, "add", "src/app.py")
     index_before = git(repo, "write-tree")
-    result = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "feature", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    result = run_snapshot_create(repo, "feature", "pre_red", roles=role_receipt(repo, "feature"))
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(result.stdout)
     assert git(repo, "write-tree") == index_before
@@ -380,25 +533,14 @@ def test_snapshot_create_replay_and_cleanup_preserve_index(tmp_path: Path) -> No
 
 def test_snapshot_ref_is_append_only(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
-    first = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "feature", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    roles = role_receipt(repo, "feature")
+    first = run_snapshot_create(repo, "feature", "pre_red", roles=roles)
     assert first.returncode == 0, first.stdout + first.stderr
     ref = json.loads(first.stdout)["ref"]
     original_oid = git(repo, "rev-parse", ref)
     (repo / "src" / "app.py").write_text("value = 99\n")
 
-    repeated = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "feature", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    repeated = run_snapshot_create(repo, "feature", "pre_red", roles=roles)
 
     assert repeated.returncode == 1
     assert "exists" in repeated.stdout.lower()
@@ -419,17 +561,12 @@ def test_snapshot_captures_complete_state_without_mutating_repository(tmp_path: 
     git(repo, "mv", "src/rename_me.py", "src/renamed.py")
     (repo / "normal.py").write_text("normal = True\n")
     (repo / "ignored.py").write_text("ignored = True\n")
+    roles = role_receipt(repo, "complete")
     index_before = git(repo, "write-tree")
     branch_before = git(repo, "branch", "--show-current")
     status_before = subprocess.check_output(["git", "status", "--porcelain=v1", "--ignored"], cwd=repo)
 
-    result = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "complete", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    result = run_snapshot_create(repo, "complete", "pre_red", roles=roles)
 
     assert result.returncode == 0, result.stdout + result.stderr
     ref = json.loads(result.stdout)["ref"]
@@ -448,12 +585,11 @@ def test_snapshot_captures_complete_state_without_mutating_repository(tmp_path: 
 def test_replay_uses_snapshot_bytes_and_cleanup_removes_preserved_resources(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
     (repo / "snapshot_value.txt").write_text("immutable\n")
-    created = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "replay_feature", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
+    created = run_snapshot_create(
+        repo,
+        "replay_feature",
+        "pre_red",
+        roles=role_receipt(repo, "replay_feature"),
     )
     assert created.returncode == 0, created.stdout + created.stderr
     ref = json.loads(created.stdout)["ref"]
@@ -510,13 +646,7 @@ def test_replay_uses_snapshot_bytes_and_cleanup_removes_preserved_resources(tmp_
 
 def test_failing_replay_can_preserve_blocked_run_worktree(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
-    created = subprocess.run(
-        [sys.executable, str(SNAPSHOT), "create", "--feature", "blocked", "--phase", "red"],
-        cwd=repo,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
+    created = run_snapshot_create(repo, "blocked", "pre_red", roles=role_receipt(repo, "blocked"))
     assert created.returncode == 0, created.stdout + created.stderr
     ref = json.loads(created.stdout)["ref"]
 
@@ -563,14 +693,9 @@ def test_failing_replay_can_preserve_blocked_run_worktree(tmp_path: Path) -> Non
 def test_cleanup_removes_all_phase_refs_for_feature(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
     refs: list[str] = []
-    for phase in ("red", "green"):
-        created = subprocess.run(
-            [sys.executable, str(SNAPSHOT), "create", "--feature", "multi", "--phase", phase],
-            cwd=repo,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
+    roles = role_receipt(repo, "multi")
+    for phase in ("pre_red", "pre_green"):
+        created = run_snapshot_create(repo, "multi", phase, roles=roles)
         assert created.returncode == 0, created.stdout + created.stderr
         refs.append(str(json.loads(created.stdout)["ref"]))
 
@@ -587,3 +712,437 @@ def test_cleanup_removes_all_phase_refs_for_feature(tmp_path: Path) -> None:
     assert set(payload["removed_refs"]) == set(refs)
     for ref in refs:
         assert subprocess.run(["git", "show-ref", "--verify", ref], cwd=repo, check=False).returncode != 0
+
+
+def test_snapshot_create_requires_role_receipt_without_publishing_ref(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+
+    result = run_snapshot_create(repo, "missing_roles", "pre_red")
+
+    assert result.returncode != 0
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/missing_roles/pre_red"],
+        cwd=repo,
+        check=False,
+    ).returncode != 0
+
+
+def test_snapshot_accepts_backend_neutral_monitor_provenance(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+
+    result = run_snapshot_create(
+        repo,
+        "portable_monitor",
+        "pre_red",
+        roles=portable_role_receipt(repo, "portable_monitor", include_reviewers=False),
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["ref"] == "refs/tdd/portable_monitor/pre_red"
+
+
+def test_snapshot_accepts_backend_neutral_distinct_reviewer_provenance(
+    tmp_path: Path,
+) -> None:
+    repo = init_repo(tmp_path)
+
+    result = run_snapshot_create(
+        repo,
+        "portable_reviewers",
+        "pre_green",
+        roles=portable_role_receipt(repo, "portable_reviewers", include_reviewers=True),
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["ref"] == "refs/tdd/portable_reviewers/pre_green"
+
+
+def test_post_red_snapshot_requires_current_provenance_without_publishing_ref(
+    tmp_path: Path,
+) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "bound_reviewers", include_reviewers=True)
+    provenance = provenance_receipt(repo, "bound_reviewers", roles)
+    payload = json.loads(provenance.read_text())
+    Path(payload["reviewers"][1]["audit_path"]).write_text("replaced after provenance\n")
+
+    stale = run_snapshot_create(
+        repo,
+        "bound_reviewers",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+        provenance=provenance,
+    )
+
+    assert stale.returncode != 0
+    assert "audit_sha256" in stale.stdout
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/bound_reviewers/pre_green"],
+        cwd=repo,
+        check=False,
+    ).returncode != 0
+
+
+def test_post_red_snapshot_accepts_current_receipt_bound_provenance(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "current_reviewers", include_reviewers=True)
+    provenance = provenance_receipt(repo, "current_reviewers", roles)
+
+    result = run_snapshot_create(
+        repo,
+        "current_reviewers",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+        provenance=provenance,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["ref"] == "refs/tdd/current_reviewers/pre_green"
+
+
+def test_post_red_snapshot_rejects_missing_provenance(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "missing_provenance", include_reviewers=True)
+
+    result = run_snapshot_create(
+        repo,
+        "missing_provenance",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+    )
+
+    assert result.returncode != 0
+    assert "post-Red snapshots require --provenance" in result.stdout
+
+
+def test_post_red_snapshot_rejects_mismatched_review_iteration(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "stale_iteration", include_reviewers=True)
+    provenance = provenance_receipt(repo, "stale_iteration", roles, iteration=1)
+
+    result = run_snapshot_create(
+        repo,
+        "stale_iteration",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+        provenance=provenance,
+        review_iteration=2,
+    )
+
+    assert result.returncode != 0
+    assert "review iteration" in result.stdout
+
+
+def test_numbered_red_snapshot_requires_previous_review_iteration(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "round_iteration", include_reviewers=True)
+    provenance = provenance_receipt(repo, "round_iteration", roles, iteration=1)
+
+    result = run_snapshot_create(
+        repo,
+        "round_iteration",
+        "pre_red",
+        roles=roles,
+        round_number=3,
+        auto_provenance=False,
+        provenance=provenance,
+        review_iteration=1,
+    )
+
+    assert result.returncode != 0
+    assert "round 3 requires review iteration 2" in result.stdout
+
+
+def test_pre_green_snapshot_accepts_focused_iteration_provenance(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "focused_review", include_reviewers=True)
+    initial_provenance = provenance_receipt(repo, "focused_review", roles, iteration=1)
+    focused_provenance = focused_provenance_receipt(repo, "focused_review", roles)
+
+    result = run_snapshot_create(
+        repo,
+        "focused_review",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+        provenance=initial_provenance,
+        review_iteration=2,
+        focused_provenance=focused_provenance,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert json.loads(result.stdout)["ref"] == "refs/tdd/focused_review/pre_green"
+
+
+def test_pre_green_snapshot_rejects_stale_focused_audit(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "stale_focused", include_reviewers=True)
+    initial_provenance = provenance_receipt(repo, "stale_focused", roles, iteration=1)
+    focused_provenance = focused_provenance_receipt(repo, "stale_focused", roles)
+    focused_payload = json.loads(focused_provenance.read_text())
+    Path(focused_payload["focused_audit_path"]).write_text("changed after focused gate\n")
+
+    result = run_snapshot_create(
+        repo,
+        "stale_focused",
+        "pre_green",
+        roles=roles,
+        auto_provenance=False,
+        provenance=initial_provenance,
+        review_iteration=2,
+        focused_provenance=focused_provenance,
+    )
+
+    assert result.returncode != 0
+    assert "focused provenance focused_audit_sha256 is stale" in result.stdout
+
+
+def test_start_gate_role_receipt_contract_matches_snapshot_validator(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles, documented_payload = documented_pre_red_role_receipt(repo, "documented_roles")
+
+    accepted = run_snapshot_create(repo, "documented_roles", "pre_red", roles=roles)
+
+    assert accepted.returncode == 0, accepted.stdout + accepted.stderr
+    assert json.loads(accepted.stdout)["ref"] == "refs/tdd/documented_roles/pre_red"
+
+    documented_payload["feature"] = "monitor_alias"
+    documented_payload["monitor"] = documented_payload.pop("monitor_agent_id")
+    roles.write_text(json.dumps(documented_payload))
+    rejected = run_snapshot_create(repo, "monitor_alias", "pre_red", roles=roles)
+
+    assert rejected.returncode == 1
+    assert "monitor_agent_id" in json.loads(rejected.stdout)["error"]
+
+
+@pytest.mark.parametrize(
+    "receipt_override",
+    [
+        {"schema": 1},
+        {"feature": "different_feature"},
+        {"route": "automatic"},
+        {"monitor_agent_id": ""},
+        {"monitor_source": "  "},
+    ],
+)
+def test_snapshot_create_rejects_invalid_monitor_receipt_without_publishing_ref(
+    tmp_path: Path,
+    receipt_override: dict[str, object],
+) -> None:
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "receipt_check", **receipt_override)
+
+    result = run_snapshot_create(repo, "receipt_check", "pre_red", roles=roles)
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout)["status"] == "fail"
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/receipt_check/pre_red"],
+        cwd=repo,
+        check=False,
+    ).returncode != 0
+
+
+@pytest.mark.parametrize(
+    "receipt_override",
+    [
+        {"red_reviewer_agent_ids": []},
+        {"red_reviewer_agent_ids": ["agent:reviewer", "agent:reviewer"]},
+        {"red_reviewer_agent_ids": ["agent:monitor", "agent:reviewer-2"]},
+        {"red_reviewer_agent_ids": [""]},
+        {"reviewer_source": ""},
+    ],
+)
+def test_pre_green_snapshot_requires_delegated_distinct_red_reviewers(
+    tmp_path: Path,
+    receipt_override: dict[str, object],
+) -> None:
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "reviewer_check", **receipt_override)
+
+    result = run_snapshot_create(repo, "reviewer_check", "pre_green", roles=roles)
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout)["status"] == "fail"
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/reviewer_check/pre_green"],
+        cwd=repo,
+        check=False,
+    ).returncode != 0
+
+
+def test_snapshot_create_accepts_valid_pre_green_role_receipt(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+
+    result = run_snapshot_create(
+        repo,
+        "valid_roles",
+        "pre_green",
+        roles=role_receipt(repo, "valid_roles", route="full"),
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["ref"] == "refs/tdd/valid_roles/pre_green"
+
+
+def test_subsequent_pre_red_round_is_authenticated_and_append_only(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "red_round")
+    first = run_snapshot_create(repo, "red_round", "pre_red", roles=roles, round_number=1)
+    assert first.returncode == 0, first.stdout + first.stderr
+    first_payload = json.loads(first.stdout)
+    assert first_payload["ref"] == "refs/tdd/red_round/pre_red"
+
+    (repo / "src" / "app.py").write_text("value = 2\n")
+    second = run_snapshot_create(repo, "red_round", "pre_red", roles=roles, round_number=2)
+    assert second.returncode == 0, second.stdout + second.stderr
+    second_payload = json.loads(second.stdout)
+    assert second_payload["ref"] == "refs/tdd/red_round/pre_red_round_2"
+    assert git(repo, "show", f"{first_payload['ref']}:src/app.py") == "value = 1"
+    assert git(repo, "show", f"{second_payload['ref']}:src/app.py") == "value = 2"
+
+    original_round_two_oid = git(repo, "rev-parse", second_payload["ref"])
+    (repo / "src" / "app.py").write_text("value = 3\n")
+    repeated = run_snapshot_create(repo, "red_round", "pre_red", roles=roles, round_number=2)
+
+    assert repeated.returncode == 1
+    assert "exists" in repeated.stdout.lower()
+    assert git(repo, "rev-parse", second_payload["ref"]) == original_round_two_oid
+
+
+@pytest.mark.parametrize("round_number", [0, -1])
+def test_pre_red_snapshot_rejects_invalid_round_number(tmp_path: Path, round_number: int) -> None:
+    repo = init_repo(tmp_path)
+
+    result = run_snapshot_create(
+        repo,
+        "invalid_round",
+        "pre_red",
+        roles=role_receipt(repo, "invalid_round"),
+        round_number=round_number,
+    )
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout)["status"] == "fail"
+    assert subprocess.run(
+        ["git", "for-each-ref", "--format=%(refname)", "refs/tdd/invalid_round/"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    ).stdout == ""
+
+
+@pytest.mark.parametrize(
+    "receipt_override",
+    [
+        {"red_reviewer_agent_ids": []},
+        {"red_reviewer_agent_ids": ["agent:reviewer", "agent:reviewer"]},
+        {"red_reviewer_agent_ids": ["agent:monitor", "agent:reviewer-2"]},
+        {"red_reviewer_agent_ids": [""]},
+        {"reviewer_source": ""},
+    ],
+)
+def test_subsequent_pre_red_round_requires_delegated_distinct_reviewers(
+    tmp_path: Path,
+    receipt_override: dict[str, object],
+) -> None:
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "round_roles", **receipt_override)
+
+    result = run_snapshot_create(repo, "round_roles", "pre_red", roles=roles, round_number=2)
+
+    assert result.returncode == 1
+    assert json.loads(result.stdout)["status"] == "fail"
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/round_roles/pre_red_round_2"],
+        cwd=repo,
+        check=False,
+    ).returncode != 0
+
+
+def test_cache_neutral_run_preserves_existing_cache_paths_and_bytes(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+    (repo / "sample.py").write_text("VALUE = 7\n")
+    (repo / "tests" / "test_cache_neutral.py").write_text(
+        "import sys\n"
+        "from pathlib import Path\n"
+        "from sample import VALUE\n\n"
+        "ROOT = Path(__file__).resolve().parents[1]\n\n"
+        "def test_value(pytestconfig):\n"
+        "    assert VALUE == 7\n"
+        "    assert sys.dont_write_bytecode is True\n"
+        "    assert not pytestconfig.pluginmanager.hasplugin('cacheprovider')\n"
+        "    cache_paths = {\n"
+        "        path.relative_to(ROOT).as_posix()\n"
+        "        for path in ROOT.rglob('*')\n"
+        "        if path.name in {'.pytest_cache', '__pycache__'} or path.suffix == '.pyc'\n"
+        "    }\n"
+        "    assert cache_paths == {'.pytest_cache', '__pycache__', '__pycache__/sentinel.pyc'}\n"
+    )
+    pytest_sentinel = repo / ".pytest_cache" / "sentinel"
+    bytecode_sentinel = repo / "__pycache__" / "sentinel.pyc"
+    pytest_sentinel.parent.mkdir()
+    bytecode_sentinel.parent.mkdir()
+    pytest_sentinel.write_bytes(b"pytest-sentinel\n")
+    bytecode_sentinel.write_bytes(b"bytecode-sentinel\n")
+    cache_paths_before = {
+        path.relative_to(repo).as_posix()
+        for path in repo.rglob("*")
+        if path.name == ".pytest_cache" or path.name == "__pycache__" or path.suffix == ".pyc"
+    }
+    child_env = os.environ.copy()
+    child_env.pop("PYTHONDONTWRITEBYTECODE", None)
+    child_env.pop("PYTEST_ADDOPTS", None)
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SNAPSHOT),
+            "run",
+            "--",
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            "tests/test_cache_neutral.py",
+        ],
+        cwd=repo,
+        env=child_env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["returncode"] == 0
+    assert "1 passed" in payload["stdout"]
+    cache_paths_after = {
+        path.relative_to(repo).as_posix()
+        for path in repo.rglob("*")
+        if path.name == ".pytest_cache" or path.name == "__pycache__" or path.suffix == ".pyc"
+    }
+    assert cache_paths_after == cache_paths_before
+    assert pytest_sentinel.read_bytes() == b"pytest-sentinel\n"
+    assert bytecode_sentinel.read_bytes() == b"bytecode-sentinel\n"
+
+
+def test_cache_neutral_run_preserves_child_exit_status(tmp_path: Path) -> None:
+    repo = init_repo(tmp_path)
+
+    result = subprocess.run(
+        [sys.executable, str(SNAPSHOT), "run", "--", sys.executable, "-c", "raise SystemExit(7)"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 7
+    assert json.loads(result.stdout)["returncode"] == 7

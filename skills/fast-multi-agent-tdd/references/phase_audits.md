@@ -30,14 +30,27 @@ Suggested criteria:
 - the test is the smallest useful specification step
 - the failure output points to missing behavior
 - a pre-Red monitor gate passed the map against these Red criteria, records its digest and the planned tests' clean baseline hashes/status, and still matches the audited map; a changed, inferred, or reconstructed map must be re-gated before any test edit
+- when a completed Red review required a correction, the numbered-round monitor approved the precise correction plan, scope, retained prior reviewer provenance, and current pre-edit test hashes/status before the append-only snapshot; only planned tests changed after publication, and this reviewer iteration verifies the corrected content plus genuine Red and guard evidence
 - every constraining clause in the imported active requirement and definition of done maps there to a property or explicit exclusion
 - every independent option, argument, state transition, timer/wait seam, or external call governing a mapped property has a causally observable, asserted non-neutral effect or an exclusion backed by quoted user or repository requirement evidence; a zero, empty, false, no-op, immediate-success, or one-attempt fixture does not exercise the corresponding effect unless that boundary value is itself required
 - when the slice reuses an existing policy or mechanism, the map includes every control in that family which changes the selected path's observable sequence, timing, bounds, ordering, or side effects and is constrained by the active requirement; an unconstrained neighboring branch is not a reason to expand Red
+- for a compact filter or selector change, compatible existing controls that materially change selected membership, cardinality, ordering, or output have combined interaction evidence at a binding non-neutral value; mutually exclusive strategies are excluded only with concrete source evidence
 - every exclusion names its source and exact quote that affirmatively permits omission or neutralization; an exclusion based on a control being pre-existing, not newly requested, internal, or allegedly not user-visible fails, as does one that contradicts the requirement table, definition of done, another mapped property, or selected execution path
 - for every mapped control, the exact targeted test's assertions would fail if the named shortcut were used
 - each added scenario distinguishes a separate behavior decision constrained by the active requirement; implementation branches that the requirement does not constrain stay outside Red and rely on existing regression coverage
 - no shortcut-mutant production changes are in the active worktree
 - no production code was changed
+
+Focused compact-low follow-up claim:
+`After the valid three-reviewer initial Red round unanimously identified exactly one blocking criterion, the corrected Red evidence satisfies that frozen criterion; the focused audit is owned by one newly delegated independent reviewer, contains a strict evidence-backed pass on only that criterion, and remains bound to the unchanged role receipt and eligibility artifact.`
+
+Focused handling:
+
+- use only after `red_review_gate.py initial` writes eligibility for `route=compact` and `risk_tier=low`
+- retain the normal correction monitor, numbered snapshot, test-only edit, genuine Red, and Red scope guard
+- reject any changed or extra criterion, insufficient evidence, counterevidence, open question, dispute, non-pass verdict, reused identity, receipt/hash mismatch, or malformed citation
+- advance only when `red_review_gate.py focused` returns `advance_green`; otherwise run the normal three-reviewer follow-up
+- do not apply this exception to medium risk, high risk, full route, Refactor, or Test Refactor reviews
 
 ## Green Gate Claim
 

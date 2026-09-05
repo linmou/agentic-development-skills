@@ -5,328 +5,104 @@ description: Use when the user explicitly wants executable feature or bug-fix be
 
 # Fast Multi Agent TDD
 
-## Overview
+## Stop: Mandatory Start Gate
 
-Use this skill for executable implementation work when the user wants strict TDD and strong phase discipline. Re-check the user-visible outcome before selecting tests or code. Keep implementation ownership with one main agent and use the monitor only for phase enforcement and audit handoff. File scope is decided incrementally at phase boundaries from Git snapshots and a Git-backed scope artifact.
+Before any test or production edit, test run, `apply_patch`, or exploration command that can generate files, enter this gate and complete its steps in order. While the gate is open, the only permitted writes are the request map, role receipt, required scope artifact, and `pre_red` snapshot:
 
-This skill is not a generic planning or documentation workflow. For mixed requests, split executable behavior from guidance, rubric, data, research, and result-production work; run TDD only on the executable slice.
+1. Save `audits/<feature>_request_map.md` with `route: compact|full` after the requirement re-check and path preflight.
+2. **Delegate the dedicated monitor through any available, authorized mechanism that gives it an independent context and returns a stable identity. Native worker tools, task APIs, MCP servers, and installed agent CLIs or APIs are all valid; no operation name is privileged. If a candidate is unavailable, inspect the interfaces exposed in the current environment and try another authorized delegation mechanism. The handoff must include the absolute request-map path, the absolute `references/phase_contracts.md` path, and the active project cwd.**
+3. Write `audits/<feature>_role_receipt.json` only from the delegation result. Record the returned identity verbatim and a compact name for the mechanism used. For `pre_red`, use exactly this contract; replace the four angle-bracket values, keep the field name `monitor_agent_id` (not `monitor`), and do not add reviewer fields yet:
 
-## Trigger Conditions
+   <!-- pre-red-role-receipt-contract -->
+   ```json
+   {
+     "schema": 2,
+     "feature": "<feature>",
+     "route": "<compact|full>",
+     "monitor_agent_id": "<stable-monitor-identity>",
+     "monitor_source": "<delegation-mechanism>"
+   }
+   ```
+   <!-- /pre-red-role-receipt-contract -->
 
-Use this skill when the request includes some combination of:
+4. Write the proposed Red scope artifact. Its `baseline_ref` must be `refs/tdd/<feature>/pre_red`, never `HEAD`, even though that intended ref does not exist yet.
+5. <!-- initial-pre-red-monitor-validation --> Ask the dedicated monitor to validate the proposed request map, map digest, route, planned path classifications, Red scope, and planned test-file Git hashes/status. This initial check must not run tests, `phase_guard.py`, or require the intended `baseline_ref` to resolve. If the monitor finds a defect, correct the proposed map or scope and have the same dedicated monitor recheck it inside this initial gate; do not open or number a Red round. Receive the monitor-authored pre-Red gate pass before continuing.
+6. <!-- initial-pre-red-snapshot-publication --> Only after that pass, run `python scripts/tdd_snapshot.py create --feature <feature> --phase pre_red --roles audits/<feature>_role_receipt.json` and verify its returned ref and commit. Red unlocks only when both the monitor pass and snapshot publication succeed.
 
-- add or change executable behavior
-- fix a reproducible software bug
-- strict TDD, red-green-refactor, or regression checks
-- explicit auditing of Red, production Refactor, or Test Refactor phases
-- concern that green or refactor work might quietly mutate tests
+Test execution begins only after step 6 through the cache-neutral snapshot runner.
 
-Do not use this skill when:
+Until step 6 succeeds: do not edit tests or production, run tests, or perform another write-capable action. Self-authored monitor, role, reviewer, or snapshot evidence is invalid. Do not stop merely because one delegation interface is absent. A receipt formatting error may be corrected only from the original delegation result and revalidated. A snapshot invocation may be retried only when it published no ref; never overwrite an existing phase ref. Stop when no available authorized mechanism can provide an independent role with a stable identity, provenance is missing or ambiguous, a phase ref already exists unexpectedly, or the monitor gate cannot pass.
 
-- the user only wants a code review
-- the user only wants diagnosis, requirements analysis, planning, or status
-- the task edits only Markdown, SKILL.md, AGENTS.md, rubrics, prompts, documents, schemas, or research guidance
-- the task curates data, performs a research/evaluation run, or computes a one-off scientific result without changing executable behavior
+Local validators prove internal consistency and immutability of recorded provenance, not the authenticity of every possible backend. Preserve the actual delegation return in the run evidence and never infer a successful handoff from self-authored receipt fields alone.
 
-## Core Rules
+## Sequential Phase Controller
 
-- Requirements come before methodology. Do not select TDD scope, test level, agents, or audit mode until the requirement re-check passes.
-- When a new user requirement changes the active slice's behavior or invalidates an existing test, stop the current phase, mark the old requirement as superseded, and tell the user about the conflict to confirm that the change reflects their intent.
-- Treat the conflicting instruction as a proposed replacement, not as its own confirmation; resume only after a later user reply explicitly confirms the replacement.
-- The definition of done must name the user-visible outcome, must-exist artifacts, acceptance evidence, exclusions, and resource constraints.
-- TDD owns only executable behavior. Keep non-code workstreams outside TDD phases; do not postpone a required skill, rubric, dataset, or result merely because code is unfinished.
-- The first slice must be the smallest end-to-end usable behavior, not an isolated lower-level engine that leaves the requested artifact unusable.
-- Red owns test specification changes. Green and production Refactor do not edit tests. Test Refactor may reorganize tests only after the cumulative production Refactor audit; if behavior, an oracle, or a boundary must change, go back to Red.
-- Red is locked by the pre-Red monitor gate defined below; without its pass, stop before editing tests.
-- Update docs relevant to the code change only after Red, Green, regression, production Refactor, and Test Refactor are complete. Do not mix docs into either refactor phase.
-- The main agent owns the critical path and the implementation work.
-- A dedicated monitor agent never edits files. It checks phase scope, records violations, and blocks phase completion if boundaries were crossed.
-- Do not spawn parallel workers for implementation, exploration, or test drafting. Extra workers here create chaos rather than speed.
-- Red, cumulative production Refactor, and Test Refactor end with mandatory `$review-with-multi-debate` audits.
-- Before aggregation, validate every reviewer file against the debate skill's JSON contract and regenerate malformed output at the same iteration.
-- If the monitor or a mandatory debate is unavailable, fails, or its aggregate status is not `converged`, stop at that phase and tell the user; matching verdict text, a phase guard, self-review, or a limitation note is not a substitute.
-- User-specified audit counts, resource limits, and concurrency constraints override workflow defaults.
-- Green ends with a deterministic gate, not a debate by default: scope check, no test edits, targeted test pass, and saved production diff.
-- Refactor audit must review the cumulative production diff from pre-Green to post-Refactor, not only the refactor-only diff.
-- After any code change, run the full available test suite. This is the regression check.
+Follow the phases in order. Before acting in a phase, read its section in [references/workflow.md](references/workflow.md) and the linked specialized reference. Do not enter the next phase until the current gate passes.
 
-## Roles
+### 0. Requirement Re-check and Request Map
 
-Keep the setup minimal.
+Read `Overview`, `Trigger Conditions`, `Core Rules`, and Workflow sections 0-1 in [references/workflow.md](references/workflow.md), plus [references/phase_contracts.md](references/phase_contracts.md). Keep only executable behavior inside TDD, define the smallest end-to-end slice and done conditions, classify `compact|full`, preflight path semantics, and save the request map. Then immediately execute the mandatory start gate above.
 
-- Main agent: owns the current phase outcome and all file edits for that phase.
-- Monitor agent: no file edits, no implementation suggestions, only scope enforcement and audit orchestration.
-- Debate reviewers: independently audit Red, cumulative production Refactor, and Test Refactor artifacts through `$review-with-multi-debate`.
+### 1. Start Gate
 
-## Workflow
-
-### 0. Requirement Re-check and Applicability Gate
-
-Before starting a monitor, writing a request map, or selecting TDD:
-
-1. Restate the requested outcome in one sentence from the user's perspective.
-2. Carry forward relevant constraints already present in the conversation and repository guidance; do not ask the user to repeat them.
-3. Record a compact requirement-to-feature table:
-
-| Requirement | User-visible feature | Must-exist artifact | Acceptance evidence | Work type | TDD? |
-|---|---|---|---|---|---|
-
-Use work types such as `executable`, `guidance`, `rubric`, `data`, `research`, and `result`.
-
-4. Define done as the complete set of required artifacts and operational results, not merely a passing component test.
-5. Mark executable rows for TDD. Keep all other rows outside this skill's phases.
-6. Choose the smallest vertical executable slice that advances the user-visible outcome. Reject a lower-level slice that cannot be used without several still-missing primary artifacts.
-7. Select the resource ceiling for the mandatory Red, cumulative production Refactor, and Test Refactor debates; preserve any tighter human limit.
-8. Preflight the planned changed paths against [references/phase_contracts.md](references/phase_contracts.md). Resolve path-classification collisions before Red. If a runtime file sits under a lexically test-like path, obtain and record a human semantic classification or relocate it before editing.
-
-Ask at most one concise clarification only when different answers would materially change the deliverable. If no executable behavior remains after classification, stop using this skill and continue with the appropriate non-TDD workflow.
-
-### 1. Request Map
-
-Before writing tests or code:
-
-- read the nearest guidance files such as `AGENTS.md`, `CLAUDE.md`, `README.md`, and nearby docs
-- import the requirement re-check rather than reinterpreting the request
-- identify the next executable behavior inside the selected vertical slice
-- identify the highest-risk execution boundary
-- identify the concrete minimal execution path that actually traverses the highest-risk execution boundary
-- identify the observable evidence that will prove the boundary was crossed during the test
-- list every behavior-controlling property of the next executable behavior and, for each property, the test observation and one plausible shortcut implementation that must fail
-- treat bounds, ordering, timing, and forbidden side effects as separate properties when the requirement makes them behaviorally significant; omit dimensions the requirement does not constrain
-- trace every constraining clause in the imported active requirement and definition of done to one listed property or an explicit exclusion; naming the outcome without its required bound, order, timing, or side-effect constraint is incomplete
-- for each property, inventory every independent existing or planned control that governs it, such as an option, argument, state transition, timer/wait seam, or external call; each control needs its own non-neutral asserted effect, or an exclusion backed by quoted user or repository requirement evidence
-- when the slice reuses an existing policy or mechanism, inventory the controls that change the selected path's observable sequence, timing, bounds, ordering, or side effects and are constrained by the active requirement; preserving the headline outcome does not make one of those controls irrelevant, but neighboring unconstrained branches do not enter the slice
-- call a control non-neutral only when the test gives it a value that makes its required effect observable and asserts that effect; zero delay, an empty value, a false flag, a no-op callback, immediate success, or one attempt is neutral for a property whose effect is respectively waiting, content, enablement, invocation, transition, or repetition, unless that boundary value is itself the requirement
-- reject an exclusion that merely says the control is pre-existing, not newly requested, internal, or not user-visible, or that contradicts the requirement table, definition of done, another mapped property, or the selected execution path; every exclusion must name its source and quote the exact user or repository requirement that affirmatively permits omitting or neutralizing that control
-- decide the likely test level: feature, integration, or unit
-- list predicted Red, Green, production Refactor, Test Refactor, and documentation paths with their semantic classifications; predictions are initial guidance, not a complete future production allowlist
-- if you plan to rely on lower-level tests because no high-risk integration boundary is actually crossed, justify that with a `strace` or `dtruss` check on the minimal execution path rather than with narrative alone
-- derive a short `feature_name` for audit files
-
-Start the monitor agent here. It should open [references/phase_contracts.md](references/phase_contracts.md) and enforce it for the rest of the run.
-
-Before any Red edit, save the request-map artifact as `audits/<feature_name>_request_map.md` for the later Red and Refactor audits. A missing map blocks Red and must not be reconstructed after tests exist. Do not run `$review-with-multi-debate` for request-map by default.
-
-At every phase transition, write the next scope artifact first, then capture the current worktree with `scripts/tdd_snapshot.py` so the immutable baseline contains that exact artifact. Decide the next phase's protected paths and semantic overrides, write `audits/<feature>_<phase>_scope.json`, and record the baseline ref and commit in the phase artifact. The next phase runs only with that scope artifact. Production phases may leave `editable` out; Test Refactor and Documentation must provide an explicit `editable` list.
-
-The guard authenticates the scope artifact against the same repository-relative path in `baseline_ref` before evaluating changes. It fails closed when the artifact is edited, deleted, malformed, outside the repository, reached through a symlink, missing from the baseline, or paired with conflicting semantic overrides. Change discovery includes tracked, renamed, deleted, normal-untracked, and ignored-untracked paths using NUL-safe Git records; ignored files cannot hide phase violations. Protected paths always take precedence over editable paths, and matching patterns are exact paths or terminal `/**` only.
-
-The Red exit snapshot is the pre-Green production baseline. `tdd_snapshot.py replay`
-runs the original Red command in a detached worktree at that ref and
-records its stable test identifier and failure classification alongside the
-captured output. Use `--preserve-worktree` for a blocked run; `cleanup` removes
-phase refs and preserved replay worktrees only after successful terminal
-closeout.
+Execute the six gate steps above without interleaving edits, test runs, or other write-capable actions beyond the named gate artifacts and their monitor-required corrections. The main agent implements; the delegated monitor never edits files. Do not delegate parallel implementers.
 
 ### 2. Red
 
-Main goal: produce the next failing test and nothing else.
+Read Workflow section 2 and [references/phase_audits.md](references/phase_audits.md). Edit tests only, prove the mapped risky boundary with a genuine failing test, pass the Red scope guard, and complete the mandatory Red debate. Record the stable identities and delegation mechanism returned for the reviewers, run the provenance gate, and pass its output through `--provenance` with the matching `--review-iteration` when creating the append-only `pre_green` Git-ref snapshot. <!-- post-red-numbered-rounds-only --> A correction required by a completed Red review opens a new authenticated `pre_red_round_<N>` and retains the prior reviewer provenance; an initial monitor correction does not. Never overwrite an earlier ref.
 
-Before the first Red edit, give the monitor the saved request-map path and digest plus the planned test paths and their current Git hashes/status. The monitor must check the map against the Red criteria, including clause/control coverage and exact evidence for every control exclusion, then return a pre-Red gate pass containing the map digest and test baselines; preserve that exact response in the Red artifact, and if the map changes, return to this gate before editing tests.
+<!-- post-review-correction-order --> At that numbered round's pre-edit boundary, the monitor validates the precise correction plan, updated map and scope, retained prior reviewer provenance, and current pre-edit Git hashes/status of every planned test. It must not require the corrected test content to exist before the snapshot that authorizes the edit. After the monitor pass, publish and verify the append-only numbered snapshot `pre_red_round_<N>` with the latest accepted provenance artifact and `--review-iteration <N-1>`; only then edit only the planned tests. Run the targeted test to prove genuine Red and pass the Red scope guard before the applicable follow-up verifies the correction. Normally that follow-up is the next three-reviewer iteration; only the exact compact-low eligibility below permits one focused reviewer instead.
 
-Allowed actions:
+<!-- reviewer-owned-debate-artifacts --> The initial Red debate follows the loaded review skill's three-reviewer contract, extended here with `reviewer_agent_id` and `reviewer_source` in every audit. Each independently delegated reviewer writes exactly one `audits/<feature>_red_auditN_iteration1.json` with its assigned `auditN`; parent/monitor transcription and chat-only verdicts are invalid. Normal follow-up iterations retain that contract.
 
-- create or edit tests
-- add a brief Gherkin feature file when the behavior is broad enough to need one
-- adjust test fixtures only if required by the new test
-- write the first failing test at the highest-risk execution boundary identified in Request Map
-- use the highest-risk boundary to choose the test entry point, not to narrow the behavior asserted; identify each behavior-controlling property of the active requirement, make it observable, and do not neutralize it with a fixture value
-- for every property and independent control recorded in the request map, use a non-neutral fixture and assert the control's effect through a deterministic fake or spy seam instead of real sleeping; add another test only when it distinguishes a separate behavior decision constrained by the active requirement
-- specify only the next behavior; do not bundle later validation, sensitivity, reporting, or error-path requirements into the first Red merely because they share one CLI
-- if the boundary involves multiple components, process execution, shell, filesystem, network, concurrency, or external tool invocation, an integration test is mandatory
-- when an integration test is mandatory, the failing test must assert at least one observable outcome that proves the risky boundary was actually traversed
-- command construction or mocked boundary tests do not satisfy this requirement unless the boundary itself is purely local logic
-- run the targeted test to confirm the failure reason is missing behavior rather than syntax or setup
+<!-- risk-scaled-focused-red-review --> One exception applies after the initial round: for `route=compact`, `risk_tier=low`, `scripts/red_review_gate.py initial` may freeze exactly one repaired blocking criterion only when all three valid reviewer-owned audits fail that same criterion, pass every other criterion, and contain no insufficient evidence, counterevidence, open question, dispute, changed criterion, or other failure. The normal correction monitor, numbered snapshot, test-only edit, genuine Red run, and Red scope guard remain mandatory. After them, exactly one newly delegated reviewer, distinct from the monitor and all initial reviewers, writes `audits/<feature>_red_focused_iteration2.json` and reviews only the frozen criterion. `red_review_gate.py focused` must validate the unchanged receipt and eligibility hash, reviewer provenance, strict audit schema, structured evidence, and a clean pass before returning an `advance_green` artifact. Create `pre_green` with the initial-round `--provenance`, this artifact as `--focused-provenance`, and `--review-iteration 2`. Any invalid or ineligible state, including `full`, medium risk, or high risk, uses the normal three-reviewer follow-up.
 
-Before closing red:
+<!-- capacity-aware-reviewer-scheduling --> Reviewer independence requires three distinct identities with their assigned roles, isolated prompts, and reviewer-owned files; it does not require simultaneous execution. Keep reviewer execution within the available concurrency or capacity limit. When only one reviewer slot is free, delegate and await `audit1`, then `audit2`, then `audit3`. A capacity error does not invalidate a completed reviewer-owned file or justify interrupting an active reviewer: wait for the active reviewer to finish, then retry only the missing distinct reviewer in the same iteration. If no available authorized mechanism can run the reviewer cohort after the bounded retry, stop. Never replace the missing reviewer by reusing an identity, relabeling a file, or parent/monitor transcription.
 
-- run `python scripts/phase_guard.py --phase red --scope audits/<feature>_red_scope.json`; the guard derives tracked, untracked, rename, and deletion paths from the baseline ref
-- confirm every mapped property control has a non-neutral asserted effect that would reject its named shortcut
-- run `$review-with-multi-debate` with the Red claim from [references/phase_audits.md](references/phase_audits.md)
+Before leaving Red, run `red_review_gate.py provenance` to bind the receipt to the three reviewer-owned audit files and their hashes. Then run the review skill's `record_round`, deterministic aggregator, and inspect every initial reviewer file for blocking verdicts, evidence, and counterevidence. Run `advance_phase` when the blocking criteria pass. Pass the unchanged provenance artifact and its iteration to the next snapshot; `tdd_snapshot.py` requires the latest review iteration and re-hashes the staged receipt, provenance, and audits before publishing the ref. A normal later iteration repeats the three-reviewer sequence and provenance gate for only the disputed criteria; the exact compact-low exception instead requires the focused gate above. Missing, stale, malformed, non-converged, or unowned evidence stops Red or routes to normal three-reviewer follow-up.
 
 ### 3. Green
 
-Main goal: make the red test pass with the smallest production change.
-
-Allowed actions:
-
-- edit production code
-- add the smallest missing wiring required for the failing test
-- run the targeted test until it passes
-
-Forbidden actions:
-
-- editing tests
-- broad cleanup
-- hidden fallback logic
-
-Before closing green:
-
-- run `python scripts/phase_guard.py --phase green --scope audits/<feature>_green_scope.json`
-- confirm no test files changed
-- confirm the targeted red test now passes
-- save the Green production diff for the later cumulative Refactor audit
-- do not run `$review-with-multi-debate` at Green by default
+Read Workflow section 3. Edit production only and make the smallest change that passes the Red test. Close with the deterministic Green gate: authenticated scope, no test edits, targeted pass through the cache-neutral snapshot runner, and saved production diff. Green has no debate by default.
 
 ### 4. Regression Check
 
-Run the full available test suite after the green change. This is not optional.
+Read Workflow section 4. Run the full available suite after every code change, plus repository-required type/static checks, without editing files during the check. A failure returns to the owning phase.
 
-If the suite is large, you may first run the closest package or component suite, but phase completion still requires the full available suite unless the environment makes that impossible.
+<!-- bounded-phase-state-recovery -->
+When an owning-phase command may accidentally touch a disallowed path, run it through `scripts/phase_recovery.py` with the authenticated phase scope, the explicit cause `accidental_phase_write`, and a new receipt path outside the repository. The helper may continue the phase only when the pre-command guard passed, every violating path was a baseline-clean tracked regular file, the command alone produced the violation, the Git index did not change, evidence was durably recorded before one exact restore, and the same guard passes afterward. Untracked or renamed paths, `audits/**`, ambiguous classifications or provenance, semantic requirement conflicts, reviewer-owned artifacts, and role, dependency, capacity, review, or debate failures stop unchanged. Read the bounded recovery contract in [references/workflow.md](references/workflow.md) before invoking it.
 
-Record the targeted and full-suite results for the later cumulative Refactor audit. Do not run `$review-with-multi-debate` for regression by default.
+### 5. Production Refactor
 
-### 5. Refactor
-
-Only start refactor after green plus regression are both clean.
-
-Run `$code-smell-monitor` on the changed production scope before editing to have an understanding of code quality.
-
-Allowed actions:
-
-- simplify production code
-- remove duplication
-- improve naming or structure
-- tighten obvious implementation seams
-
-Forbidden actions:
-
-- editing tests
-- editing docs such as `README.md`
-- sneaking in new behavior
-- using refactor as a second green phase
-
-Before closing refactor:
-
-- run the full available test suite again
-- rerun `$code-smell-monitor` on the same scope and record both report paths
-- run `python scripts/phase_guard.py --phase refactor --scope audits/<feature>_refactor_scope.json`
-- audit with `$review-with-multi-debate` using the cumulative Refactor claim from [references/phase_audits.md](references/phase_audits.md)
-- include the cumulative production diff from pre-Green to post-Refactor, the refactor-only diff, the request map, the Red audit result, the Green gate result, and regression results
+Read Workflow section 5. On the `compact` route, use the documented no-op transition only when all eligibility and no-delta checks pass. On the `full` route, edit production only, preserve behavior, guard the cumulative production diff from pre-Green, rerun regression, and complete the mandatory cumulative Refactor debate.
 
 ### 6. Test Refactor
 
-Start only after the cumulative production Refactor audit converges. Read
-[references/test_refactor.md](references/test_refactor.md), inspect the Red tests
-and directly shared test support, and record a no-op artifact when no
-demonstrated test smell exists and the test diff is empty.
-
-Test Refactor may edit only test-like paths. It must preserve the behavior map,
-independent oracles, assertion strength, test selection, and required execution
-boundaries. A missing case, wrong expectation, or changed boundary returns the
-workflow to Red.
-
-Before closing, run the `test_refactor` scope guard, targeted and full suites,
-replay the original Red behavior against pre-Green production, and run the
-mandatory Test Refactor debate using the claim in
-[references/phase_audits.md](references/phase_audits.md).
-
-If the test diff is empty and no demonstrated test smell exists, create a
-no-op artifact, run the scope, collection, targeted, and full-suite checks, and
-skip the multi-review debate. Any Test Refactor test change requires the
-mandatory debate. Replay metadata must retain the stable test ID and failure
-classification; use `--preserve-worktree` for blocked runs and remove preserved
-worktrees and all feature phase refs during terminal `cleanup`.
+Read Workflow section 6 and [references/test_refactor.md](references/test_refactor.md). Start only after the production Refactor gate. Test Refactor may edit only test-like paths and must preserve behavior, independent oracles, assertion strength, selection, and required boundaries. Run the scope guard plus targeted and full suites; any test change requires the mandatory Test Refactor debate. A changed oracle, boundary, or behavior returns to Red.
 
 ### 7. Documentation Follow-Up
 
-Only start this step after Red, Green, regression, production Refactor, and Test
-Refactor are done.
-
-Allowed actions:
-
-- update docs relevant to the completed code change
-- keep doc edits narrow and implementation-aligned
-
-Forbidden actions:
-
-- editing tests
-- editing production code
-- using docs as a place to sneak in design changes that the code does not implement
-
-Before closing documentation:
-
-- run `python scripts/phase_guard.py --phase docs --scope audits/<feature>_docs_scope.json`
-- record the docs artifact for final closeout
-- do not run `$review-with-multi-debate` for docs by default
+Read Workflow section 7. Update only relevant docs after all code and test phases close, use the explicit docs scope, and do not alter behavior.
 
 ### 8. Final Closeout
 
-Before finishing:
+Read Workflow section 8. Confirm every mapped requirement and non-TDD artifact, cite the Red audit, Green gate, regression evidence, route-specific Refactor evidence, and docs artifact, then run terminal snapshot cleanup. Do not make edits during closeout.
 
-- confirm each mapped requirement has a passing test
-- confirm every non-TDD requirement row has its must-exist artifact and acceptance evidence
-- confirm the user-visible definition of done is satisfied end to end
-- summarize any unresolved risks
-- keep the final explanation short and oversight-friendly
+## Invariants
 
-Do not run a final `$review-with-multi-debate` by default. The final closeout should point to the Red audit, Green gate, regression result, cumulative production Refactor audit, and Test Refactor audit.
-
-## Monitor Protocol
-
-The monitor agent is separate on purpose. Its job is to stop phase bleed.
-
-At each phase boundary:
-
-1. Collect the changed file list for the phase.
-2. Run:
-
-```bash
-python scripts/phase_guard.py --phase red --scope audits/<feature>_red_scope.json
-python scripts/phase_guard.py --phase green --scope audits/<feature>_green_scope.json
-python scripts/phase_guard.py --phase refactor --scope audits/<feature>_refactor_scope.json
-python scripts/phase_guard.py --phase test_refactor --scope audits/<feature>_test_refactor_scope.json
-python scripts/phase_guard.py --phase docs --scope audits/<feature>_docs_scope.json
-```
-
-3. If the guard fails, stop. Do not rationalize the violation. Move the work into the correct phase. Lexical classification is only a default; a path with a semantic conflict must have an explicit override in the artifact, and the guard fails closed when it is absent.
-4. Hand the phase artifact plus the claim to `$review-with-multi-debate` only for Red, production Refactor, and Test Refactor. Other phases record artifacts for those audits and final closeout.
-
-Use [references/phase_contracts.md](references/phase_contracts.md) for the exact phase ownership rules and [references/phase_audits.md](references/phase_audits.md) for audit claims.
-
-## Audit Integration
-
-Each `$review-with-multi-debate` audit should hand off:
-
-- the artifact for the phase
-- the exact claim text from [references/phase_audits.md](references/phase_audits.md)
-- the `feature_name`
-- the phase label
-
-Mandatory debate phases:
-
-- `red`
-- `refactor`
-- `test_refactor`
-
-Default gate/artifact phases:
-
-- `request_map`
-- `green`
-- `regression`
-- `docs`
-- `final`
-
-Keep the phase artifact compact. Good artifacts are:
-
-- requirement map plus chosen test seam
-- failing test output
-- Green gate output plus saved production diff
-- targeted and full suite results
-- cumulative production diff plus refactor diff plus full suite results
-- Test Refactor behavior map, test diff, replay evidence, and full suite results
-
-For Red and cumulative production Refactor audits, also include:
-
-- the chosen execution path and the observable evidence that proves the path crosses the claimed boundary
-- if lower-level tests are claimed to be sufficient, the `strace` or `dtruss` output that shows no high-risk boundary was crossed on the minimal execution path
-- if the path does not prove traversal of the risky boundary, red is incomplete even if the test fails as expected
+- New or conflicting behavior returns to Red; a conflicting user instruction requires later explicit confirmation before resuming.
+- Tests change only in Red or Test Refactor. Production changes only in Green or production Refactor. Docs change only after both refactor stages close.
+- Mandatory monitors, reviewers, and debates cannot be replaced by self-review or matching prose. Exhaust available authorized delegation mechanisms before treating a role as unavailable; unavailable or non-converged roles then stop the phase.
+- Phase scope comes from authenticated, append-only Git refs plus scope artifacts. Keep both the ref and commit metadata; SHA-only evidence does not replace the ref.
+- User resource limits override defaults. The main agent owns implementation; the monitor owns enforcement and audit handoff only.
 
 ## Resources
 
-- Use [scripts/trace_boundary_check.py](scripts/trace_boundary_check.py) to run `strace` or `dtruss` on a minimal execution path and emit JSON evidence about process, network, and filesystem boundary crossings.
-- Open [references/phase_contracts.md](references/phase_contracts.md) when you need exact edit-boundary rules.
-- Open [references/phase_audits.md](references/phase_audits.md) when preparing a mandatory Red, cumulative production Refactor, or Test Refactor audit with `$review-with-multi-debate`.
-- Read [references/test_refactor.md](references/test_refactor.md) before changing tests after production Refactor.
-- Use [scripts/phase_guard.py](scripts/phase_guard.py) for the monitor agent's scope check.
-- Use [evals/evals.json](evals/evals.json) to benchmark whether the skill triggers on the right work and stays lean.
+- [references/workflow.md](references/workflow.md): complete rules, artifacts, monitor protocol, and audit handoff; read the relevant section before each phase.
+- [references/phase_contracts.md](references/phase_contracts.md): exact edit ownership, role provenance, dynamic scope, and compact/full transition rules.
+- [references/phase_audits.md](references/phase_audits.md): exact mandatory audit claims.
+- [references/test_refactor.md](references/test_refactor.md): Test Refactor decision and evidence contract.
+- [scripts/tdd_snapshot.py](scripts/tdd_snapshot.py): authenticated Git-ref snapshots, replay, cache-neutral test runner, and cleanup.
+- [scripts/phase_guard.py](scripts/phase_guard.py): phase-scope enforcement.
+- [scripts/phase_recovery.py](scripts/phase_recovery.py): bounded command wrapper for authenticated accidental phase-state recovery.
+- [scripts/trace_boundary_check.py](scripts/trace_boundary_check.py): process, network, and filesystem boundary evidence.

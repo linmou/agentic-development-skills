@@ -86,7 +86,7 @@
     },
     {
       "id": 7,
-      "prompt": "Use $fast-multi-agent-tdd to create a local Codex skill with a SKILL.md workflow, a scoring rubric, a small Python metric calculator, and a recorded evaluation result. Keep the process lean.",
+      "prompt": "Use $fast-multi-agent-tdd to create a local coding-agent skill with a SKILL.md workflow, a scoring rubric, a small Python metric calculator, and a recorded evaluation result. Keep the process lean.",
       "expected_output": "A requirement re-check that defines the complete usable deliverable, separates non-executable artifacts from executable behavior, applies TDD only to the metric calculator, and includes a scoped Test Refactor after production Refactor.",
       "files": [],
       "expectations": [
@@ -96,6 +96,95 @@
         "Workflow: Planned paths are semantically classified against phase contracts before Red starts.",
         "Audit: The executable calculator's Red and cumulative Refactor phases use mandatory multi-agent debate audits.",
         "Audit: The executable calculator's Test Refactor is test-only, behavior-preserving, regression-checked, and audited when applicable."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Use $fast-multi-agent-tdd to add an `ms_strictly_dominant` selection strategy to this existing CSV cohort CLI. A row qualifies only when MS is greater than every other demand-domain score; ties and rows led by another domain are excluded. Existing configuration supports the mutually exclusive `all_data` strategy and a `limit_per_benchmark` control. Preserve compatible existing selection controls, keep this deterministic local change on the compact route, and retain the official 3-reviewer Red debate. After Green, run one full regression, repository-required static checks, CLI materialization, and a direct audit of every selected row.",
+      "expected_output": "A compact Scope & Evidence Plan and strict TDD run that proves strict-MS selection together with the existing per-benchmark limit, without inventing an all-data/strict-filter combination or reducing the official Red review.",
+      "files": [],
+      "contract": {
+        "route": "compact",
+        "delegation_contract": {
+          "backend_specific_operation_required": false,
+          "identity_requirement": "stable_nonempty",
+          "source_requirement": "actual_nonempty_mechanism",
+          "fallback_before_stop": true
+        },
+        "compatible_control_evidence": [
+          {
+            "control": "limit_per_benchmark",
+            "fixture": "binding_non_neutral",
+            "combined_assertions": [
+              "strict_filter_membership",
+              "per_benchmark_cardinality"
+            ]
+          }
+        ],
+        "mutually_exclusive_strategies": [
+          "all_data"
+        ],
+        "red_reviewer_count": 3,
+        "red_debate_artifacts": {
+          "reviewer_writes_own_file": true,
+          "reviewer_files_per_iteration": 3,
+          "parent_transcription_valid": false,
+          "snapshot_revalidates_provenance_hashes": true,
+          "summary_source": "deterministic_aggregator",
+          "required_transition_gates": [
+            "provenance",
+            "record_round",
+            "advance_phase"
+          ],
+          "later_round_scope": "disputed_criteria_only"
+        },
+        "reviewer_scheduling": {
+          "independence_requires_simultaneity": false,
+          "serial_order_when_one_slot_free": [
+            "audit1",
+            "audit2",
+            "audit3"
+          ],
+          "distinct_child_identities": true,
+          "distinct_roles_and_isolated_prompts": true,
+          "capacity_error_preserves_valid_files": true,
+          "capacity_retry_scope": "missing_distinct_reviewer_same_iteration",
+          "restart_completed_reviewers": false
+        },
+        "post_review_correction_order": {
+          "monitor_inputs": [
+            "precise_correction_plan",
+            "updated_map_and_scope",
+            "retained_prior_reviewer_provenance",
+            "current_pre_edit_test_hashes_and_status"
+          ],
+          "monitor_requires_corrected_test_content": false,
+          "snapshot": "publish_and_verify_append_only_numbered_pre_red",
+          "edit_scope": "planned_tests_only_after_snapshot",
+          "post_edit_gates": [
+            "genuine_red",
+            "red_scope_guard",
+            "three_reviewer_targeted_iteration"
+          ],
+          "corrected_content_verifier": "next_red_reviewer_iteration"
+        },
+        "focused_review_snapshot": {
+          "review_iteration": 2,
+          "initial_provenance_required": true,
+          "focused_provenance_required": true,
+          "staged_hash_revalidation": true
+        }
+      },
+      "expectations": [
+        "Scope: The compact Scope & Evidence Plan identifies `limit_per_benchmark` as a compatible material control and `all_data` as a mutually exclusive strategy supported by concrete repository evidence.",
+        "Red: A binding non-neutral `limit_per_benchmark` interaction test asserts both strict-dominance membership and the resulting per-benchmark cap; predicate-only and quota-only tests are insufficient substitutes.",
+        "Red: The official 3-reviewer debate remains required and is not replaced by risk-scaled single review in this iteration.",
+        "Roles: The monitor and reviewers may use any authorized delegation mechanism that returns stable identities; one missing interface triggers fallback discovery rather than immediate failure.",
+        "Red: Each delegated reviewer writes exactly its own correctly named JSON with stable identity and delegation source for every iteration; parent or monitor transcription and chat-only verdicts are invalid, and Red advances only after the receipt-bound provenance gate, `record_round`, deterministic aggregation with evidence inspection, and `advance_phase` pass.",
+        "Red: Reviewer independence uses distinct child identities, roles, isolated prompts, and owned files but does not require simultaneous execution; with one reviewer slot the controller awaits audit1, audit2, and audit3 serially, preserving valid files and retrying only a missing distinct reviewer after a capacity error.",
+        "Red: After a completed review requires correction, the monitor approves the precise plan, scope, retained provenance, and current pre-edit test hashes/status without requiring corrected content; an append-only numbered snapshot precedes planned test-only edits, and genuine Red, the scope guard, and the next official three-reviewer iteration verify the correction.",
+        "Workflow: Green is followed by one full regression, repository-required static checks, CLI materialization, and a direct audit that every selected row satisfies MS greater than every other demand domain.",
+        "Quality: The plan does not add generic target-domain behavior or combine mutually exclusive `all_data` and strict-filter strategies."
       ]
     }
   ]
