@@ -168,36 +168,6 @@ def _scope_identity(scope_path: Path, repo: Path) -> tuple[Path, str]:
     return candidate, normalize(relative.as_posix())
 
 
-def _status_untracked_and_ignored(repo: Path) -> list[str]:
-    status = subprocess.run(
-        ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignored=matching"],
-        check=False,
-        capture_output=True,
-        cwd=repo,
-    )
-    if status.returncode != 0:
-        raise ScopeError(status.stderr.decode(errors="replace").strip() or "unable to inspect Git status")
-    records = status.stdout.split(b"\0")
-    paths: list[str] = []
-    index = 0
-    while index < len(records):
-        record = records[index]
-        index += 1
-        if not record:
-            continue
-        if len(record) < 4 or record[2:3] != b" ":
-            raise ScopeError("malformed Git status output")
-        code = record[:2]
-        path = record[3:].decode(errors="surrogateescape")
-        if code in {b"??", b"!!"}:
-            paths.append(normalize_git_path(path))
-        if b"R" in code or b"C" in code:
-            if index >= len(records) or not records[index]:
-                raise ScopeError("malformed Git rename status output")
-            index += 1
-    return paths
-
-
 def _parse_name_status(raw: bytes) -> list[str]:
     tokens = raw.split(b"\0")
     paths: list[str] = []
@@ -223,7 +193,6 @@ def _changed_paths(baseline_ref: str, scope_relative: str, repo: Path) -> list[s
     verify = _git("rev-parse", "--verify", f"{baseline_ref}^{{commit}}", cwd=repo)
     if verify.returncode != 0:
         raise ScopeError(f"baseline ref does not resolve to a commit: {baseline_ref}")
-    ignored = _status_untracked_and_ignored(repo)
     index_dir = Path(tempfile.mkdtemp(prefix="tdd-phase-guard-index-"))
     try:
         env = os.environ.copy()
@@ -234,10 +203,6 @@ def _changed_paths(baseline_ref: str, scope_relative: str, repo: Path) -> list[s
         add = _git("add", "-A", "--", ".", cwd=repo, env=env)
         if add.returncode != 0:
             raise ScopeError(add.stderr.strip() or "unable to stage current worktree")
-        if ignored:
-            add_ignored = _git("add", "-f", "--", *ignored, cwd=repo, env=env)
-            if add_ignored.returncode != 0:
-                raise ScopeError(add_ignored.stderr.strip() or "unable to stage ignored paths")
         diff = subprocess.run(
             ["git", "diff", "--cached", "--name-status", "--find-renames", "-z", baseline_ref, "--"],
             check=False,

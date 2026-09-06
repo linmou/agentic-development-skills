@@ -44,20 +44,32 @@ Each phase publishes the scope for the next phase under `audits/`:
 ```
 
 At the initial pre-Red transition, write the proposed artifact, obtain the
-monitor pass without resolving its future ref, then capture the tracked and
-untracked worktree into a Git snapshot so the immutable baseline contains the
-approved artifact. At later transitions, write the next-phase artifact first,
+monitor pass without resolving its future ref, then capture tracked changes and
+non-ignored untracked files into a Git snapshot so the immutable baseline contains
+the approved artifact. At later transitions, write the next-phase artifact first,
 then capture it. Record the baseline ref and commit in the phase output.
 The guard treats the baseline ref as authoritative, verifies the current scope
 bytes at the same repository-relative path before parsing, and fails closed on
 mutation, deletion, malformed content, missing baseline copy, symlink aliases,
-or out-of-repository paths. It includes both sides of renames and deleted paths,
-normal untracked files, and ignored untracked files using NUL-safe Git status.
-Ignored files are enforceable changes, not a hiding place. Overlapping semantic
-override patterns with different classifications are conflicts; exact paths and
-terminal `/**` are the only supported pattern forms. Production phases can omit
-`editable`; Test Refactor and Documentation must include it. Protected paths
-always win over editable paths.
+or out-of-repository paths. Change discovery includes tracked modifications,
+both sides of renames, deleted paths, and non-ignored untracked files using
+NUL-safe Git diff records.
+
+Snapshots and guards respect Git ignore rules, including repository-local and
+global excludes; they must never force-add ignored directories. Files already
+tracked in the baseline remain captured and enforced even if an ignore rule
+matches them. Ignored untracked files are outside snapshot and guard coverage.
+Keep required code, tests, scope, request maps, receipts, and audit evidence
+non-ignored; verify their inclusion in the baseline before entering the phase.
+If an ignored artifact is required, use an explicitly authorized narrow
+ignore-rule exception for that file; never override ignores for the whole worktree.
+Missing receipt or provenance bytes reject snapshot publication; a missing scope
+copy rejects the guard.
+
+Overlapping semantic override patterns with different classifications are
+conflicts; exact paths and terminal `/**` are the only supported pattern forms.
+Production phases can omit `editable`; Test Refactor and Documentation must
+include it. Protected paths always win over editable paths.
 
 Phase refs are append-only: creating an existing `refs/tdd/<feature>/<phase>`
 is an error and never overwrites the prior snapshot. Replay worktrees and refs

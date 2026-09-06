@@ -296,7 +296,7 @@ def create_snapshot(
     round_number: int | None = None,
     repo: Path | None = None,
 ) -> dict[str, object]:
-    """Commit the complete worktree state into a temporary phase ref."""
+    """Snapshot tracked and non-ignored worktree files without changing staging."""
     resolved_phase = _snapshot_phase(phase, round_number)
     root = _repo_root(repo)
     receipt = _validate_role_receipt(roles, feature, resolved_phase)
@@ -359,7 +359,7 @@ def create_snapshot(
         read_tree = _run(root, ["read-tree", "HEAD"], env=env)
         if read_tree.returncode != 0:
             raise SnapshotError(read_tree.stderr.strip() or "unable to initialise temporary index")
-        add = _run(root, ["add", "-A", "-f"], env=env)
+        add = _run(root, ["add", "-A"], env=env)
         if add.returncode != 0:
             raise SnapshotError(add.stderr.strip() or "unable to stage worktree in temporary index")
         for path, expected_hash in bound_hashes.items():

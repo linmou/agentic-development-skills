@@ -94,6 +94,7 @@ Read Workflow section 8. Confirm every mapped requirement and non-TDD artifact, 
 - Tests change only in Red or Test Refactor. Production changes only in Green or production Refactor. Docs change only after both refactor stages close.
 - Mandatory monitors, reviewers, and debates cannot be replaced by self-review or matching prose. Exhaust available authorized delegation mechanisms before treating a role as unavailable; unavailable or non-converged roles then stop the phase.
 - Phase scope comes from authenticated, append-only Git refs plus scope artifacts. Keep both the ref and commit metadata; SHA-only evidence does not replace the ref.
+- Snapshots and guards respect Git ignore rules. Keep required phase files and evidence tracked in the baseline or non-ignored; ignored untracked data is outside their coverage. Never force-add the whole worktree. Read the coverage contract in [references/phase_contracts.md](references/phase_contracts.md) before snapshotting.
 - User resource limits override defaults. The main agent owns implementation; the monitor owns enforcement and audit handoff only.
 
 ## Resources

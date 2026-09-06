@@ -425,13 +425,13 @@ def test_guard_rejects_malformed_scope_even_when_baseline_matches(tmp_path: Path
     assert "invalid scope artifact" in result.stdout.lower()
 
 
-def test_guard_discovers_normal_and_ignored_untracked_paths_nul_safely(tmp_path: Path) -> None:
+def test_guard_discovers_non_ignored_untracked_paths_nul_safely(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
     (repo / ".gitignore").write_text("ignored-*\n")
     git(repo, "add", ".gitignore")
     git(repo, "commit", "-qm", "ignore rule")
     scope = scope_file(repo)
-    normal_name = "src/normal name.py"
+    normal_name = "src/normal name\nbreak.py"
     ignored_name = "ignored-line\nbreak.py"
     (repo / normal_name).write_text("value = 1\n")
     (repo / ignored_name).write_text("value = 2\n")
@@ -439,17 +439,20 @@ def test_guard_discovers_normal_and_ignored_untracked_paths_nul_safely(tmp_path:
     result = run_guard(repo, "green", scope)
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert set(json.loads(result.stdout)["changed_paths"]) == {normal_name, ignored_name}
+    assert set(json.loads(result.stdout)["changed_paths"]) == {normal_name}
 
 
-def test_guard_applies_phase_policy_to_ignored_untracked_paths(tmp_path: Path) -> None:
+def test_guard_applies_phase_policy_to_tracked_paths_matching_ignore_rules(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
     (repo / ".gitignore").write_text("*.test.py\n")
     git(repo, "add", ".gitignore")
     git(repo, "commit", "-qm", "ignore tests")
-    scope = scope_file(repo, protected=[])
     ignored_test = "hidden.test.py"
     (repo / ignored_test).write_text("def test_hidden(): pass\n")
+    git(repo, "add", "-f", "--", ignored_test)
+    git(repo, "commit", "-qm", "explicitly tracked test")
+    scope = scope_file(repo, protected=[])
+    (repo / ignored_test).write_text("def test_hidden(): assert True\n")
 
     result = run_guard(repo, "green", scope)
 
@@ -547,7 +550,7 @@ def test_snapshot_ref_is_append_only(tmp_path: Path) -> None:
     assert git(repo, "rev-parse", ref) == original_oid
 
 
-def test_snapshot_captures_complete_state_without_mutating_repository(tmp_path: Path) -> None:
+def test_snapshot_captures_non_ignored_state_without_mutating_repository(tmp_path: Path) -> None:
     repo = init_repo(tmp_path)
     (repo / ".gitignore").write_text("ignored.py\n")
     (repo / "src" / "deleted.py").write_text("delete me\n")
@@ -574,12 +577,97 @@ def test_snapshot_captures_complete_state_without_mutating_repository(tmp_path: 
     assert git(repo, "show", f"{ref}:tests/test_app.py") == "unstaged = True"
     assert git(repo, "show", f"{ref}:src/renamed.py") == "rename me"
     assert git(repo, "show", f"{ref}:normal.py") == "normal = True"
-    assert git(repo, "show", f"{ref}:ignored.py") == "ignored = True"
+    assert "ignored.py" not in git(repo, "ls-tree", "-r", "--name-only", ref).splitlines()
     assert subprocess.run(["git", "cat-file", "-e", f"{ref}:src/deleted.py"], cwd=repo, check=False).returncode != 0
     assert subprocess.run(["git", "cat-file", "-e", f"{ref}:src/rename_me.py"], cwd=repo, check=False).returncode != 0
     assert git(repo, "write-tree") == index_before
     assert git(repo, "branch", "--show-current") == branch_before
     assert subprocess.check_output(["git", "status", "--porcelain=v1", "--ignored"], cwd=repo) == status_before
+
+
+@pytest.mark.parametrize("ignore_source", ["worktree", "info", "global"])
+def test_snapshot_and_guard_exclude_ignored_data_without_writing_blobs(
+    tmp_path: Path, ignore_source: str,
+) -> None:
+    # tdd_snapshot.py and phase_guard.py: exclude data throughout a real phase transition.
+    repo = init_repo(tmp_path / "repo")
+    rules = ".venv/\nresults/\n"
+    if ignore_source == "worktree":
+        (repo / ".gitignore").write_text(rules)
+    elif ignore_source == "info":
+        (repo / ".git" / "info" / "exclude").write_text(rules)
+    else:
+        exclude_file = tmp_path / "global-ignore"
+        exclude_file.write_text(rules)
+        git(repo, "config", "core.excludesFile", str(exclude_file))
+    sentinels = [repo / ".venv" / "sentinel", repo / "results" / "sentinel"]
+    digests: list[str] = []
+    for sentinel in sentinels:
+        sentinel.parent.mkdir()
+        sentinel.write_text(f"ignored payload in {sentinel.parent.name}\n")
+        digests.append(git(repo, "hash-object", str(sentinel)))
+    tracked = repo / "results" / "tracked.txt"
+    tracked.write_text("baseline\n")
+    git(repo, "add", "-f", "--", "results/tracked.txt")
+    git(repo, "commit", "-qm", "tracked ignored fixture")
+    tracked.write_text("updated tracked content\n")
+    roles = role_receipt(repo, "ignore_data")
+    scope = scope_file(
+        repo, commit=False, phase="red", baseline_ref="refs/tdd/ignore_data/pre_red",
+    )
+    audits = repo / "audits"
+    audits.mkdir()
+    request_map = audits / "request_map.md"
+    request_map.write_text("Required request evidence\n")
+    index_file = repo / ".git" / "index"
+    index_before = index_file.read_bytes()
+    head_before = git(repo, "rev-parse", "HEAD")
+
+    created = run_snapshot_create(repo, "ignore_data", "pre_red", roles=roles)
+
+    assert created.returncode == 0, created.stdout + created.stderr
+    ref = json.loads(created.stdout)["ref"]
+    for artifact in (tracked, roles, scope, request_map):
+        relative = artifact.relative_to(repo).as_posix()
+        assert git(repo, "show", f"{ref}:{relative}") == artifact.read_text().strip()
+    entries = git(repo, "ls-tree", "-r", "--name-only", ref).splitlines()
+    for sentinel in sentinels:
+        assert sentinel.relative_to(repo).as_posix() not in entries
+        sentinel.write_text(sentinel.read_text() + "changed after snapshot\n")
+        digests.append(git(repo, "hash-object", str(sentinel)))
+
+    guarded = run_guard(repo, "red", scope)
+
+    assert guarded.returncode == 0, guarded.stdout + guarded.stderr
+    assert json.loads(guarded.stdout)["changed_paths"] == []
+    for digest in digests:
+        assert subprocess.run(
+            ["git", "cat-file", "-e", digest], cwd=repo, capture_output=True, check=False,
+        ).returncode != 0
+    assert index_file.read_bytes() == index_before
+    assert git(repo, "rev-parse", "HEAD") == head_before
+
+
+@pytest.mark.parametrize("ignored_artifact", ["roles", "audit"])
+def test_snapshot_rejects_ignored_required_evidence(tmp_path: Path, ignored_artifact: str) -> None:
+    # tdd_snapshot.py: excluded provenance must fail closed without publishing a ref.
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "ignored_evidence")
+    provenance = provenance_receipt(repo, "ignored_evidence", roles)
+    ignored_name = roles.name if ignored_artifact == "roles" else "ignored_evidence_red_audit1_iteration1.json"
+    (repo / ".gitignore").write_text(ignored_name + "\n")
+
+    result = run_snapshot_create(
+        repo, "ignored_evidence", "pre_green", roles=roles,
+        auto_provenance=False, provenance=provenance,
+    )
+
+    assert result.returncode == 1
+    assert f"provenance-bound file is absent from the snapshot: {ignored_name}" in result.stdout
+    assert subprocess.run(
+        ["git", "show-ref", "--verify", "refs/tdd/ignored_evidence/pre_green"],
+        cwd=repo, capture_output=True, check=False,
+    ).returncode != 0
 
 
 def test_replay_uses_snapshot_bytes_and_cleanup_removes_preserved_resources(tmp_path: Path) -> None:
@@ -800,6 +888,10 @@ def test_post_red_snapshot_accepts_current_receipt_bound_provenance(tmp_path: Pa
 
     assert result.returncode == 0, result.stdout + result.stderr
     assert json.loads(result.stdout)["ref"] == "refs/tdd/current_reviewers/pre_green"
+    ref = json.loads(result.stdout)["ref"]
+    required = [roles, provenance, *repo.glob("current_reviewers_red_audit*.json")]
+    for artifact in required:
+        assert json.loads(git(repo, "show", f"{ref}:{artifact.name}")) == json.loads(artifact.read_text())
 
 
 def test_post_red_snapshot_rejects_missing_provenance(tmp_path: Path) -> None:
