@@ -1,7 +1,7 @@
 interface:
   display_name: "Auto Skill Test-Improve Loop"
-  short_description: "Real miss → ecological cases → minimum worktree fix → RESULTS"
-  default_prompt: "Use $auto-skill-test-improve-loop on this real agent miss through RESULTS (fix, comparison, cost rate)."
+  short_description: "Diagnose a miss, then test any warranted minimum fix"
+  default_prompt: "Use $auto-skill-test-improve-loop to dependency-check and causally diagnose this real agent miss, test any justified minimum fix in quarantine, and report matched-environment RESULTS."
 
 policy:
   allow_implicit_invocation: false

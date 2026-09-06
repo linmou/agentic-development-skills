@@ -84,6 +84,20 @@ Each reviewer writes exactly one file:
 - `audits/<feature_name>_<phase>_audit2_iteration1.json`
 - `audits/<feature_name>_<phase>_audit3_iteration1.json`
 
+Before advancing from reviewer execution, validate that all three expected
+result files exist:
+
+```bash
+python <skill_dir>/scripts/validate_audit_transition.py record_round \
+  --feature-name <feature_name> \
+  --phase <phase> \
+  --iteration <iteration> \
+  --audit-dir <audit_dir>
+```
+
+The validator is a coarse artifact-presence gate. It does not judge evidence
+quality, blocking status, counterevidence, or convergence.
+
 Every criterion verdict must cite evidence or explicitly record missing evidence. No unsupported verdicts.
 
 Reviewer JSON contract:
@@ -141,6 +155,25 @@ Mechanical convergence rule:
 - confidence spread for that criterion is at most `0.2`
 
 Full convergence also requires that no new counterevidence remains unanswered. The aggregator does not judge evidence quality or blocking status; the main agent must check those from the reviewer JSON files before declaring the audit converged.
+
+Before advancing to the next phase, run the strict phase gate after the
+summary has been written:
+
+```bash
+python <skill_dir>/scripts/validate_audit_transition.py advance_phase \
+  --feature-name <feature_name> \
+  --from-phase <phase> \
+  --to-phase <next_phase> \
+  --iteration <iteration> \
+  --audit-dir <audit_dir>
+```
+
+This gate fails closed unless all three reviewer files have valid metadata and
+criterion contracts, the current iteration summary exists, and every blocking
+criterion is converged with a final verdict of `pass`. A missing, malformed, or
+`not_converged` blocking result must trigger a targeted follow-up round before
+the next phase. Non-blocking disputes may remain only when the blocking gate
+passes and must be reported explicitly.
 
 If all blocking criteria fully converge, the final result may be treated as converged even if only non-blocking criteria still differ slightly. State that explicitly in the final answer.
 

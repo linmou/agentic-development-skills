@@ -26,6 +26,9 @@ probe: verbatim human text (or path to fixture)
 precondition:
   skill_discoverable: yes/no/unknown
   notes: e.g. skill missing from injected list
+environment_revision: E0
+dependency_manifest: .eft/<miss_id>/DEPENDENCIES.json
+tested_skill_variant: baseline | candidate identifier
 gold_observables:
   - must load <skill>/SKILL.md (tool read), not only path string in a skill list
   - must / must not write path X
@@ -62,6 +65,27 @@ Avoid gold that needs mind-reading (“agent understood friction”).
 | FS isolation | `git worktree add` or full copy | same | copy/clone |
 
 Method stays the same; only file paths and CLI flags change. Put harness-specific paths in the **case**, not in this skill’s core steps.
+
+## Dependency closure and environment revisions
+
+An isolated target skill is not automatically an isolated runnable workflow. Before each measured forward run, inspect the case-selected execution path and resolve its declared executable closure. Follow explicit calls and required resources through peer skills until every placeholder and command maps to one exact runnable interface.
+
+Write `.eft/<miss_id>/DEPENDENCIES.json` with, for each resolved dependency:
+
+- logical name and owning package;
+- exact absolute runner path or capability interface;
+- why the selected path requires it;
+- quarantine or read-only status;
+- Git revision for clean tracked resources, or a content hash when no Git identity exists;
+- required commands or operations and a no-write readiness result.
+
+Also record project inputs, tool/runtime versions, model and harness configuration, and capabilities that can affect behavior or timing. A documentation mention alone is not readiness: required files must exist and the declared interface must be callable without mutating the tested artifact. Live read-only callees remain allowed only when their exact identity is frozen and unchanged for every compared run; copy or worktree-isolate any dependency that may be patched.
+
+Write `.eft/<miss_id>/ENVIRONMENT.md` and assign the controlled ready state a monotonically named revision such as `E0`, `E1`, or `E2`. Every case score and timing record names its environment revision and tested target-skill identity. The designated target skill is the experimental treatment, so changing only its recorded baseline/candidate variant does not change the environment revision. Before a rerun, confirm the manifest identities and readiness checks still match; a changed peer skill, script, model, harness surface, fixture, tool, or material environment condition creates a new revision when it can affect the result.
+
+Some dependencies appear only during execution. Preserve such a run and its trace as discovery evidence. Record the newly observed dependency, the detection point, the prior state, and any reproducible repair; then create a fresh runner, freeze a new revision, and repeat readiness checks. Do not rewrite the failed runner, silently borrow a live dependency, or attribute a post-repair outcome to the skill patch alone.
+
+Functional evidence may be reported for its own revision. Causal behavior or speed comparisons require matched environment revisions, explicit target-skill variant identities, and no undeclared differences. Report readiness/setup and recovery time separately from the steady-state forward interval so an operationally expensive environment is not made to look cheap by starting the clock after undocumented repairs.
 
 ---
 
@@ -119,6 +143,8 @@ apply PATCH.diff only → original_skill_path (and original_project only if huma
 | Use `project_worktree_path` as cwd when writing drafts | Write Discussion/`learnt/` into live project when worktree exists |
 | Put scores, PATCH.diff, RESULTS under `.eft/<miss_id>/` (may live inside project worktree) | Edit live original “to save a step” |
 | Bisect by resetting **worktree** skill files from original, then re-apply rank | Bisect on live |
+| Pin and recheck dependency/environment identities before each measured run | Repair or swap dependencies silently during a run |
+| Preserve dynamic dependency discoveries and start a fresh environment revision | Compare baseline and candidate timings across unmatched revisions |
 
 ### Promote (only after human OK)
 
@@ -144,6 +170,9 @@ worktree_skill_path:
 original_project_root: (or n/a)
 project_worktree_path: (or n/a)
 home_callee_copy: (path or n/a)
+dependency_manifest: .eft/<miss_id>/DEPENDENCIES.json
+environment_record: .eft/<miss_id>/ENVIRONMENT.md
+environment_revision: E0
 isolation_method: git_worktree | full_copy
 created_at:
 promote: pending | done | skipped
@@ -158,4 +187,6 @@ verify: worktree_skill_path != original_skill_path  (required true)
 | Patched live original mid-loop | Stop; restore from git/backup; re-quarantine; treat as process fail |
 | Runner used live skill path | Re-run cases with worktree path only |
 | Project pollution on live | Prefer restore live from VCS; re-run with project_worktree |
+| Required peer command missing or version-skewed | Preserve the discovery, resolve it in quarantine, create a new environment revision, and rerun matched comparisons |
+| Environment changed after baseline | Invalidate unmatched causal comparisons and rerun the evidence needed under one frozen revision |
 | Left worktrees forever | Cleanup step after promote/skip |

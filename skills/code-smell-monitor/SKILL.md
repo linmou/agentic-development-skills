@@ -25,6 +25,25 @@ python3 /Users/admin/.codex/skills/code-smell-monitor/scripts/code_smell_monitor
 
 Use `--install missing` by default. It installs missing common tools for detected stacks. Use `--install never` when the environment must not be changed.
 
+## Dependencies and Installation
+
+The monitor requires Python 3.10 or newer to run. It uses these external tools:
+
+- Python repositories: `ruff`, `radon`, `vulture`, `bandit`, and `mypy`.
+- JavaScript/TypeScript repositories: Node.js with `npm`/`npx`, plus the project's package manager when a lockfile or package script requires it.
+
+By default, `--install missing` checks for the Python tools and installs missing ones with `python3 -m pip install --user`. For JavaScript/TypeScript tools, it uses a local `node_modules/.bin` tool first, then a tool on `PATH`, and otherwise fetches the tool through `npx --yes` for that run. This requires network access. The installation commands and their exit codes are recorded in the report.
+
+The monitor does not install the target project's own dependencies. Install those before running checks when the project needs them:
+
+```bash
+npm ci                          # package-lock.json
+pnpm install --frozen-lockfile  # pnpm-lock.yaml
+yarn install --immutable        # yarn.lock
+```
+
+Use the command appropriate for the repository and do not run all three. For a locked-down or offline environment, use `--install never`; missing monitor tools are then reported as failed checks instead of being installed.
+
 ## Workflow
 
 1. Choose the smallest meaningful scope first: changed files, touched module, or package boundary.
@@ -47,11 +66,12 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 
 ## Outputs
 
-The script writes reports under `--out` or `.codex/code_smell_monitor/<timestamp>/`:
+The script writes reports under `--out` or `code_smell_monitor/<timestamp>/`:
 
 - `code_smell_report.md`: human-readable summary, commands, exit codes, and ranked signals.
 - `summary.json`: stack detection, tool availability, command metadata, and extracted headline metrics.
 - `raw/`: exact tool outputs for auditability.
+- add output folder to .git/info/exclude
 
 ## Tool Policy
 

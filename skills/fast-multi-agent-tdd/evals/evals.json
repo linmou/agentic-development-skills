@@ -4,13 +4,15 @@
     {
       "id": 1,
       "prompt": "Use $fast-multi-agent-tdd to add idempotent Stripe webhook handling for `invoice.paid` in this FastAPI service.\n\nRequirements:\n- Start in Red: write one failing Gherkin acceptance test for the end-to-end webhook flow, then the lowest-level failing integration or unit tests needed beneath it.\n- Confirm each new test fails for the expected reason before writing implementation.\n- Keep implementation ownership with one main agent and a non-editing monitor only.\n- After Red and Refactor, run a structured 3-reviewer audit and save JSON outputs under `audits/stripe_webhook_<phase>_auditN_iterationM.json`.\n- At Green, run the deterministic gate and save the production diff for cumulative Refactor review.\n- After Green and after Refactor, run the full test suite as the regression check.\n- Keep the implementation minimal. No fallback logic, no speculative abstractions.",
-      "expected_output": "A workflow that preserves strict red-green-refactor, keeps one implementing agent plus the monitor, audits Red and cumulative Refactor with $review-with-multi-debate, and uses a deterministic Green gate.",
+      "expected_output": "A workflow that preserves strict red-green-refactor, keeps one implementing agent plus the monitor, audits Red, cumulative production Refactor, and Test Refactor with $review-with-multi-debate, and uses a deterministic Green gate.",
       "files": [],
       "expectations": [
-        "Workflow: The response starts with request mapping before Red and keeps red, green, regression, and refactor in sequence.",
+        "Workflow: The response starts with request mapping before Red and keeps red, green, regression, production Refactor, and Test Refactor in sequence.",
         "Workflow: The workflow names a monitor agent that does not edit files and checks phase boundaries.",
         "Workflow: The red phase is test-first and the green or refactor phases do not edit tests.",
         "Workflow: Red and cumulative Refactor are audited with $review-with-multi-debate and use the requested audit file naming pattern.",
+          "Workflow: Test Refactor follows the converged production Refactor audit, edits only test-like paths, preserves behavior and boundaries, and is audited.",
+          "Workflow: Each phase derives scope from a Git snapshot containing the scope artifact instead of caller-supplied changed paths.",
         "Workflow: Green uses a deterministic gate and saves the production diff for cumulative Refactor review.",
         "Quality: The response keeps implementation ownership with one main agent rather than parallel workers.",
         "Quality: The green plan is minimal and rejects fallback logic or speculative abstractions."
@@ -19,12 +21,14 @@
     {
       "id": 2,
       "prompt": "Use $fast-multi-agent-tdd to build a CSV user-import feature in this Next.js app and Python API.\n\nRequirements:\n- Begin with Red: write a failing `.feature` file for the core admin journey, then add failing integration tests for API or database boundaries and unit tests for CSV validation edge cases.\n- Before implementation, inspect nearby docs and existing import or auth code to map constraints.\n- Keep implementation ownership with one main agent and use the monitor only for phase enforcement.\n- Green must be the minimum code required to pass the new tests.\n- After Red and cumulative Refactor, run a 3-reviewer audit with disagreement handling and save results to `audits/user_import_<phase>_auditN_iterationM.json`.\n- At Green, run the deterministic gate and save the production diff for cumulative Refactor review.\n- After Green and Refactor, run the entire suite as the regression check.\n- If existing tests conflict with the new requirement, identify and refactor them explicitly rather than silently working around them.",
-      "expected_output": "A workflow that reads local guidance first, chooses test levels deliberately, preserves phase boundaries, and does not let green or refactor mutate tests.",
+      "expected_output": "A workflow that reads local guidance first, chooses test levels deliberately, preserves phase boundaries, includes a behavior-preserving Test Refactor, and does not let green or production refactor mutate tests.",
       "files": [],
       "expectations": [
         "Workflow: The response starts with docs and dependency analysis before writing tests.",
         "Workflow: The response picks deliberate test levels across feature, integration, and unit layers instead of collapsing everything into one layer.",
         "Workflow: The response still starts implementation with the next failing test and requires a full-suite regression check after code changes.",
+          "Workflow: After the production Refactor audit, Test Refactor is limited to test-like files and requires targeted plus full regression.",
+          "Workflow: Narrow Test Refactor and Documentation phases use explicit editable lists, while production phases can accommodate newly discovered modules.",
         "Quality: The response handles conflicting existing tests explicitly instead of silently bypassing them.",
         "Quality: The response avoids overbuilding import infrastructure or configuration not demanded by the failing tests."
       ]
@@ -32,13 +36,14 @@
     {
       "id": 3,
       "prompt": "Use $fast-multi-agent-tdd to add expiring invitation links to this monorepo.\n\nRequirements:\n- Start with a failing acceptance test in Gherkin for the invite lifecycle, then write failing tests for token expiry and single-use behavior at the lowest sensible levels.\n- Confirm Red-phase failures are due to missing behavior, not broken fixtures or environment issues.\n- Keep implementation ownership with one main agent and use the monitor only for phase enforcement.\n- During Green, implement only what the failing tests require and save the production diff.\n- During Refactor, clean duplication in invite or token handling if and only if behavior is already locked by passing tests.\n- After Red and cumulative Refactor, run a multi-review audit with saved JSON artifacts and deterministic convergence rules.\n- After Green and Refactor, run the full suite and treat flaky results as failures.",
-      "expected_output": "A workflow that resists turning a feature request into a broad auth rewrite and treats refactor as a separate post-green activity.",
+      "expected_output": "A workflow that resists turning a feature request into a broad auth rewrite and treats production and Test Refactor as separate post-green activities.",
       "files": [],
       "expectations": [
         "Workflow: The red phase verifies that failures come from missing behavior rather than fixture or environment breakage.",
         "Workflow: The response separates green from refactor and keeps the suite green before any cleanup starts.",
         "Workflow: The Refactor audit reviews the cumulative production diff rather than only the cleanup diff.",
         "Workflow: The response treats flaky results as failures during regression checking.",
+        "Workflow: Test Refactor preserves the behavior map, oracle strength, and required boundaries, with a mandatory converged audit.",
         "Quality: The response does not smuggle in a broad auth rewrite while implementing invitation expiry.",
         "Quality: The response only refactors duplication after behavior is locked by passing tests."
       ]
@@ -53,7 +58,8 @@
         "Workflow: The response still includes the monitor boundary check, Red audit handoff, Green gate, and cumulative Refactor audit handoff when refactor is needed.",
         "Quality: The response does not spawn parallel workers for a small parser bug.",
         "Quality: The response chooses the lowest sensible test level for a small parser bug.",
-        "Quality: The response stays lean and does not turn a tiny fix into ceremonial overhead."
+        "Quality: The response stays lean and does not turn a tiny fix into ceremonial overhead.",
+        "Quality: Any Test Refactor is optional when no demonstrated test smell exists and never weakens the parser boundary or assertions."
       ]
     },
     {
@@ -80,15 +86,105 @@
     },
     {
       "id": 7,
-      "prompt": "Use $fast-multi-agent-tdd to create a local Codex skill with a SKILL.md workflow, a scoring rubric, a small Python metric calculator, and a recorded evaluation result. Keep the process lean.",
-      "expected_output": "A requirement re-check that defines the complete usable deliverable, separates non-executable artifacts from executable behavior, and applies TDD only to the metric calculator.",
+      "prompt": "Use $fast-multi-agent-tdd to create a local coding-agent skill with a SKILL.md workflow, a scoring rubric, a small Python metric calculator, and a recorded evaluation result. Keep the process lean.",
+      "expected_output": "A requirement re-check that defines the complete usable deliverable, separates non-executable artifacts from executable behavior, applies TDD only to the metric calculator, and includes a scoped Test Refactor after production Refactor.",
       "files": [],
       "expectations": [
         "Requirements: The response defines user-visible done and maps requirements to artifacts and acceptance evidence before selecting TDD.",
         "Scope: SKILL.md, the rubric, and the recorded result stay outside TDD; only executable calculator behavior enters Red-Green-Refactor.",
         "Workflow: The first executable slice supports a usable vertical result rather than presenting an isolated scoring engine as the whole deliverable.",
         "Workflow: Planned paths are semantically classified against phase contracts before Red starts.",
-        "Audit: The executable calculator's Red and cumulative Refactor phases use mandatory multi-agent debate audits."
+        "Audit: The executable calculator's Red and cumulative Refactor phases use mandatory multi-agent debate audits.",
+        "Audit: The executable calculator's Test Refactor is test-only, behavior-preserving, regression-checked, and audited when applicable."
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Use $fast-multi-agent-tdd to add an `ms_strictly_dominant` selection strategy to this existing CSV cohort CLI. A row qualifies only when MS is greater than every other demand-domain score; ties and rows led by another domain are excluded. Existing configuration supports the mutually exclusive `all_data` strategy and a `limit_per_benchmark` control. Preserve compatible existing selection controls, keep this deterministic local change on the compact route, and retain the official 3-reviewer Red debate. After Green, run one full regression, repository-required static checks, CLI materialization, and a direct audit of every selected row.",
+      "expected_output": "A compact Scope & Evidence Plan and strict TDD run that proves strict-MS selection together with the existing per-benchmark limit, without inventing an all-data/strict-filter combination or reducing the official Red review.",
+      "files": [],
+      "contract": {
+        "route": "compact",
+        "delegation_contract": {
+          "backend_specific_operation_required": false,
+          "identity_requirement": "stable_nonempty",
+          "source_requirement": "actual_nonempty_mechanism",
+          "fallback_before_stop": true
+        },
+        "compatible_control_evidence": [
+          {
+            "control": "limit_per_benchmark",
+            "fixture": "binding_non_neutral",
+            "combined_assertions": [
+              "strict_filter_membership",
+              "per_benchmark_cardinality"
+            ]
+          }
+        ],
+        "mutually_exclusive_strategies": [
+          "all_data"
+        ],
+        "red_reviewer_count": 3,
+        "red_debate_artifacts": {
+          "reviewer_writes_own_file": true,
+          "reviewer_files_per_iteration": 3,
+          "parent_transcription_valid": false,
+          "snapshot_revalidates_provenance_hashes": true,
+          "summary_source": "deterministic_aggregator",
+          "required_transition_gates": [
+            "provenance",
+            "record_round",
+            "advance_phase"
+          ],
+          "later_round_scope": "disputed_criteria_only"
+        },
+        "reviewer_scheduling": {
+          "independence_requires_simultaneity": false,
+          "serial_order_when_one_slot_free": [
+            "audit1",
+            "audit2",
+            "audit3"
+          ],
+          "distinct_child_identities": true,
+          "distinct_roles_and_isolated_prompts": true,
+          "capacity_error_preserves_valid_files": true,
+          "capacity_retry_scope": "missing_distinct_reviewer_same_iteration",
+          "restart_completed_reviewers": false
+        },
+        "post_review_correction_order": {
+          "monitor_inputs": [
+            "precise_correction_plan",
+            "updated_map_and_scope",
+            "retained_prior_reviewer_provenance",
+            "current_pre_edit_test_hashes_and_status"
+          ],
+          "monitor_requires_corrected_test_content": false,
+          "snapshot": "publish_and_verify_append_only_numbered_pre_red",
+          "edit_scope": "planned_tests_only_after_snapshot",
+          "post_edit_gates": [
+            "genuine_red",
+            "red_scope_guard",
+            "three_reviewer_targeted_iteration"
+          ],
+          "corrected_content_verifier": "next_red_reviewer_iteration"
+        },
+        "focused_review_snapshot": {
+          "review_iteration": 2,
+          "initial_provenance_required": true,
+          "focused_provenance_required": true,
+          "staged_hash_revalidation": true
+        }
+      },
+      "expectations": [
+        "Scope: The compact Scope & Evidence Plan identifies `limit_per_benchmark` as a compatible material control and `all_data` as a mutually exclusive strategy supported by concrete repository evidence.",
+        "Red: A binding non-neutral `limit_per_benchmark` interaction test asserts both strict-dominance membership and the resulting per-benchmark cap; predicate-only and quota-only tests are insufficient substitutes.",
+        "Red: The official 3-reviewer debate remains required and is not replaced by risk-scaled single review in this iteration.",
+        "Roles: The monitor and reviewers may use any authorized delegation mechanism that returns stable identities; one missing interface triggers fallback discovery rather than immediate failure.",
+        "Red: Each delegated reviewer writes exactly its own correctly named JSON with stable identity and delegation source for every iteration; parent or monitor transcription and chat-only verdicts are invalid, and Red advances only after the receipt-bound provenance gate, `record_round`, deterministic aggregation with evidence inspection, and `advance_phase` pass.",
+        "Red: Reviewer independence uses distinct child identities, roles, isolated prompts, and owned files but does not require simultaneous execution; with one reviewer slot the controller awaits audit1, audit2, and audit3 serially, preserving valid files and retrying only a missing distinct reviewer after a capacity error.",
+        "Red: After a completed review requires correction, the monitor approves the precise plan, scope, retained provenance, and current pre-edit test hashes/status without requiring corrected content; an append-only numbered snapshot precedes planned test-only edits, and genuine Red, the scope guard, and the next official three-reviewer iteration verify the correction.",
+        "Workflow: Green is followed by one full regression, repository-required static checks, CLI materialization, and a direct audit that every selected row satisfies MS greater than every other demand domain.",
+        "Quality: The plan does not add generic target-domain behavior or combine mutually exclusive `all_data` and strict-filter strategies."
       ]
     }
   ]

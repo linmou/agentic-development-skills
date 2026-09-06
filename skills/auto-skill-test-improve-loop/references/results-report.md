@@ -18,23 +18,29 @@ Print the same content as the final user message. Do not ask the human to assemb
 - human probe (verbatim or path):
 - caller / callee:
 - failure_label:
-- root_reason: (one line: cause → missing gold)
+- causal_ruling: (bounded explanation of cause → missing gold)
+- material uncertainty / next discriminating evidence:
+- dependency manifest, comparison environment revision, and tested skill variants:
 
-## 2. How the agent fixed it
-- layer patched: caller | callee | harness
-- rank used: M0 | M1 | M2 | M3
+## 2. How the agent responded
+- selected intervention and why the diagnosis supports it:
+- rank used: M0 | M1 | M2 | M3 | n/a (no skill patch)
 - files changed:
 - what was added/changed (≤5 bullets):
 - what was deliberately not changed:
 - key diff (≤20 lines) or path to PATCH.diff:
 
 ## 3. Results (observables)
-| Case | Baseline | After min patch | Gold check |
-|------|----------|-----------------|------------|
-| ECO_POS… | FAIL/PASS + one-line | FAIL/PASS + one-line | met? |
-| ECO_NEG… | … | … | met? |
+| Case | Environment revision | Baseline variant/result | Candidate variant/result | Gold check |
+|------|----------------------|-------------------------|--------------------------|------------|
+| ECO_POS… | E… | id + FAIL/PASS + one-line | id/n/a + FAIL/PASS + one-line | met? |
+| ECO_NEG… | E… | … | … | met? |
 
-## 4. Comparison (fat vs minimum)
+- dynamic dependencies discovered:
+- environment changes and reproducible repairs:
+- unmatched runs excluded from causal comparison:
+
+## 4. Comparison (fat vs minimum; n/a when no skill patch was justified)
 | Metric | Baseline | Fat (if tried) | Minimum |
 |--------|----------|----------------|---------|
 | Ecological POS | | | |
@@ -54,6 +60,9 @@ Print the same content as the final user message. Do not ask the human to assemb
 | **File cost rate** | | see formula |
 | Token / model cost | n/a or sum | do not invent |
 | Human stops | 0 or 1 (promote) | |
+| Readiness/setup time | | outside forward interval |
+| Environment discovery/recovery time | | preserve separately |
+| Matched forward time | | baseline and candidate under same revision |
 
 ## 6. Status (hygiene)
 - original_skill_path:
@@ -62,7 +71,9 @@ Print the same content as the final user message. Do not ask the human to assemb
 - project_worktree_path: (or n/a)
 - isolation_method: git_worktree | full_copy
 - HYGIENE.md: path
-- promote: pending | done | skipped
+- DEPENDENCIES.json: path
+- ENVIRONMENT.md and comparison revision:
+- promote: pending | done | skipped | n/a
 - cleanup: pending | done | deferred
 - remaining risk: (one line)
 ```
@@ -77,7 +88,7 @@ size_cost_rate = (files_min + lines_added_min) / max(1, files_fat + lines_added_
 file_cost_rate = files_min / max(1, files_fat)
 ```
 
-If no fat trial: both rates = **1.0**, note `no_fat_trial`.  
+If no skill patch was justified: both rates = `n/a`. If a minimum patch exists but no fat trial ran: both rates = **1.0**, note `no_fat_trial`.
 Also count: `forward_test_runs`, `ranks_tried`, `human_stops` (target **1** = promote only).
 
 ## Rules
@@ -85,3 +96,5 @@ Also count: `forward_test_runs`, `ranks_tried`, `human_stops` (target **1** = pr
 - Empty section = incomplete run.  
 - Prefer numbers (“+1 line”) over adjectives (“small”).  
 - Token costs: harness-reported only, else `n/a`.  
+- Do not claim a skill-caused behavior or speed difference from unmatched environment revisions or undeclared treatment differences.
+- Preserve setup, dependency discovery, and recovery costs even when the steady-state forward clock starts afterward.
