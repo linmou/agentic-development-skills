@@ -1,13 +1,21 @@
 ---
 name: fast-multi-agent-tdd
-description: Use when the user explicitly wants executable feature or bug-fix behavior delivered under strict Red-Green-Refactor with requirement re-checking, a dedicated monitor, mandatory Red, cumulative production Refactor, and Test Refactor debates, deterministic Green gates, and regression checks. Apply TDD only to executable behavior; do not use it for Markdown, SKILL.md, AGENTS.md, rubrics, documents, data curation, research evaluation, or review/diagnosis-only work.
+description: Strict Red-Green-Refactor orchestration for executable feature or bug-fix implementation when the user explicitly requests it. May follow prerequisite diagnosis; activate before permanent regression-test or production edits. Do not use for review/diagnosis-only or non-executable work such as Markdown, SKILL.md, AGENTS.md, rubrics, documents, data curation, or research evaluation.
 ---
 
 # Fast Multi Agent TDD
 
+## Activation Boundary
+
+Prerequisite workflows may diagnose, explore, run tests, and collect evidence before this skill activates. At handoff, account for every diagnostic-created worktree change in the request map and enter activation with production files free of temporary instrumentation. A retained diagnostic harness must remain outside normal test collection and does not replace the formal Red test.
+
+TDD activates when `audits/<feature>_request_map.md` is saved, before any permanent regression-test or production edit. If prerequisite work reaches a permanent test or fix, activate TDD before making that edit. From activation through closeout, this skill owns the executable slice and its phase rules apply.
+
+Carry a prerequisite diagnostic workflow's red-capable command into the request map and rerun it after Green against the original symptom. After TDD closeout, that workflow may finish cleanup of its retained diagnostic artifacts; any resulting permanent test or production correction requires a new TDD activation.
+
 ## Stop: Mandatory Start Gate
 
-Before any test or production edit, `apply_patch`, enter this gate and complete its steps in order. While the gate is open, the only permitted writes are the request map, role receipt, required scope artifact, and `pre_red` snapshot:
+Complete this gate in order to activate TDD; step 1 is the activation point. While the gate is open, the only permitted writes are the request map, role receipt, required scope artifact, and `pre_red` snapshot:
 
 1. Save `audits/<feature>_request_map.md` with `route: compact|full` after the requirement re-check and path preflight.
 2. **Delegate the dedicated monitor through any available, authorized mechanism that gives it an independent context and returns a stable identity. Native worker tools, task APIs, MCP servers, and installed agent CLIs or APIs are all valid; no operation name is privileged. If a candidate is unavailable, inspect the interfaces exposed in the current environment and try another authorized delegation mechanism. The handoff must include the absolute request-map path, the absolute `references/phase_contracts.md` path, and the active project cwd.**
@@ -29,9 +37,7 @@ Before any test or production edit, `apply_patch`, enter this gate and complete 
 5. <!-- initial-pre-red-monitor-validation --> Ask the dedicated monitor to validate the proposed request map, map digest, route, planned path classifications, Red scope, and planned test-file Git hashes/status. This initial check must not run tests, `phase_guard.py`, or require the intended `baseline_ref` to resolve. If the monitor finds a defect, correct the proposed map or scope and have the same dedicated monitor recheck it inside this initial gate; do not open or number a Red round. Receive the monitor-authored pre-Red gate pass before continuing.
 6. <!-- initial-pre-red-snapshot-publication --> Only after that pass, run `python scripts/tdd_snapshot.py create --feature <feature> --phase pre_red --roles audits/<feature>_role_receipt.json` and verify its returned ref and commit. Red unlocks only when both the monitor pass and snapshot publication succeed.
 
-Test execution begins only after step 6 through the cache-neutral snapshot runner.
-
-Until step 6 succeeds: do not edit tests or production, run tests, or perform another write-capable action. Self-authored monitor, role, reviewer, or snapshot evidence is invalid. Do not stop merely because one delegation interface is absent. A receipt formatting error may be corrected only from the original delegation result and revalidated. A snapshot invocation may be retried only when it published no ref; never overwrite an existing phase ref. Stop when no available authorized mechanism can provide an independent role with a stable identity, provenance is missing or ambiguous, a phase ref already exists unexpectedly, or the monitor gate cannot pass.
+Until step 6 succeeds, continue only the named gate actions and monitor-required corrections. Red then begins with test execution through the cache-neutral snapshot runner. Self-authored monitor, role, reviewer, or snapshot evidence is invalid. Do not stop merely because one delegation interface is absent. A receipt formatting error may be corrected only from the original delegation result and revalidated. A snapshot invocation may be retried only when it published no ref; never overwrite an existing phase ref. Stop when no available authorized mechanism can provide an independent role with a stable identity, provenance is missing or ambiguous, a phase ref already exists unexpectedly, or the monitor gate cannot pass.
 
 Local validators prove internal consistency and immutability of recorded provenance, not the authenticity of every possible backend. Preserve the actual delegation return in the run evidence and never infer a successful handoff from self-authored receipt fields alone.
 
@@ -41,11 +47,11 @@ Follow the phases in order. Before acting in a phase, read its section in [refer
 
 ### 0. Requirement Re-check and Request Map
 
-Read `Overview`, `Trigger Conditions`, `Core Rules`, and Workflow sections 0-1 in [references/workflow.md](references/workflow.md), plus [references/phase_contracts.md](references/phase_contracts.md). Keep only executable behavior inside TDD, define the smallest end-to-end slice and done conditions, classify `compact|full`, preflight path semantics, and save the request map. Then immediately execute the mandatory start gate above.
+Read `Overview`, `Trigger Conditions`, `Core Rules`, and Workflow sections 0-1 in [references/workflow.md](references/workflow.md), plus [references/phase_contracts.md](references/phase_contracts.md). Keep only executable behavior inside TDD, define the smallest end-to-end slice and done conditions, classify `compact|full`, preflight path semantics, and prepare the request map. Then execute the mandatory start gate above; step 1 saves the map and activates TDD.
 
 ### 1. Start Gate
 
-Execute the six gate steps above without interleaving edits, test runs, or other write-capable actions beyond the named gate artifacts and their monitor-required corrections. The main agent implements; the delegated monitor never edits files. Do not delegate parallel implementers.
+Execute the six gate steps above. The gate is complete only when the monitor pass and verified `pre_red` snapshot both exist. The main agent implements; the delegated monitor never edits files. Do not delegate parallel implementers.
 
 ### 2. Red
 
@@ -91,7 +97,7 @@ Read Workflow section 8. Confirm every mapped requirement and non-TDD artifact, 
 ## Invariants
 
 - New or conflicting behavior returns to Red; a conflicting user instruction requires later explicit confirmation before resuming.
-- Tests change only in Red or Test Refactor. Production changes only in Green or production Refactor. Docs change only after both refactor stages close.
+- Within an activated TDD run, tests change only in Red or Test Refactor. Production changes only in Green or production Refactor. Docs change only after both refactor stages close.
 - Mandatory monitors, reviewers, and debates cannot be replaced by self-review or matching prose. Exhaust available authorized delegation mechanisms before treating a role as unavailable; unavailable or non-converged roles then stop the phase.
 - Phase scope comes from authenticated, append-only Git refs plus scope artifacts. Keep both the ref and commit metadata; SHA-only evidence does not replace the ref.
 - Snapshots and guards respect Git ignore rules. Keep required phase files and evidence tracked in the baseline or non-ignored; ignored untracked data is outside their coverage. Never force-add the whole worktree. Read the coverage contract in [references/phase_contracts.md](references/phase_contracts.md) before snapshotting.

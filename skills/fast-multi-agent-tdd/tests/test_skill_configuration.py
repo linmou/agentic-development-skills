@@ -1,5 +1,5 @@
-# Responsible files: references, evals, and agents/openai.yaml
-# Purpose: ensure non-SKILL configuration artifacts retain their expected workflow guidance.
+# Responsible files: SKILL.md, references, evals, and agents/openai.yaml
+# Purpose: ensure skill configuration retains its workflow and orchestration contracts.
 
 from __future__ import annotations
 
@@ -14,6 +14,38 @@ SKILL = (ROOT / "SKILL.md").read_text()
 WORKFLOW = (ROOT / "references" / "workflow.md").read_text()
 EVAL_RUBRIC = (ROOT / "references" / "eval_rubric.md").read_text()
 EVALS = json.loads((ROOT / "evals" / "evals.json").read_text())
+
+
+def test_prerequisite_diagnosis_hands_off_to_strict_tdd_activation() -> None:
+    activation = SKILL[SKILL.index("## Activation Boundary") :]
+    composed_eval = next(case for case in EVALS["evals"] if case["id"] == 9)
+    serialized_eval = json.dumps(composed_eval)
+
+    assert "diagnose, explore, run tests, and collect evidence" in activation
+    assert "account for every diagnostic-created worktree change" in activation
+    assert "production files free of temporary instrumentation" in activation
+    assert "outside normal test collection" in activation
+    assert "does not replace the formal Red test" in activation
+    assert "TDD activates when `audits/<feature>_request_map.md` is saved" in activation
+    assert "before any permanent regression-test or production edit" in activation
+    assert "rerun it after Green against the original symptom" in activation
+    assert "finish cleanup of its retained diagnostic artifacts" in activation
+    assert "monitor pass and verified `pre_red` snapshot" in activation
+
+    assert "$diagnosing-bugs" in composed_eval["prompt"]
+    assert "$fast-multi-agent-tdd" in composed_eval["prompt"]
+    assert "does not become a loophole" in serialized_eval
+    assert "permanent regression test is written only after" in serialized_eval
+    assert "permanent test or production correction requires a new TDD activation" in serialized_eval
+
+    stale_global_prohibitions = (
+        "Test execution begins only after step 6",
+        "do not edit tests or production, run tests",
+        "parallel workers for implementation, exploration, or test drafting",
+        "must not be reconstructed after tests exist",
+    )
+    combined = "\n".join((SKILL, WORKFLOW, EVAL_RUBRIC))
+    assert all(rule not in combined for rule in stale_global_prohibitions)
 
 
 def test_ui_metadata_does_not_advertise_parallel_agents() -> None:

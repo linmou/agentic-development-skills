@@ -6,7 +6,7 @@ Preserve the complete phase rules and evidence contracts behind the concise cont
 
 ## Start Gate
 
-The authoritative start gate is the first section of `../SKILL.md`. Execute it immediately after saving the request map; do not interleave test or production edits, test runs, or write-capable actions beyond the named gate artifacts and their monitor-required corrections. The monitor approves the proposed pre-Red state before the main agent publishes its immutable snapshot. The sections below define the artifacts checked by that gate and the phases it unlocks.
+The authoritative activation boundary and start gate are in the first sections of `../SKILL.md`. The monitor approves the proposed pre-Red state before the main agent publishes its immutable snapshot. The sections below define the artifacts checked by that gate and the phases it unlocks.
 
 ## Overview
 
@@ -33,18 +33,18 @@ Do not use this skill when:
 
 ## Core Rules
 
-- Requirements come before methodology. Do not select TDD scope, test level, agents, or audit mode until the requirement re-check passes.
+- Requirements come before methodology. Select TDD scope, test level, TDD roles, and audit mode only after the requirement re-check passes.
 - When a new user requirement changes the active slice's behavior or invalidates an existing test, stop the current phase, mark the old requirement as superseded, and tell the user about the conflict to confirm that the change reflects their intent.
 - Treat the conflicting instruction as a proposed replacement, not as its own confirmation; resume only after a later user reply explicitly confirms the replacement.
 - The definition of done must name the user-visible outcome, must-exist artifacts, acceptance evidence, exclusions, and resource constraints.
-- TDD owns only executable behavior. Keep non-code workstreams outside TDD phases; do not postpone a required skill, rubric, dataset, or result merely because code is unfinished.
+- TDD owns only executable behavior after activation. Run prerequisite workflows to their implementation handoff, then preserve their evidence while TDD owns permanent tests and production changes. Keep non-code workstreams outside TDD phases; do not postpone a required skill, rubric, dataset, or result merely because code is unfinished.
 - The first slice must be the smallest end-to-end usable behavior, not an isolated lower-level engine that leaves the requested artifact unusable.
 - Red owns test specification changes. Green and production Refactor do not edit tests. Test Refactor may reorganize tests only after the cumulative production Refactor audit; if behavior, an oracle, or a boundary must change, go back to Red.
-- Red is locked by the pre-Red monitor gate defined below; without its pass, stop before editing tests.
+- After activation, Red is locked by the pre-Red monitor gate defined below; its pass unlocks the permanent regression-test edit.
 - Update docs relevant to the code change only after Red, Green, regression, production Refactor, and Test Refactor are complete. Do not mix docs into either refactor phase.
 - The main agent owns the critical path and the implementation work.
 - A dedicated monitor agent never edits files. It checks phase scope, records violations, and blocks phase completion if boundaries were crossed.
-- Do not delegate parallel workers for implementation, exploration, or test drafting. Extra workers here create chaos rather than speed.
+- Keep implementation and Red test drafting for the active TDD slice with the main agent. A prerequisite workflow retains its own exploration orchestration until the activation handoff.
 - Red always ends with a mandatory `$review-with-multi-debate` audit. On the full route, cumulative production Refactor and Test Refactor do too.
 - Each delegated reviewer owns its audit output: it writes exactly one correctly named reviewer JSON for the assigned phase and iteration. A parent or monitor must not transcribe reviewer messages into JSON; chat-only verdicts are not audit artifacts.
 - Reviewer independence comes from distinct stable identities, assigned roles, isolated review prompts, and reviewer-owned output, not from simultaneous execution. Schedule reviewer work within the available concurrency or capacity limit and run reviewers serially when only one reviewer slot is available.
@@ -83,14 +83,14 @@ Use work types such as `executable`, `guidance`, `rubric`, `data`, `research`, a
 5. Mark executable rows for TDD. Keep all other rows outside this skill's phases.
 6. Choose the smallest vertical executable slice that advances the user-visible outcome. Reject a lower-level slice that cannot be used without several still-missing primary artifacts.
 7. Select the resource ceiling for the mandatory Red, cumulative production Refactor, and Test Refactor debates; preserve any tighter human limit.
-8. Classify the slice as `compact` or `full` before any snapshot or test edit. `compact` requires bounded, deterministic, local CLI, process, or filesystem behavior, including config-driven materialization, with no network, GPU, concurrency, nondeterminism, external service, unrelated persistent side effect, or other high-risk behavior. Any uncertainty selects `full`.
+8. Classify the slice as `compact` or `full` before any TDD snapshot or formal Red test edit. `compact` requires bounded, deterministic, local CLI, process, or filesystem behavior, including config-driven materialization, with no network, GPU, concurrency, nondeterminism, external service, unrelated persistent side effect, or other high-risk behavior. Any uncertainty selects `full`.
 9. Preflight the planned changed paths against [phase_contracts.md](phase_contracts.md). Resolve path-classification collisions before Red. If a runtime file sits under a lexically test-like path, obtain and record a human semantic classification or relocate it before editing.
 
 Ask at most one concise clarification only when different answers would materially change the deliverable. If no executable behavior remains after classification, stop using this skill and continue with the appropriate non-TDD workflow.
 
 ### 1. Request Map
 
-Before writing tests or code:
+Before writing permanent tests or production code:
 
 - treat this saved request map as the compact Scope & Evidence Plan: accepted scope stays authoritative, while discovered evidence may strengthen proof without adding product behavior
 
@@ -116,9 +116,9 @@ Before writing tests or code:
 - derive a short `feature_name` for audit files
 - declare `route: compact|full` and list the concrete eligibility or exclusion reasons from Requirement Re-check
 
-Before any Red edit, save the request-map artifact as `audits/<feature_name>_request_map.md` for the later Red and Refactor audits. A missing map blocks Red and must not be reconstructed after tests exist. Do not run `$review-with-multi-debate` for request-map by default.
+Before any formal Red edit, save the request-map artifact as `audits/<feature_name>_request_map.md` for the later Red and Refactor audits. A missing map blocks Red and must not be reconstructed after formal Red begins. Do not run `$review-with-multi-debate` for request-map by default.
 
-After saving the map, resolve and invoke an available authorized delegation mechanism for the dedicated monitor. Give it the map path and [phase_contracts.md](phase_contracts.md), and retain the stable identity returned by the backend. Do not create a snapshot or edit tests until an independent monitor is running. If one interface is unavailable, try another mechanism already exposed by the environment; stop only when none can satisfy the role contract.
+After saving the map, resolve and invoke an available authorized delegation mechanism for the dedicated monitor. Give it the map path and [phase_contracts.md](phase_contracts.md), and retain the stable identity returned by the backend. Create the snapshot and begin the formal Red test only after the independent monitor is running. If one interface is unavailable, try another mechanism already exposed by the environment; stop only when none can satisfy the role contract.
 
 Write `audits/<feature>_role_receipt.json` only from the actual delegation result. It records schema `2`, the exact feature, the request-map route, the returned opaque monitor identity, and a nonempty `monitor_source` naming the mechanism used. Do not infer identity format from a provider or filesystem layout.
 
@@ -134,7 +134,7 @@ python scripts/tdd_snapshot.py create --feature <feature> --phase pre_red --role
 
 Snapshots capture tracked changes and non-ignored untracked files using normal Git ignore rules. Before entering the phase, verify that the ref contains the required request map, scope, receipt, and audit evidence. Keep those files non-ignored. Ignored environments, caches, and results are excluded; a required ignored artifact needs an explicitly authorized ignore-rule exception for that file, never a global force-add. See the coverage boundary in [phase_contracts.md](phase_contracts.md).
 
-Do not edit a test until both the monitor pass and snapshot publication succeed.
+The monitor pass and snapshot publication unlock the formal Red test edit.
 
 At every later phase transition, write the next scope artifact first, then capture the current worktree with `scripts/tdd_snapshot.py` so the immutable baseline contains that exact artifact. Decide the next phase's protected paths and semantic overrides, write `audits/<feature>_<phase>_scope.json`, and record the baseline ref and commit in the phase artifact. Name the Red-exit/pre-Green snapshot `pre_green`; name later snapshots `pre_<next-phase>`. Every create passes `--roles`. From `pre_green` onward, first add the distinct stable Red reviewer identities and the actual nonempty `reviewer_source` delegation mechanism to the receipt, then pass the latest accepted Red provenance artifact and matching iteration through `--provenance ... --review-iteration <M>`. Snapshot creation rejects stale iterations and re-hashes the staged receipt, provenance, and every bound audit before publishing. A missing, stale, rejected, or failed receipt/provenance/snapshot keeps the next phase locked; only the bounded non-publishing corrections above may be retried. Production phases may leave `editable` out; Test Refactor and Documentation must provide an explicit `editable` list.
 

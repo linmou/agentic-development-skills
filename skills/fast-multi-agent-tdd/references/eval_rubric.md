@@ -25,6 +25,8 @@ For non-trigger evals, check:
 Each positive eval should check these dimensions where relevant:
 
 - a requirement re-check defines the complete user-visible outcome before selecting a methodology
+- prerequisite diagnosis may run its feedback loop before TDD activation, accounts for its worktree changes at handoff, and leaves permanent regression-test and production edits to the activated TDD phases
+- a prerequisite diagnostic command is rerun against the original symptom after Green, prerequisite artifact cleanup resumes only after TDD closeout, and any resulting permanent correction starts a new TDD activation
 - mixed requests classify executable behavior separately from guidance, rubrics, data, research, and recorded results
 - TDD applies only to the executable rows in the requirement map
 - the first executable slice is the smallest vertical slice that contributes to the complete outcome
@@ -45,13 +47,13 @@ Each positive eval should check these dimensions where relevant:
 - Green uses a deterministic gate instead of a debate by default
 - Refactor hands off to `$review-with-multi-debate` with the cumulative production diff from pre-Green to post-Refactor
 - Test Refactor follows the converged production Refactor audit, edits only test-like paths, and hands off to `$review-with-multi-debate`
-- implementation ownership stays with one main agent rather than parallel workers
+- implementation ownership for the active TDD slice stays with one main agent rather than parallel workers
 
 ## Output Quality Dimensions
 
 Each positive eval should also check:
 
-- no parallel worker choreography is introduced
+- the active TDD slice introduces no parallel implementer or Red test-drafting choreography; prerequisite workflows retain their own orchestration
 - green stays minimal and avoids speculative abstractions
 - conflicting existing tests are handled explicitly
 - refactor does not become a second implementation phase
@@ -68,7 +70,8 @@ Each positive eval should also check:
 - treating an isolated helper or scoring engine as complete when the requested user-facing artifact is unusable
 - discovering a phase-path classification collision only after Red has started
 - testing a new filter predicate in isolation while omitting a compatible existing quota, ordering, or output control that materially changes selection
-- parallel workers being introduced for implementation, exploration, or test drafting
+- parallel implementers or Red test-drafting workers being introduced within the active TDD slice
+- using a prerequisite label to make a permanent regression-test or production edit before TDD activation
 - green or refactor mutating tests
 - skipping the full-suite regression check
 - vague Red or Refactor audit language with no explicit `$review-with-multi-debate` handoff
