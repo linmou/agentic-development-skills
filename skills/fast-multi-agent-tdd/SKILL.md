@@ -7,7 +7,7 @@ description: Use when the user explicitly wants executable feature or bug-fix be
 
 ## Stop: Mandatory Start Gate
 
-Before any test or production edit, test run, `apply_patch`, or exploration command that can generate files, enter this gate and complete its steps in order. While the gate is open, the only permitted writes are the request map, role receipt, required scope artifact, and `pre_red` snapshot:
+Before any test or production edit, `apply_patch`, enter this gate and complete its steps in order. While the gate is open, the only permitted writes are the request map, role receipt, required scope artifact, and `pre_red` snapshot:
 
 1. Save `audits/<feature>_request_map.md` with `route: compact|full` after the requirement re-check and path preflight.
 2. **Delegate the dedicated monitor through any available, authorized mechanism that gives it an independent context and returns a stable identity. Native worker tools, task APIs, MCP servers, and installed agent CLIs or APIs are all valid; no operation name is privileged. If a candidate is unavailable, inspect the interfaces exposed in the current environment and try another authorized delegation mechanism. The handoff must include the absolute request-map path, the absolute `references/phase_contracts.md` path, and the active project cwd.**
