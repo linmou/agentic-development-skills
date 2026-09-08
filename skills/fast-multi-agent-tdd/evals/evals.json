@@ -186,6 +186,21 @@
         "Workflow: Green is followed by one full regression, repository-required static checks, CLI materialization, and a direct audit that every selected row satisfies MS greater than every other demand domain.",
         "Quality: The plan does not add generic target-domain behavior or combine mutually exclusive `all_data` and strict-filter strategies."
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "Use $diagnosing-bugs to establish the cause of an intermittent token-expiry failure, then use $fast-multi-agent-tdd to fix it. Diagnosis needs repeated test runs, a retained non-collected repro harness, and temporary timing instrumentation. Keep the permanent regression test and production fix under strict TDD phase ownership.",
+      "expected_output": "A composed workflow that completes diagnostic evidence gathering before TDD activation, accounts for diagnostic-created worktree changes and clears temporary production instrumentation at the handoff, records the retained harness in the request map, and preserves strict Red-Green-Refactor ownership for permanent edits.",
+      "files": [],
+      "expectations": [
+        "Orchestration: Diagnosis may run repeated tests and use a non-collected repro harness before the TDD request map activates phase ownership.",
+        "Handoff: Every diagnostic-created worktree change is accounted for, temporary production instrumentation is absent at activation, and the retained diagnostic harness and evidence are recorded in the request map without treating the harness as formal Red.",
+        "Red: The permanent regression test is written only after the monitor pass and verified pre-Red snapshot, then run to prove the diagnosed symptom is genuinely red.",
+        "Green: The production fix occurs only after formal Red and is followed by the targeted diagnostic loop and required regression checks.",
+        "Closeout: The diagnostic workflow resumes after TDD only to clean its retained artifacts; any resulting permanent test or production correction requires a new TDD activation.",
+        "Quality: Prerequisite diagnosis does not become a loophole for permanent test or production edits before TDD activation.",
+        "Quality: The active TDD slice keeps implementation and Red test drafting with the main agent while allowing the diagnostic workflow to retain its own exploration orchestration before handoff."
+      ]
     }
   ]
 }
