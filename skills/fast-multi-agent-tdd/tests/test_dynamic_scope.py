@@ -111,14 +111,21 @@ def portable_role_receipt(
     return path
 
 
+def reviewer_audit_dir(repo: Path) -> Path:
+    path = repo / "audits"
+    path.mkdir(exist_ok=True)
+    return path
+
+
 def provenance_receipt(repo: Path, feature: str, roles: Path, *, iteration: int = 1) -> Path:
+    audit_dir = reviewer_audit_dir(repo)
     receipt = json.loads(roles.read_text())
     reviewer_ids = receipt.get("red_reviewer_agent_ids", [])
     if not isinstance(reviewer_ids, list):
         reviewer_ids = []
     reviewers: list[dict[str, object]] = []
     for index, reviewer_id in enumerate(reviewer_ids, start=1):
-        audit_path = repo / f"{feature}_red_audit{index}_iteration{iteration}.json"
+        audit_path = audit_dir / f"{feature}_red_audit{index}_iteration{iteration}.json"
         audit_path.write_text(json.dumps({"reviewer_agent_id": reviewer_id}))
         reviewers.append(
             {
@@ -150,9 +157,10 @@ def provenance_receipt(repo: Path, feature: str, roles: Path, *, iteration: int 
 
 
 def focused_provenance_receipt(repo: Path, feature: str, roles: Path) -> Path:
+    audit_dir = reviewer_audit_dir(repo)
     eligibility = repo / f"{feature}-focused-eligibility.json"
     eligibility.write_text(json.dumps({"decision": "focused_re_review"}))
-    focused_audit = repo / f"{feature}_red_focused_iteration2.json"
+    focused_audit = audit_dir / f"{feature}_red_focused_iteration2.json"
     focused_audit.write_text(json.dumps({"reviewer_agent_id": "agent:focused-reviewer"}))
     path = repo / f"{feature}-focused-gate.json"
     path.write_text(
@@ -648,13 +656,12 @@ def test_snapshot_and_guard_exclude_ignored_data_without_writing_blobs(
     assert git(repo, "rev-parse", "HEAD") == head_before
 
 
-@pytest.mark.parametrize("ignored_artifact", ["roles", "audit"])
-def test_snapshot_rejects_ignored_required_evidence(tmp_path: Path, ignored_artifact: str) -> None:
-    # tdd_snapshot.py: excluded provenance must fail closed without publishing a ref.
+def test_snapshot_rejects_ignored_role_receipt(tmp_path: Path) -> None:
+    # tdd_snapshot.py: required in-repository role evidence must fail closed when ignored.
     repo = init_repo(tmp_path)
     roles = role_receipt(repo, "ignored_evidence")
     provenance = provenance_receipt(repo, "ignored_evidence", roles)
-    ignored_name = roles.name if ignored_artifact == "roles" else "ignored_evidence_red_audit1_iteration1.json"
+    ignored_name = roles.name
     (repo / ".gitignore").write_text(ignored_name + "\n")
 
     result = run_snapshot_create(
@@ -889,9 +896,15 @@ def test_post_red_snapshot_accepts_current_receipt_bound_provenance(tmp_path: Pa
     assert result.returncode == 0, result.stdout + result.stderr
     assert json.loads(result.stdout)["ref"] == "refs/tdd/current_reviewers/pre_green"
     ref = json.loads(result.stdout)["ref"]
-    required = [roles, provenance, *repo.glob("current_reviewers_red_audit*.json")]
-    for artifact in required:
+    entries = git(repo, "ls-tree", "-r", "--name-only", ref).splitlines()
+    for artifact in (roles, provenance):
         assert json.loads(git(repo, "show", f"{ref}:{artifact.name}")) == json.loads(artifact.read_text())
+    assert roles.name in entries
+    assert provenance.name in entries
+    for reviewer in json.loads(provenance.read_text())["reviewers"]:
+        audit_path = Path(str(reviewer["audit_path"]))
+        assert audit_path.parent == (repo / "audits").resolve()
+        assert str(audit_path.relative_to(repo.resolve())) not in entries
 
 
 def test_post_red_snapshot_rejects_missing_provenance(tmp_path: Path) -> None:

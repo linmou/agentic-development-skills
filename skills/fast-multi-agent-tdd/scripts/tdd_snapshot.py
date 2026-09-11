@@ -128,6 +128,18 @@ def _staged_sha256(root: Path, path: Path, env: dict[str, str]) -> str:
     return hashlib.sha256(result.stdout).hexdigest()
 
 
+def _bound_sha256(
+    root: Path,
+    path: Path,
+    env: dict[str, str],
+    *,
+    reviewer_audit: bool,
+) -> str:
+    if reviewer_audit:
+        return _sha256(path, "reviewer audit")
+    return _staged_sha256(root, path, env)
+
+
 def _validate_provenance(
     path: Path,
     roles: Path,
@@ -363,7 +375,17 @@ def create_snapshot(
         if add.returncode != 0:
             raise SnapshotError(add.stderr.strip() or "unable to stage worktree in temporary index")
         for path, expected_hash in bound_hashes.items():
-            if _staged_sha256(root, path, env) != expected_hash:
+            reviewer_audit = path.name.startswith(f"{feature}_red_audit") or path.name == (
+                f"{feature}_red_focused_iteration2.json"
+            )
+            if reviewer_audit:
+                _, relative = _repo_file(root, path, "reviewer audit")
+                dropped = _run(root, ["update-index", "--force-remove", "--", relative], env=env)
+                if dropped.returncode != 0:
+                    raise SnapshotError(
+                        dropped.stderr.strip() or f"unable to keep reviewer audit out of the tree: {relative}"
+                    )
+            if _bound_sha256(root, path, env, reviewer_audit=reviewer_audit) != expected_hash:
                 raise SnapshotError(
                     f"provenance-bound file changed before snapshot publication: {path}"
                 )

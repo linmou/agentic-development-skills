@@ -167,6 +167,7 @@ def test_red_debate_requires_reviewer_owned_files_and_strict_transition() -> Non
     for document in (SKILL, WORKFLOW, PHASE_CONTRACTS):
         owned_contract = document[document.index("<!-- reviewer-owned-debate-artifacts -->") :]
         assert "exactly one" in owned_contract
+        assert "untracked and ignored" in owned_contract
         assert "chat-only" in owned_contract
         assert "provenance" in owned_contract
         assert "record_round" in owned_contract

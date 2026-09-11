@@ -118,6 +118,8 @@ Before writing permanent tests or production code:
 
 Before any formal Red edit, save the request-map artifact as `audits/<feature_name>_request_map.md` for the later Red and Refactor audits. A missing map blocks Red and must not be reconstructed after formal Red begins. Do not run `$review-with-multi-debate` for request-map by default.
 
+Before delegating reviewers, add a narrow Git-ignore rule covering only the reviewer-owned audit JSON files under `audits/`. Those files remain local working evidence; the repository retains the request map, scope, role receipt, provenance, eligibility, and transition artifacts.
+
 After saving the map, resolve and invoke an available authorized delegation mechanism for the dedicated monitor. Give it the map path and [phase_contracts.md](phase_contracts.md), and retain the stable identity returned by the backend. Create the snapshot and begin the formal Red test only after the independent monitor is running. If one interface is unavailable, try another mechanism already exposed by the environment; stop only when none can satisfy the role contract.
 
 Write `audits/<feature>_role_receipt.json` only from the actual delegation result. It records schema `2`, the exact feature, the request-map route, the returned opaque monitor identity, and a nonempty `monitor_source` naming the mechanism used. Do not infer identity format from a provider or filesystem layout.
@@ -132,11 +134,11 @@ Write the proposed Red scope with `baseline_ref: refs/tdd/<feature>/pre_red`. <!
 python scripts/tdd_snapshot.py create --feature <feature> --phase pre_red --roles audits/<feature>_role_receipt.json
 ```
 
-Snapshots capture tracked changes and non-ignored untracked files using normal Git ignore rules. Before entering the phase, verify that the ref contains the required request map, scope, receipt, and audit evidence. Keep those files non-ignored. Ignored environments, caches, and results are excluded; a required ignored artifact needs an explicitly authorized ignore-rule exception for that file, never a global force-add. See the coverage boundary in [phase_contracts.md](phase_contracts.md).
+Snapshots capture tracked changes and non-ignored untracked files using normal Git ignore rules. Before entering the phase, verify that the ref contains the required request map, scope, role receipt, provenance, and transition artifacts. Reviewer-owned audit JSON files stay under `audits/` and are never tracked: the loaded `review-with-multi-debate` skill keeps them out of Git, and this workflow never stages them or requires them in the snapshot. Their bytes are hash-checked from the working tree. Ignored environments, caches, and results are excluded; a required ignored in-repository artifact needs an explicitly authorized ignore-rule exception for that file, never a global force-add. See the coverage boundary in [phase_contracts.md](phase_contracts.md).
 
 The monitor pass and snapshot publication unlock the formal Red test edit.
 
-At every later phase transition, write the next scope artifact first, then capture the current worktree with `scripts/tdd_snapshot.py` so the immutable baseline contains that exact artifact. Decide the next phase's protected paths and semantic overrides, write `audits/<feature>_<phase>_scope.json`, and record the baseline ref and commit in the phase artifact. Name the Red-exit/pre-Green snapshot `pre_green`; name later snapshots `pre_<next-phase>`. Every create passes `--roles`. From `pre_green` onward, first add the distinct stable Red reviewer identities and the actual nonempty `reviewer_source` delegation mechanism to the receipt, then pass the latest accepted Red provenance artifact and matching iteration through `--provenance ... --review-iteration <M>`. Snapshot creation rejects stale iterations and re-hashes the staged receipt, provenance, and every bound audit before publishing. A missing, stale, rejected, or failed receipt/provenance/snapshot keeps the next phase locked; only the bounded non-publishing corrections above may be retried. Production phases may leave `editable` out; Test Refactor and Documentation must provide an explicit `editable` list.
+At every later phase transition, write the next scope artifact first, then capture the current worktree with `scripts/tdd_snapshot.py` so the immutable baseline contains that exact artifact. Decide the next phase's protected paths and semantic overrides, write `audits/<feature>_<phase>_scope.json`, and record the baseline ref and commit in the phase artifact. Name the Red-exit/pre-Green snapshot `pre_green`; name later snapshots `pre_<next-phase>`. Every create passes `--roles`. From `pre_green` onward, first add the distinct stable Red reviewer identities and the actual nonempty `reviewer_source` delegation mechanism to the receipt, then pass the latest accepted Red provenance artifact and matching iteration through `--provenance ... --review-iteration <M>`. Snapshot creation rejects stale iterations, re-hashes the staged receipt and in-repository provenance artifacts, and re-hashes the live ignored reviewer audits before publishing; reviewer audit contents are never staged. A missing, stale, rejected, or failed receipt/provenance/snapshot keeps the next phase locked; only the bounded non-publishing corrections above may be retried. Production phases may leave `editable` out; Test Refactor and Documentation must provide an explicit `editable` list.
 
 <!-- post-red-numbered-rounds-only --> A request-map or test correction required by a completed Red review starts a subsequent Red round. Before any corrected test edit, update the map and Red scope, obtain a fresh monitor gate, retain the actual prior Red reviewer IDs in the receipt, and create the next append-only baseline:
 
@@ -165,7 +167,7 @@ python scripts/tdd_snapshot.py run -- python -m pytest <pytest-args>
 
 The runner disables pytest's cache provider and Python bytecode writes before the child starts, preserves the child exit status and output, and never deletes cache paths.
 
-The guard authenticates the scope artifact against the same repository-relative path in `baseline_ref` before evaluating changes. It fails closed when the artifact is edited, deleted, malformed, outside the repository, reached through a symlink, missing from the baseline, or paired with conflicting semantic overrides. Change discovery includes tracked, renamed, deleted, and non-ignored untracked paths using NUL-safe Git records. Ignored untracked files are outside the guard's coverage; required phase files must be tracked in the baseline or non-ignored. Protected paths always take precedence over editable paths, and matching patterns are exact paths or terminal `/**` only.
+The guard authenticates the scope artifact against the same repository-relative path in `baseline_ref` before evaluating changes. It fails closed when the artifact is edited, deleted, malformed, outside the repository, reached through a symlink, missing from the baseline, or paired with conflicting semantic overrides. Change discovery includes tracked, renamed, deleted, and non-ignored untracked paths using NUL-safe Git records. Ignored untracked files, including reviewer audit files, are outside the guard's coverage; required in-repository phase files must be tracked in the baseline or non-ignored. Protected paths always take precedence over editable paths, and matching patterns are exact paths or terminal `/**` only.
 
 The `pre_green` Red-exit snapshot is the pre-Green production baseline. `tdd_snapshot.py replay`
 runs the original Red command in a detached worktree at that ref and
@@ -385,7 +387,7 @@ Each debate artifact must record every actual independent reviewer identity and 
 
 The local gates verify consistency and unchanged bytes; they cannot authenticate every possible backend. Preserve the actual delegation return as run evidence. A matching self-authored identity/source string is not proof that delegation occurred.
 
-<!-- reviewer-owned-debate-artifacts --> For the initial iteration, and for every normal follow-up iteration `M`, assign the three independently delegated reviewers `audit1`, `audit2`, and `audit3`. Each reviewer must itself write exactly one file and no other reviewer file:
+<!-- reviewer-owned-debate-artifacts --> For the initial iteration, and for every normal follow-up iteration `M`, assign the three independently delegated reviewers `audit1`, `audit2`, and `audit3`. Each reviewer must itself write exactly one file and no other reviewer file; all reviewer-owned audit JSON files must remain untracked and ignored:
 
 - `audits/<feature>_<phase>_audit1_iterationM.json`
 - `audits/<feature>_<phase>_audit2_iterationM.json`
@@ -447,7 +449,7 @@ python <review-skill-dir>/scripts/validate_audit_transition.py advance_phase \
 
 Do not create the next-phase scope or snapshot before `advance_phase` passes. If a blocking criterion does not converge, iteration `M + 1` keeps all three reviewer identities and writes three new correctly named files that address only the disputed criteria; repeat `record_round`, aggregation, inspection, and `advance_phase`. Never overwrite or reuse a prior iteration file. Stop at the debate skill's hard limit rather than forcing consensus.
 
-After `advance_phase` passes, provide the unchanged provenance output to the next `tdd_snapshot.py create` with `--provenance ... --review-iteration <M>`; snapshot publication verifies that this is the latest recorded iteration, re-hashes the staged receipt/provenance/audits, and rejects any intervening mutation.
+After `advance_phase` passes, provide the unchanged provenance output to the next `tdd_snapshot.py create` with `--provenance ... --review-iteration <M>`; snapshot publication verifies that this is the latest recorded iteration, re-hashes the staged in-repository receipt/provenance artifacts and the live ignored reviewer audits, and rejects any intervening mutation.
 
 <!-- risk-scaled-focused-red-review -->
 ### Compact Low-Risk Focused Red Review
@@ -491,7 +493,7 @@ python scripts/tdd_snapshot.py create \
   --review-iteration 2
 ```
 
-Snapshot publication re-hashes the staged initial receipt/audits/provenance and the focused eligibility/audit/gate artifacts. Without `--focused-provenance`, iteration 2 must use the normal three-reviewer provenance shape.
+Snapshot publication re-hashes the staged initial receipt, provenance, eligibility, and gate artifacts plus the live ignored reviewer audits. Without `--focused-provenance`, iteration 2 must use the normal three-reviewer provenance shape.
 
 Mandatory debate phases:
 
