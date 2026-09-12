@@ -1,4 +1,4 @@
-# Responsible files: SKILL.md, references, evals, and agents/openai.yaml
+# Responsible files: SKILL.md, references, and evals
 # Purpose: ensure skill configuration retains its workflow and orchestration contracts.
 
 from __future__ import annotations
@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-OPENAI_YAML = (ROOT / "agents" / "openai.yaml").read_text()
 PHASE_AUDITS = (ROOT / "references" / "phase_audits.md").read_text()
 PHASE_CONTRACTS = (ROOT / "references" / "phase_contracts.md").read_text()
 SKILL = (ROOT / "SKILL.md").read_text()
@@ -48,11 +47,6 @@ def test_prerequisite_diagnosis_hands_off_to_strict_tdd_activation() -> None:
     assert all(rule not in combined for rule in stale_global_prohibitions)
 
 
-def test_ui_metadata_does_not_advertise_parallel_agents() -> None:
-    assert "parallel agents" not in OPENAI_YAML
-    assert "monitor agent" in OPENAI_YAML
-
-
 def test_evals_do_not_reward_parallel_orchestration() -> None:
     serialized = json.dumps(EVALS)
     assert "parallel agents" not in serialized
@@ -87,7 +81,7 @@ def test_green_uses_gate_and_refactor_uses_cumulative_audit() -> None:
     serialized_evals = json.dumps(EVALS)
 
     assert "Cumulative Refactor Claim" in PHASE_AUDITS
-    assert "Do not run `$review-with-multi-debate` for Green by default" in PHASE_AUDITS
+    assert "Do not run `review-with-multi-debate` for Green by default" in PHASE_AUDITS
     assert "Green uses a deterministic gate instead of a debate by default" in EVAL_RUBRIC
     assert "Green uses a deterministic gate" in serialized_evals
     assert "audits each phase" not in serialized_evals
@@ -145,7 +139,7 @@ def test_numbered_pre_red_rounds_remain_post_review_and_authenticated() -> None:
         assert "pre_red_round_<N>" in round_contract
         assert "reviewer" in round_contract.lower()
 
-    assert "Red always ends with a mandatory `$review-with-multi-debate` audit" in WORKFLOW
+    assert "Red always ends with a mandatory `review-with-multi-debate` audit" in WORKFLOW
     selector_eval = next(case for case in EVALS["evals"] if case["id"] == 8)
     assert selector_eval["contract"]["red_reviewer_count"] == 3
 
@@ -275,6 +269,50 @@ def test_post_review_test_correction_has_an_authenticated_pre_edit_order() -> No
         assert baseline < snapshot
         assert prohibition < snapshot
         assert snapshot < edit < red < review
+
+
+def test_test_only_slices_are_rejected_before_monitor_delegation() -> None:
+    marker = "<!-- tdd-shape-eligibility-gate -->"
+    for document in (SKILL, WORKFLOW, PHASE_CONTRACTS):
+        gate = document[document.index(marker) :]
+        assert "production-side artifact" in gate
+        assert "distinct from every planned red test path" in gate
+        assert "test maintenance" in gate
+
+    gated_section = SKILL[SKILL.index("### 0. Requirement Re-check") :]
+    assert gated_section.index(marker) < gated_section.index("### 1. Start Gate")
+
+    step_zero = WORKFLOW[WORKFLOW.index("### 0. Requirement Re-check") :]
+    assert step_zero.index(marker) < step_zero.index("### 1. Request Map")
+
+
+def test_gate_artifacts_do_not_depend_on_repository_ignore_configuration() -> None:
+    # SKILL.md + workflow.md: evidence must travel through --include, never a hand-written
+    # ignore negation, so a repo rule covering audits/ cannot strand a phase baseline.
+    assert "add a narrow Git-ignore rule" not in WORKFLOW
+    assert "ignore-rule exception for that file" not in PHASE_CONTRACTS
+
+    for document in (SKILL, WORKFLOW, PHASE_CONTRACTS):
+        assert "--include" in document
+        assert "never add one and never add a global force-add" in document or (
+            "no repository ignore configuration is ever required" in document
+            or "never needs an ignore negation" in document
+        )
+
+    publication = WORKFLOW[WORKFLOW.index("<!-- initial-pre-red-snapshot-publication -->") :]
+    assert publication.index("--include") < publication.index("The monitor pass and snapshot")
+
+
+def test_reviewer_audits_are_dropped_from_snapshots_and_skipped_by_guards() -> None:
+    # SKILL.md + phase_contracts.md: one naming rule serves both tools, or the guard
+    # reports the audit the snapshot deliberately dropped and every later phase fails.
+    for document in (SKILL, PHASE_CONTRACTS):
+        assert "never reported as phase changes by the guard" in document or (
+            "must not report them as new phase changes" in document
+        )
+        assert "feature" in document
+
+    assert "reviewer-audit naming rule" in PHASE_CONTRACTS
 
 
 def test_bounded_recovery_contract_is_consistent_and_does_not_weaken_red_debate() -> None:

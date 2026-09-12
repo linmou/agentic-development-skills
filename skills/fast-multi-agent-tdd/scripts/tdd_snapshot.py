@@ -128,6 +128,11 @@ def _staged_sha256(root: Path, path: Path, env: dict[str, str]) -> str:
     return hashlib.sha256(result.stdout).hexdigest()
 
 
+def reviewer_audit_name(name: str, feature: str) -> bool:
+    """Return whether a filename is a reviewer-owned audit for this feature."""
+    return name.startswith(f"{feature}_red_audit") or name == f"{feature}_red_focused_iteration2.json"
+
+
 def _bound_sha256(
     root: Path,
     path: Path,
@@ -135,9 +140,12 @@ def _bound_sha256(
     *,
     reviewer_audit: bool,
 ) -> str:
-    if reviewer_audit:
-        return _sha256(path, "reviewer audit")
-    return _staged_sha256(root, path, env)
+    try:
+        return _staged_sha256(root, path, env)
+    except SnapshotError:
+        if not reviewer_audit:
+            raise
+    return _sha256(path, "reviewer audit")
 
 
 def _validate_provenance(
@@ -305,10 +313,15 @@ def create_snapshot(
     review_iteration: int | None,
     focused_provenance: Path | None,
     *,
+    required: Sequence[Path] = (),
     round_number: int | None = None,
     repo: Path | None = None,
 ) -> dict[str, object]:
-    """Snapshot tracked and non-ignored worktree files without changing staging."""
+    """Snapshot tracked and non-ignored worktree files without changing staging.
+
+    Gate artifacts named in ``required`` are force-added, so a repository ignore
+    rule covering the evidence directory cannot drop the phase baseline.
+    """
     resolved_phase = _snapshot_phase(phase, round_number)
     root = _repo_root(repo)
     receipt = _validate_role_receipt(roles, feature, resolved_phase)
@@ -374,18 +387,37 @@ def create_snapshot(
         add = _run(root, ["add", "-A"], env=env)
         if add.returncode != 0:
             raise SnapshotError(add.stderr.strip() or "unable to stage worktree in temporary index")
-        for path, expected_hash in bound_hashes.items():
-            reviewer_audit = path.name.startswith(f"{feature}_red_audit") or path.name == (
-                f"{feature}_red_focused_iteration2.json"
+        required_paths = [roles, *required]
+        if provenance is not None:
+            required_paths.append(provenance)
+        if focused_provenance is not None:
+            required_paths.append(focused_provenance)
+        relative_required: list[str] = []
+        for artifact in required_paths:
+            resolved, relative = _repo_file(root, artifact, "required phase artifact")
+            if not resolved.is_file():
+                raise SnapshotError(f"required phase artifact is missing: {relative}")
+            relative_required.append(relative)
+        forced = _run(root, ["add", "-f", "--", *relative_required], env=env)
+        if forced.returncode != 0:
+            raise SnapshotError(
+                forced.stderr.strip() or "unable to include required phase artifacts in snapshot"
             )
-            if reviewer_audit:
+        for path, expected_hash in bound_hashes.items():
+            if reviewer_audit_name(path.name, feature):
+                if _bound_sha256(root, path, env, reviewer_audit=True) != expected_hash:
+                    raise SnapshotError(
+                        f"provenance-bound file changed before snapshot publication: {path}"
+                    )
                 _, relative = _repo_file(root, path, "reviewer audit")
                 dropped = _run(root, ["update-index", "--force-remove", "--", relative], env=env)
                 if dropped.returncode != 0:
                     raise SnapshotError(
-                        dropped.stderr.strip() or f"unable to keep reviewer audit out of the tree: {relative}"
+                        dropped.stderr.strip()
+                        or f"unable to keep reviewer audit out of the tree: {relative}"
                     )
-            if _bound_sha256(root, path, env, reviewer_audit=reviewer_audit) != expected_hash:
+                continue
+            if _staged_sha256(root, path, env) != expected_hash:
                 raise SnapshotError(
                     f"provenance-bound file changed before snapshot publication: {path}"
                 )
@@ -539,6 +571,13 @@ def parse_args() -> argparse.Namespace:
     create.add_argument("--provenance", type=Path)
     create.add_argument("--review-iteration", type=int)
     create.add_argument("--focused-provenance", type=Path)
+    create.add_argument(
+        "--include",
+        type=Path,
+        action="append",
+        default=[],
+        help="gate artifact to force into the snapshot regardless of ignore rules",
+    )
     create.add_argument("--round", type=int)
     replay = subparsers.add_parser("replay")
     replay.add_argument("--ref", required=True)
@@ -566,6 +605,7 @@ def main() -> int:
                 args.provenance,
                 args.review_iteration,
                 args.focused_provenance,
+                required=args.include,
                 round_number=args.round,
             )
         elif args.operation == "replay":

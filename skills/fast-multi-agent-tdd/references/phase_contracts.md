@@ -7,6 +7,7 @@ Define the smallest enforceable phase boundaries for `fast-multi-agent-tdd`.
 Requirement re-check, mixed-work classification, and path preflight happen before phase ownership begins.
 
 - Classify each requirement as executable, guidance, rubric, data, research, or result work.
+- <!-- tdd-shape-eligibility-gate --> Admit a slice to TDD only when red has a test-like artifact to edit and Green has a production-side artifact to change that is distinct from every planned red test path. A slice whose entire delta is a test, feature file, fixture, snapshot, or other test-like artifact, or whose fix is the test's own data or expectation, has no red-to-green transition to own; keep it as ordinary test maintenance outside this skill rather than opening the start gate.
 - Put only executable behavior under Red-Green-Refactor.
 - Keep required non-code artifacts outside TDD phases; do not use TDD ordering to delay them.
 - Record planned paths and semantic roles before Red.
@@ -56,19 +57,27 @@ both sides of renames, deleted paths, and non-ignored untracked files using
 NUL-safe Git diff records.
 
 Snapshots and guards respect Git ignore rules, including repository-local and
-global excludes; they must never force-add ignored directories. Files already
+global excludes, for ordinary code and data. The gate artifacts named by
+`--roles`, `--provenance`, and `--include` are force-added into the temporary
+snapshot index, so evidence survives an ignore rule that covers its directory and
+no repository ignore configuration is ever required for a phase baseline; the
+temporary index is discarded and the real index is untouched. Confirm inclusion
+by reading the published ref, not by inspecting ignore rules. Files already
 tracked in the baseline remain captured and enforced even if an ignore rule
-matches them. Ignored untracked files are outside snapshot and guard coverage.
-Keep required code, tests, scope, request maps, role receipts, provenance, and
-transition artifacts non-ignored; verify their inclusion in the baseline before
-entering the phase. Reviewer-owned audit JSON files are the exception: keep them
-untracked and hash their working-tree bytes for provenance. The loaded
-`review-with-multi-debate` skill keeps them out of Git; this workflow never
-stages them, and their contents stay out of Git snapshots and guard coverage.
-If another ignored artifact is required, use an explicitly authorized narrow
-ignore-rule exception for that file; never override ignores for the whole worktree.
-Missing receipt or provenance bytes reject snapshot publication; a missing scope
-copy rejects the guard.
+matches them. Ignored untracked files that were not named stay outside snapshot
+and guard coverage. Reviewer-owned audit JSON files are the exception: keep them
+untracked, drop them from the snapshot tree, and hash their working-tree bytes
+for provenance whether or not Git excludes them. The loaded
+`review-with-multi-debate` skill keeps reviewer audits out of Git, so this
+workflow never requires them in a snapshot. Because the published tree omits
+them, the guard must not report them as new phase changes, or every phase after
+the review fails closed on evidence it dropped itself; both tools therefore share
+one reviewer-audit naming rule, and the scope artifact's `feature` must match the
+role receipt for that rule to apply.
+Name every gate artifact in the create command instead of relying on it being
+visible to Git.
+Missing receipt or provenance bytes reject snapshot publication; a missing named
+artifact rejects publication; a missing scope copy rejects the guard.
 
 Overlapping semantic override patterns with different classifications are
 conflicts; exact paths and terminal `/**` are the only supported pattern forms.

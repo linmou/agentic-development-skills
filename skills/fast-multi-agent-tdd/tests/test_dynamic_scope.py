@@ -209,8 +209,11 @@ def run_snapshot_create(
     provenance: Path | None = None,
     review_iteration: int | None = None,
     focused_provenance: Path | None = None,
+    include: list[Path] | None = None,
 ) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, str(SNAPSHOT), "create", "--feature", feature, "--phase", phase]
+    for artifact in include or []:
+        command.extend(["--include", str(artifact)])
     if roles is not None:
         command.extend(["--roles", str(roles)])
         if provenance is not None:
@@ -631,7 +634,9 @@ def test_snapshot_and_guard_exclude_ignored_data_without_writing_blobs(
     index_before = index_file.read_bytes()
     head_before = git(repo, "rev-parse", "HEAD")
 
-    created = run_snapshot_create(repo, "ignore_data", "pre_red", roles=roles)
+    created = run_snapshot_create(
+        repo, "ignore_data", "pre_red", roles=roles, include=[scope, request_map],
+    )
 
     assert created.returncode == 0, created.stdout + created.stderr
     ref = json.loads(created.stdout)["ref"]
@@ -656,23 +661,73 @@ def test_snapshot_and_guard_exclude_ignored_data_without_writing_blobs(
     assert git(repo, "rev-parse", "HEAD") == head_before
 
 
-def test_snapshot_rejects_ignored_role_receipt(tmp_path: Path) -> None:
-    # tdd_snapshot.py: required in-repository role evidence must fail closed when ignored.
+def test_snapshot_includes_ignored_gate_artifacts_without_repo_ignore_configuration(
+    tmp_path: Path,
+) -> None:
+    # tdd_snapshot.py + phase_guard.py: a repo ignore rule covering audits/ must not
+    # require hand-written .git/info/exclude negations for the phase baseline.
     repo = init_repo(tmp_path)
-    roles = role_receipt(repo, "ignored_evidence")
-    provenance = provenance_receipt(repo, "ignored_evidence", roles)
-    ignored_name = roles.name
-    (repo / ".gitignore").write_text(ignored_name + "\n")
+    (repo / ".gitignore").write_text("audits/*\nresults/\n")
+    git(repo, "add", ".gitignore")
+    git(repo, "commit", "-qm", "ignore audit evidence")
+    audits = repo / "audits"
+    audits.mkdir()
+    request_map = audits / "ignored_evidence_request_map.md"
+    request_map.write_text("Required request evidence\n")
+    roles = audits / "ignored_evidence_role_receipt.json"
+    roles.write_text(json.dumps({
+        "schema": 2,
+        "feature": "ignored_evidence",
+        "route": "compact",
+        "monitor_agent_id": "agent:monitor",
+        "monitor_source": "test.delegate",
+    }))
+    scope = audits / "ignored_evidence_scope_red.json"
+    scope.write_text(json.dumps({
+        "schema": 1,
+        "feature": "ignored_evidence",
+        "phase": "red",
+        "baseline_ref": "refs/tdd/ignored_evidence/pre_red",
+        "protected": ["tests/**", "docs/**"],
+        "editable": [],
+        "semantic_overrides": {},
+    }))
+    unrelated = repo / "results" / "sentinel"
+    unrelated.parent.mkdir()
+    unrelated.write_text("ignored payload\n")
 
     result = run_snapshot_create(
-        repo, "ignored_evidence", "pre_green", roles=roles,
-        auto_provenance=False, provenance=provenance,
+        repo, "ignored_evidence", "pre_red", roles=roles, include=[request_map, scope],
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    ref = json.loads(result.stdout)["ref"]
+    for artifact in (roles, request_map, scope):
+        relative = artifact.relative_to(repo).as_posix()
+        assert git(repo, "show", f"{ref}:{relative}") == artifact.read_text().strip()
+    assert unrelated.relative_to(repo).as_posix() not in git(
+        repo, "ls-tree", "-r", "--name-only", ref,
+    ).splitlines()
+    guarded = run_guard(repo, "red", scope)
+    assert guarded.returncode == 0, guarded.stdout + guarded.stderr
+    assert json.loads(guarded.stdout)["changed_paths"] == []
+    assert git(repo, "status", "--porcelain=v1") == ""
+
+
+def test_snapshot_rejects_missing_required_gate_artifact(tmp_path: Path) -> None:
+    # tdd_snapshot.py: a named gate artifact must exist before the baseline is published.
+    repo = init_repo(tmp_path)
+    roles = role_receipt(repo, "missing_artifact")
+
+    result = run_snapshot_create(
+        repo, "missing_artifact", "pre_red", roles=roles,
+        include=[repo / "audits" / "missing_artifact_scope_red.json"],
     )
 
     assert result.returncode == 1
-    assert f"provenance-bound file is absent from the snapshot: {ignored_name}" in result.stdout
+    assert "required phase artifact is missing" in result.stdout
     assert subprocess.run(
-        ["git", "show-ref", "--verify", "refs/tdd/ignored_evidence/pre_green"],
+        ["git", "show-ref", "--verify", "refs/tdd/missing_artifact/pre_red"],
         cwd=repo, capture_output=True, check=False,
     ).returncode != 0
 
@@ -883,6 +938,8 @@ def test_post_red_snapshot_accepts_current_receipt_bound_provenance(tmp_path: Pa
     repo = init_repo(tmp_path)
     roles = portable_role_receipt(repo, "current_reviewers", include_reviewers=True)
     provenance = provenance_receipt(repo, "current_reviewers", roles)
+    # Documented configuration: the review skill keeps reviewer audits out of Git.
+    (repo / ".git" / "info" / "exclude").write_text("/audits/\n")
 
     result = run_snapshot_create(
         repo,
@@ -905,6 +962,73 @@ def test_post_red_snapshot_accepts_current_receipt_bound_provenance(tmp_path: Pa
         audit_path = Path(str(reviewer["audit_path"]))
         assert audit_path.parent == (repo / "audits").resolve()
         assert str(audit_path.relative_to(repo.resolve())) not in entries
+
+
+def test_non_ignored_reviewer_audits_stay_out_of_the_baseline_without_failing_guards(
+    tmp_path: Path,
+) -> None:
+    # tdd_snapshot.py + phase_guard.py: a bound reviewer audit that Git does not exclude must be
+    # dropped from the published tree, and the next guard must not then report it as a new
+    # out-of-scope file. Dropping it without the guard rule is what stranded the phase.
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "guard_audits", include_reviewers=True)
+    provenance = provenance_receipt(repo, "guard_audits", roles)
+    scope = scope_file(
+        repo, commit=False, phase="red", feature="guard_audits",
+        baseline_ref="refs/tdd/guard_audits/pre_red_round_2",
+    )
+
+    created = run_snapshot_create(
+        repo,
+        "guard_audits",
+        "pre_red",
+        roles=roles,
+        round_number=2,
+        auto_provenance=False,
+        provenance=provenance,
+    )
+
+    assert created.returncode == 0, created.stdout + created.stderr
+    entries = git(repo, "ls-tree", "-r", "--name-only", json.loads(created.stdout)["ref"]).splitlines()
+    for reviewer in json.loads(provenance.read_text())["reviewers"]:
+        relative = Path(str(reviewer["audit_path"])).relative_to(repo.resolve()).as_posix()
+        assert relative not in entries
+
+    guarded = run_guard(repo, "red", scope)
+
+    assert guarded.returncode == 0, guarded.stdout + guarded.stderr
+    payload = json.loads(guarded.stdout)
+    assert payload["status"] == "pass"
+    assert payload["changed_paths"] == []
+
+
+def test_guard_still_reports_a_real_change_beside_a_reviewer_audit(tmp_path: Path) -> None:
+    # phase_guard.py: skipping reviewer audits must not blind the guard to production edits.
+    repo = init_repo(tmp_path)
+    roles = portable_role_receipt(repo, "guard_audits", include_reviewers=True)
+    provenance = provenance_receipt(repo, "guard_audits", roles)
+    scope = scope_file(
+        repo, commit=False, phase="red", feature="guard_audits",
+        baseline_ref="refs/tdd/guard_audits/pre_red_round_2",
+    )
+    created = run_snapshot_create(
+        repo,
+        "guard_audits",
+        "pre_red",
+        roles=roles,
+        round_number=2,
+        auto_provenance=False,
+        provenance=provenance,
+    )
+    assert created.returncode == 0, created.stdout + created.stderr
+    (repo / "src" / "app.py").write_text("value = 2\n")
+
+    guarded = run_guard(repo, "red", scope)
+
+    payload = json.loads(guarded.stdout)
+    assert payload["status"] == "fail"
+    assert payload["changed_paths"] == ["src/app.py"]
+    assert payload["disallowed_files"] == ["src/app.py"]
 
 
 def test_post_red_snapshot_rejects_missing_provenance(tmp_path: Path) -> None:

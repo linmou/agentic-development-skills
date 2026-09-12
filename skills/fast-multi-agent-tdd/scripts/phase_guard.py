@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import shutil
@@ -18,9 +19,25 @@ DOC_SUFFIXES = {".md", ".rst", ".txt"}
 TEST_MARKERS = ("/tests/", "/__tests__/", ".test.", ".spec.")
 DOC_MARKERS = ("/docs/",)
 
+_NAMING_RULE: Any = None
+
 
 class ScopeError(ValueError):
     """Raised when a scope artifact or repository path is unsafe."""
+
+
+def _load_naming_rule() -> Any:
+    """Load the reviewer-audit naming rule from the snapshot tool that publishes the baseline."""
+    global _NAMING_RULE
+    if _NAMING_RULE is None:
+        script = Path(__file__).resolve().parent / "tdd_snapshot.py"
+        spec = importlib.util.spec_from_file_location("tdd_snapshot_naming", script)
+        if spec is None or spec.loader is None:
+            raise ScopeError(f"unable to load the snapshot naming rule from {script}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _NAMING_RULE = module.reviewer_audit_name
+    return _NAMING_RULE
 
 
 def _repo_root() -> Path:
@@ -311,6 +328,14 @@ def evaluate(phase: str, scope_path: str | Path, *, repo: Path | None = None) ->
             scope = repo_path / scope
         payload, scope_relative = _load_scope(scope, phase, repo_path)
         changed = _changed_paths(payload["baseline_ref"], scope_relative, repo_path)
+        # Reviewer audits are dropped from the snapshot by design, so they are absent from the
+        # baseline and must not be re-reported as new out-of-scope files in every phase.
+        rule = _load_naming_rule()
+        changed = [
+            path
+            for path in changed
+            if not (Path(path).parent.name == "audits" and rule(Path(path).name, payload["feature"]))
+        ]
         classified: list[dict[str, str]] = []
         disallowed: list[str] = []
         ambiguous: list[str] = []
