@@ -2,7 +2,7 @@
 
 **Intent:** Decompose L1 functions into evidence-grounded artifact transformations so diagnosis can identify a specific artifact and action.
 
-Source: [actor-artifact-function_ontology.md](../actor-artifact-function_ontology.md). The general form is:
+This is the canonical artifact/action graph. Historical design notes are retained in [archive/ontology-design-notes.md](archive/ontology-design-notes.md). The general form is:
 
 `input artifacts → (actor, action) → output artifacts → (consumer, action)`
 
@@ -35,13 +35,13 @@ Solid arrows show production or consumption; dotted arrows show method-dependent
 
 ```mermaid
 flowchart LR
-  I["Human intent / task context"] --> A1["Human + agent: align objective [L1 1]"]
+  I["Human intent / task context"] --> A1["Actor(s): align objective [L1 1]"]
   A1 --> OC["Objective Contract"]
-  OC --> A2["Agent: understand state [L1 2]"]
-  OC --> A3["Agent: form solution [L1 3]"]
-  OC --> A4["Agent / tools: execute [L1 4]"]
-  OC --> A5["Agent: monitor and adapt [L1 5]"]
-  OC --> A6["Agent / evaluator: verify [L1 6]"]
+  OC --> A2["Actor(s): understand state [L1 2]"]
+  OC --> A3["Actor(s): form solution [L1 3]"]
+  OC --> A4["Actor(s): execute [L1 4]"]
+  OC --> A5["Actor(s): monitor and adapt [L1 5]"]
+  OC --> A6["Actor(s): verify [L1 6]"]
   SYS0["SYS_t: target system state"] --> A2
   SYS0 --> A4
   A2 --> SM["State Model"]

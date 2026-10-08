@@ -23,4 +23,4 @@ Use an L1 node, a producer/consumer edge, an interaction, or a residual outside 
 
 The six functions describe work that the system must realize. The responsible actor may be a human, model, harness, tool, evaluator, or a combination; infer that allocation from the case.
 
-Case specificity comes from artifact content, versions, actions, and evidence. The historical [L2 taxonomy](../Agentic-Coding-Functional-Ontology-L2.txt) illustrates possible subfunctions; it is not a required diagnostic traversal or attribution code.
+Case specificity comes from artifact content, versions, actions, and evidence. The archived [L2 taxonomy](archive/original-l2.mmd) illustrates possible subfunctions; it is not a required diagnostic traversal or attribution code.

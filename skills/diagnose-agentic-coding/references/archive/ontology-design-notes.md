@@ -1,3 +1,5 @@
+<!-- Archived design notes. The normative artifact graph is ../artifact-flow.md. -->
+
 To better diagnose the root cause and provide suggestions for future refine, i want do decompose function nodes in L1 ontology taxonomies into (actor, input, output) triplets. 
 So the original L1 ontology graph can be tranfered into an artifact produce-consumption graph.  
 Here artifacts may have different forms in various pipelines, maybe docs, codes, or agent thoughts, the key is their definition. When diagnosing by this (actor, artifact, action) ontology, You need to first diagnose the functional actions with the supported artifacts. 

@@ -9,11 +9,13 @@ Explain an agentic coding outcome well enough to locate a supported artifact-lev
 
 ## Required references and dependency
 
-Read [functional-ontology.md](references/functional-ontology.md) and [artifact-flow.md](references/artifact-flow.md) to reconstruct the two graph views. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. L2 descriptions are illustrative background. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
+The normative references are [functional-ontology.md](references/functional-ontology.md), [artifact-flow.md](references/artifact-flow.md), [causal-interface.md](references/causal-interface.md), and [report-template.md](references/report-template.md). `references/archive/` contains historical material for provenance only; it is not an alternate ontology or workflow.
 
-Read [report-template.md](references/report-template.md) for reporting.
+Read the functional and artifact references to reconstruct the two graph views. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
 
-Every causal diagnosis invokes `competing-explanations-causal-research`, including cases supported entirely by local traces. Load its [SKILL.md](../competing-explanations-causal-research/SKILL.md) and callee-owned [version 1 contract](../competing-explanations-causal-research/references/call-contract.md). The dependency owns evidence assessment, rival-model construction, symmetric testing, ranking, causal statuses, and stopping. This host owns artifact reconstruction, L1 mapping, and presentation of the returned attribution.
+Read the causal interface before invoking the dependency and the report template when writing the result.
+
+Every causal diagnosis invokes `competing-explanations-causal-research`, including cases supported entirely by local traces. The dependency owns evidence assessment, rival-model construction, symmetric testing, ranking, causal statuses, and stopping. This host owns artifact reconstruction, L1 mapping, and presentation of the returned attribution. The causal interface and the dependency's versioned [call contract](../competing-explanations-causal-research/references/call-contract.md) define the boundary.
 
 If the dependency cannot be found or loaded, report the missing dependency and retain the descriptive graph with its unknowns. A causal ruling requires the dependency.
 
@@ -39,20 +41,13 @@ Done when each material action is grounded in artifacts or an explicit evidence 
 
 ### 3. Submit the causal-research request
 
-Execute the dependency's workflow in the current agent context using its version 1 Request:
-
-- `outcome`: frozen observed outcome; `scope`: unit, attempt/time, environment, intended outcome, and decision.
-- `evidence_seeds`: source locations/excerpts, graph records, development-method evidence, gaps, candidate deviations, and supplied theories as unranked leads.
-- `constraints`: cutoff, permitted sources/tests, access limits, and request for artifact-grounded mechanisms with unknown links marked.
-- `detail`: `full` for an auditable ledger; `output_language`: requester language; `contract_version`: `1`. Omit `caller_tag` unless useful for correlation.
-
-Provide accessible sources or excerpts. Artifact IDs are case evidence within the existing fields. The dependency can challenge the graph and consider explanations outside it.
+Execute the dependency's workflow in the current agent context using the Request defined in [causal-interface.md](references/causal-interface.md). Provide accessible sources or excerpts, with artifact IDs as case evidence in the existing fields. The dependency can challenge the graph and consider explanations outside it.
 
 Invoke the dependency's complete causal comparison for this target. Local-only access is a source constraint, not a reason to bypass the dependency.
 
 Done when a standard Response is available or a missing-dependency/access blocker is recorded.
 
-For `completed`, map the returned comparison to artifact paths. For `evidence_limited`, preserve provisional conclusions and unresolved links. For `needs_clarification`, obtain the missing boundary and resubmit. For `blocked`, report errors and descriptive findings. A malformed response or unsupported version requires a valid dependency response before a causal ruling.
+For a completed investigation, map the returned comparison to artifact paths and preserve the contract's evidence assessment and unresolved links. For clarification, obtain the missing boundary and resubmit. For blocking, report errors and descriptive findings. A malformed response or unsupported version requires a valid dependency response before a causal ruling.
 
 ### 4. Ground the returned attribution
 
@@ -62,7 +57,7 @@ Check whether the response supports production failure, handoff failure, consump
 
 If the comparison lacks a material artifact link, proposes a new mechanism, or new evidence changes the case, send an updated Request to the dependency. The host adds graph references and presentation; causal revisions return to the dependency.
 
-Done when every reported attribution is traceable to a returned causal claim and a concrete artifact path, or is explicitly evidence-limited.
+Done when every reported attribution is traceable to a returned causal claim and a concrete artifact path, with the dependency's evidence assessment preserved.
 
 ### 5. Assess representation sufficiency
 
