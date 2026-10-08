@@ -14,7 +14,7 @@ Show the relevant L1 functions and the case graph:
 
 `input artifacts → (actor, action) → output artifacts → (consumer, action)`
 
-Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md). Include concrete SYS locators and versions, artifact versions, times, and availability versus actual-use evidence. Keep SYS, SM, and ER distinct; report inspection/test results as evidence about SYS. Record applicability for each material method-dependent edge and the reason. Account for all six functions, including unobserved or out-of-boundary ones.
+Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md). Include concrete SYS locators and versions, artifact versions, times, and availability versus actual-use evidence. Keep SYS, SM, and ER distinct; report inspection/test results as evidence about SYS. Include method-dependent edge evidence when the development method materially affects the diagnosis. Account for all six functions, including unobserved or out-of-boundary ones.
 
 ## Returned causal comparison
 
@@ -54,4 +54,4 @@ Preserve the dependency's stop reason, residuals, and next discriminating eviden
 
 When saving a diagnosis, include the exact Request, Response, case graph, and source references alongside the report. Distinguish host annotations from the returned causal comparison.
 
-A concise report still includes the target, development-method applicability, concrete artifact path, returned rival comparison and ruling, evidence gaps, and next discriminating evidence.
+A concise report still includes the target, relevant development-method evidence, concrete artifact path, returned rival comparison and ruling, evidence gaps, and next discriminating evidence.

@@ -39,7 +39,7 @@ Do not label every configuration issue an interaction. Trace configuration defec
 
 The source lists AD as consumed by function 4; this table also includes it among function 4's inputs. The source's AD_d input to function 6 is expressed consistently on both sides.
 
-`_d` means **method-dependent consumption**, determined by the development method used. It qualifies a consumption edge, rather than defining a new artifact type. Record the method, supporting source, and each such edge's applicability: applicable, inapplicable, or unknown. An applicable edge can still be unobserved or fail; an inapplicable edge's absence is expected. Unknown applicability remains an evidence gap.
+`_d` means **method-dependent consumption**, determined by the development method used. It qualifies a consumption edge, rather than defining a new artifact type. When the development method materially affects the diagnosis, record the method, supporting source, and relevant edge evidence. An edge can still be unobserved or fail, and missing method evidence can remain an explicit gap.
 
 ## Graph
 
