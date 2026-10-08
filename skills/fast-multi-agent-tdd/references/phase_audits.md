@@ -8,7 +8,7 @@ Claim:
 `The requirement re-check defines the user-visible outcome and complete definition of done; the request map imports it, selects the smallest vertical executable slice, and defines a phase-safe TDD path.`
 
 Default handling:
-Record this artifact for the Red and cumulative Refactor audits. Do not run `$review-with-multi-debate` for request-map by default.
+Record this artifact for the Red and cumulative Refactor audits. Do not run `review-with-multi-debate` for request-map by default.
 
 Suggested criteria:
 
@@ -41,6 +41,20 @@ Suggested criteria:
 - no shortcut-mutant production changes are in the active worktree
 - no production code was changed
 
+### Bounded Single Red Readiness Claim
+
+Use before the full Red debate and after each correction. This checks readiness, not acceptance.
+
+Fixed criteria, in order:
+
+- `scope`: only planned test-like paths changed
+- `baseline`: baseline, scope, and provenance evidence are valid
+- `execution`: the targeted test ran and failed for missing behavior
+- `seam`: the failure exercises one behavior named in the request map
+- `assertion`: each new assertion has an independent oracle and a named shortcut or mutant that would fail; the evidence cites both the mutant and a test or command result
+
+Block only with direct command, hash, mutant, path, scope, snapshot, or test evidence. Leave full control-family coverage, exclusion interpretation, neighboring cases, and unavailable secondary runtimes to the debate. Uncertain or unsupported findings do not trigger single-review repair.
+
 Focused compact-low follow-up claim:
 `After the valid three-reviewer initial Red round unanimously identified exactly one blocking criterion, the corrected Red evidence satisfies that frozen criterion; the focused audit is owned by one newly delegated independent reviewer, contains a strict evidence-backed pass on only that criterion, and remains bound to the unchanged role receipt and eligibility artifact.`
 
@@ -65,7 +79,7 @@ Suggested criteria:
 - the production diff is saved for the cumulative Refactor audit
 
 Default handling:
-Use the monitor scope check, changed-file list, targeted test output, and saved diff. Do not run `$review-with-multi-debate` for Green by default.
+Use the monitor scope check, changed-file list, targeted test output, and saved diff. Do not run `review-with-multi-debate` for Green by default.
 
 ## Regression Claim
 
@@ -80,7 +94,7 @@ Suggested criteria:
 - repeated runs do not show flakiness
 
 Default handling:
-Record targeted and full-suite output for the cumulative Refactor audit. Do not run `$review-with-multi-debate` for regression by default.
+Record targeted and full-suite output for the cumulative Refactor audit. Do not run `review-with-multi-debate` for regression by default.
 
 ## Cumulative Refactor Claim
 
@@ -115,7 +129,7 @@ Suggested criteria:
 - the original Red behavior is replayed against the pre-Green production revision and still fails for the expected missing-behavior reason
 - the test smell assessment and before/after reports support the change, or a documented no-op artifact explains why no demonstrated smell and no test diff warranted edits; closeout cites the audit or that no-op artifact
 - missing cases, wrong expectations, changed boundaries, or requirement conflicts are returned to Red rather than fixed in Test Refactor
-- the mandatory `$review-with-multi-debate` audit reaches `converged`
+- the mandatory `review-with-multi-debate` audit reaches `converged`
 
 ## Docs Claim
 
@@ -123,7 +137,7 @@ Claim:
 `The documentation phase updates only docs relevant to the completed code change, keeps the docs aligned with implemented behavior, and does not edit tests or production code.`
 
 Default handling:
-Record the docs artifact for final closeout. Do not run `$review-with-multi-debate` for docs by default.
+Record the docs artifact for final closeout. Do not run `review-with-multi-debate` for docs by default.
 
 Suggested criteria:
 
@@ -138,7 +152,7 @@ Claim:
 `The completed work preserves strict TDD discipline, covers each mapped requirement with passing tests, updates relevant docs after TDD is complete, and clearly reports remaining risks.`
 
 Default handling:
-Use this for final closeout. Do not run `$review-with-multi-debate` for final by default.
+Use this for final closeout. Do not run `review-with-multi-debate` for final by default.
 
 Suggested criteria:
 

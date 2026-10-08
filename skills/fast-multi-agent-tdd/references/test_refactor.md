@@ -5,8 +5,11 @@ without weakening the specification established in Red.
 
 ## Entry Contract
 
-Enter only after Green regression passes and the cumulative production Refactor
-audit converges. Default scope is the tests changed in Red plus directly shared
+Enter only after Green regression passes, production Refactor makes an actual
+delta, and its cumulative audit converges. A verified no-op production Refactor
+skips this entire phase; record the skip in the production no-op artifact and
+proceed to Documentation without Test Refactor setup, checks, or artifacts.
+Default scope is the tests changed in Red plus directly shared
 test support. Broader neighboring test cleanup requires explicit scope in the
 request map.
 
@@ -16,7 +19,7 @@ Before editing:
   suite results
 - write a behavior map for each affected test:
   `stimulus -> boundary crossed -> observable result -> important edge case`
-- run `$code-smell-monitor` on the selected test scope
+- run `code-smell-monitor` on the selected test scope
 - preflight every planned path with `phase_guard.py --phase test_refactor --scope <scope-artifact>`
 
 If no demonstrated test smell exists and the test diff is empty, write
@@ -116,11 +119,11 @@ Before the mandatory Test Refactor debate:
 4. Replay at least the original Red behavior against the pre-Green production
    snapshot and confirm it still fails for the original missing-behavior reason.
 5. Confirm production and documentation snapshots are unchanged.
-6. Re-run `$code-smell-monitor` on the same test scope and record before/after
+6. Re-run `code-smell-monitor` on the same test scope and record before/after
    reports.
 7. Audit the test diff, behavior map, collection comparison, boundary evidence,
    replay result, suite results, and smell reports with
-   `$review-with-multi-debate`.
+   `review-with-multi-debate`.
 
 The stage closes only when the aggregate audit status is `converged` and every
 blocking criterion passes.

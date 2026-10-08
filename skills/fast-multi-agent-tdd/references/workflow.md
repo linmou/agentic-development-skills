@@ -111,7 +111,7 @@ Before writing permanent tests or production code:
 - when the slice reuses an existing policy or mechanism, inventory the controls that change the selected path's observable sequence, timing, bounds, ordering, or side effects and are constrained by the active requirement; preserving the headline outcome does not make one of those controls irrelevant, but neighboring unconstrained branches do not enter the slice
 - call a control non-neutral only when the test gives it a value that makes its required effect observable and asserts that effect; zero delay, an empty value, a false flag, a no-op callback, immediate success, or one attempt is neutral for a property whose effect is respectively waiting, content, enablement, invocation, transition, or repetition, unless that boundary value is itself the requirement
 - reject an exclusion that merely says the control is pre-existing, not newly requested, internal, or not user-visible, or that contradicts the requirement table, definition of done, another mapped property, or the selected execution path; every exclusion must name its source and quote the exact user or repository requirement that affirmatively permits omitting or neutralizing that control
-- decide the likely test level: feature, integration, or unit
+- decide the likely test level: feature, integration, or unit; prefer feature or integration coverage when unit tests would require hard-coded implementation details or brittle mocks, and add unit tests only when they provide useful independent evidence
 - list predicted Red, Green, production Refactor, Test Refactor, and documentation paths with their semantic classifications; predictions are initial guidance, not a complete future production allowlist
 - if you plan to rely on lower-level tests because no high-risk integration boundary is actually crossed, justify that with a `strace` or `dtruss` check on the minimal execution path rather than with narrative alone
 - derive a short `feature_name` for audit files
@@ -142,6 +142,21 @@ Snapshots capture tracked changes and non-ignored untracked files using normal G
 
 The monitor pass and snapshot publication unlock the formal Red test edit.
 
+<!-- bounded-single-red-review --> After each Red test edit, run the targeted test and the Red scope guard, then delegate one independent reviewer. Record the actual handoff as `audits/<feature>_red_single_role_receipt<N>.json` with `schema: 1`, `feature`, `role: single_red_reviewer`, `reviewer_agent_id`, and `reviewer_source`; the receipt values must match the reviewer-owned `audits/<feature>_red_single_iteration<N>.json`. The audit must contain exactly the five fixed criteria from [phase_audits.md](phase_audits.md), in order: `scope`, `baseline`, `execution`, `seam`, and `assertion`. Validate it with:
+
+```bash
+python scripts/red_review_gate.py single \
+  --feature <feature> \
+  --iteration <N> \
+  --audit audits/<feature>_red_single_iteration<N>.json \
+  --delegation-receipt audits/<feature>_red_single_role_receipt<N>.json \
+  --reviewer-agent-id <stable-single-reviewer-identity> \
+  --reviewer-source <delegation-mechanism> \
+  --output audits/<feature>_red_single_gate<N>.json
+```
+
+On `single_red_repair`, correct the cited criterion and repeat the test, guard, and single review. On `single_red_ready_for_debate`, start the full three-reviewer debate. Retain the single audit and gate output as evidence; only debate provenance can authorize `pre_green`.
+
 At every later phase transition, write the next scope artifact first, then capture the current worktree with `scripts/tdd_snapshot.py` so the immutable baseline contains that exact artifact. Decide the next phase's protected paths and semantic overrides, write `audits/<feature>_<phase>_scope.json`, and record the baseline ref and commit in the phase artifact. Name the Red-exit/pre-Green snapshot `pre_green`; name later snapshots `pre_<next-phase>`. Every create passes `--roles`. From `pre_green` onward, first add the distinct stable Red reviewer identities and the actual nonempty `reviewer_source` delegation mechanism to the receipt, then pass the latest accepted Red provenance artifact and matching iteration through `--provenance ... --review-iteration <M>`. Snapshot creation rejects stale iterations and re-hashes the staged receipt, the in-repository provenance artifacts, and the reviewer audits before publishing. A missing, stale, rejected, or failed receipt/provenance/snapshot keeps the next phase locked; only the bounded non-publishing corrections above may be retried. Production phases may leave `editable` out; Test Refactor and Documentation must provide an explicit `editable` list.
 
 <!-- post-red-numbered-rounds-only --> A request-map or test correction required by a completed Red review starts a subsequent Red round. Before any corrected test edit, update the map and Red scope, obtain a fresh monitor gate, retain the actual prior Red reviewer IDs in the receipt, and create the next append-only baseline:
@@ -159,7 +174,7 @@ Round 1 remains `pre_red`; round `N > 1` publishes `pre_red_round_<N>` and requi
 3. After the monitor pass, publish and verify the append-only numbered snapshot and returned commit. The snapshot authenticates the correction artifacts and unchanged current test baseline.
 4. Only after verification, edit only the planned tests. Do not edit production or unplanned tests.
 5. Run the targeted test through the cache-neutral runner to prove genuine Red, then pass the Red scope guard against the numbered snapshot.
-6. Run the applicable official follow-up review. Normally this is the next three-reviewer iteration, with reviewer-owned JSON and the capacity-aware schedule, against only the disputed criteria before the normal `record_round`, aggregation, inspection, and `advance_phase` gates. Use the single focused-reviewer path only when the initial round and `red_review_gate.py initial` produced the exact compact-low eligibility artifact defined in Audit Integration.
+6. Return disputed criteria to the bounded single-review repair loop above. After the single gate returns `single_red_ready_for_debate`, run the applicable official follow-up review: normally the next three-reviewer iteration, with reviewer-owned JSON and the capacity-aware schedule, against only the disputed criteria before the normal `record_round`, aggregation, inspection, and `advance_phase` gates. Use the single focused-reviewer path only when the initial round and `red_review_gate.py initial` produced the exact compact-low eligibility artifact defined in Audit Integration.
 
 A monitor that rejects step 2 only because the planned corrected content is absent has applied the post-edit reviewer check before its authorizing snapshot; re-run the pre-edit validation with this contract instead of editing around the gate.
 
@@ -296,9 +311,18 @@ Before closing refactor:
 - audit with `review-with-multi-debate` using the cumulative Refactor claim from [phase_audits.md](phase_audits.md)
 - include the cumulative production diff from pre-Green to post-Refactor, the refactor-only diff, the request map, the Red audit result, the Green gate result, and regression results
 
+If inspection requires no production cleanup and the authenticated refactor-only
+diff is empty, record `audits/<feature>_refactor_noop.md`. After the production
+Refactor gate passes, proceed directly to Documentation Follow-Up. Record Test
+Refactor as skipped in that artifact; do not open its scope or snapshot, inspect
+test smells, rerun suites for that skipped phase, or require a Test Refactor
+artifact or debate. On the full route, the cumulative production Refactor audit
+above remains required because it also covers the Green change.
+
 ### 6. Test Refactor
 
-Start only after the cumulative production Refactor audit converges. Read
+Enter only when production Refactor made an actual delta and its cumulative
+audit converges. A verified no-op production Refactor skips this phase. Read
 [test_refactor.md](test_refactor.md), inspect the Red tests
 and directly shared test support, and record a no-op artifact when no
 demonstrated test smell exists and the test diff is empty.
@@ -323,7 +347,8 @@ worktrees and all feature phase refs during terminal `cleanup`.
 ### 7. Documentation Follow-Up
 
 Only start this step after Red, Green, and regression, plus either the compact
-no-op transition or production Refactor and Test Refactor, are done.
+no-op transition, a gated no-op production Refactor with Test Refactor skipped,
+or production Refactor and Test Refactor, are done.
 
 Allowed actions:
 
@@ -352,7 +377,7 @@ Before finishing:
 - summarize any unresolved risks
 - keep the final explanation short and oversight-friendly
 
-Do not run a final `review-with-multi-debate` by default. The final closeout should point to the Red audit, Green gate, regression result, and either the two compact no-op artifacts or the cumulative production Refactor and Test Refactor audits.
+Do not run a final `review-with-multi-debate` by default. The final closeout should point to the Red audit, Green gate, regression result, and route-specific refactor evidence: the two compact no-op artifacts; the cumulative production Refactor audit plus the production no-op artifact recording Test Refactor as skipped; or the cumulative production Refactor audit plus the Test Refactor audit or test no-op artifact.
 
 ## Monitor Protocol
 
@@ -388,6 +413,8 @@ Each `review-with-multi-debate` audit should hand off:
 - the phase label
 
 Each debate artifact must record every actual independent reviewer identity and delegation mechanism returned by the backend used. Missing provenance or any self-authored reviewer file invalidates the debate and stops the phase.
+
+The bounded single reviewer is separate from the debate cohort. Its identity and delegation mechanism must come from the actual handoff, and its audit must remain reviewer-owned. The single gate validates the audit shape and evidence kinds but does not establish the three-reviewer provenance required for `pre_green`.
 
 The local gates verify consistency and unchanged bytes; they cannot authenticate every possible backend. Preserve the actual delegation return as run evidence. A matching self-authored identity/source string is not proof that delegation occurred.
 
@@ -458,7 +485,7 @@ After `advance_phase` passes, provide the unchanged provenance output to the nex
 <!-- risk-scaled-focused-red-review -->
 ### Compact Low-Risk Focused Red Review
 
-The initial Red iteration always uses the three-reviewer workflow above. After `record_round`, aggregation, and explicit evidence inspection, do not weaken or bypass a passing gate. When the initial round instead has one unanimous blocking failure, test the narrow exception with:
+After the bounded single Red gate returns `single_red_ready_for_debate`, the initial Red iteration uses the three-reviewer workflow above. After `record_round`, aggregation, and explicit evidence inspection, do not weaken or bypass a passing gate. When that initial multi-review round instead has one unanimous blocking failure, test the narrow exception with:
 
 ```bash
 python scripts/red_review_gate.py initial \

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Purpose: Enforce the narrow low-risk Red focused re-review eligibility gate.
+# Purpose: Enforce Red review provenance and risk-scaled review gates.
 
 from __future__ import annotations
 
@@ -59,6 +59,32 @@ ELIGIBILITY_FIELDS = {
     "repaired_criterion",
 }
 VERDICTS = {"pass", "fail", "insufficient_evidence"}
+SINGLE_RED_CRITERIA = (
+    ("scope", "Only planned test-like paths changed during Red."),
+    ("baseline", "The Red evidence has a valid baseline, scope, and provenance."),
+    ("execution", "The targeted test ran and failed for missing behavior."),
+    ("seam", "The failure exercises one behavior named in the request map."),
+    (
+        "assertion",
+        "Each new assertion has an independent oracle and a named shortcut or mutant that would fail.",
+    ),
+)
+SINGLE_RED_KINDS = {
+    "command",
+    "hash",
+    "mutant",
+    "path",
+    "scope",
+    "snapshot",
+    "test",
+}
+SINGLE_RECEIPT_FIELDS = {
+    "schema",
+    "feature",
+    "role",
+    "reviewer_agent_id",
+    "reviewer_source",
+}
 
 
 class InvalidGateInput(ValueError):
@@ -152,6 +178,100 @@ def validate_audit(path: Path) -> dict[str, Any]:
     if payload["overall_verdict"] != expected_overall(criteria):
         raise InvalidGateInput
     return payload
+
+
+def validate_single_receipt(
+    path: Path, *, feature: str, reviewer_agent_id: str, reviewer_source: str
+) -> dict[str, Any]:
+    payload = load_object(path)
+    if set(payload) != SINGLE_RECEIPT_FIELDS or payload["schema"] != 1:
+        raise InvalidGateInput
+    if (
+        payload["feature"] != feature
+        or payload["role"] != "single_red_reviewer"
+        or payload["reviewer_agent_id"] != reviewer_agent_id
+        or payload["reviewer_source"] != reviewer_source
+    ):
+        raise InvalidGateInput
+    if not is_agent_identity(payload["reviewer_agent_id"]):
+        raise InvalidGateInput
+    if not is_nonempty_string(payload["reviewer_source"]):
+        raise InvalidGateInput
+    return payload
+
+
+def single_red_decision(args: argparse.Namespace) -> dict[str, Any]:
+    if not is_agent_identity(args.reviewer_agent_id) or not is_nonempty_string(
+        args.reviewer_source
+    ):
+        raise InvalidGateInput
+    receipt_path = Path(args.delegation_receipt)
+    validate_single_receipt(
+        receipt_path,
+        feature=args.feature,
+        reviewer_agent_id=args.reviewer_agent_id,
+        reviewer_source=args.reviewer_source,
+    )
+    audit_path = Path(args.audit)
+    expected_name = f"{args.feature}_red_single_iteration{args.iteration}.json"
+    if audit_path.name != expected_name or args.iteration < 1:
+        raise InvalidGateInput
+    audit = validate_audit(audit_path)
+    if (
+        audit["feature_name"] != args.feature
+        or audit["phase"] != "red"
+        or audit["iteration"] != args.iteration
+        or audit["reviewer_id"] != "single"
+        or audit["reviewer_agent_id"] != args.reviewer_agent_id
+        or audit["reviewer_source"] != args.reviewer_source
+        or audit["open_questions"]
+        or audit["disputed_points_if_any"]
+        or any(item["counterevidence"] for item in audit["criteria"])
+    ):
+        raise InvalidGateInput
+    expected = [criterion_id for criterion_id, _ in SINGLE_RED_CRITERIA]
+    if [item["id"] for item in audit["criteria"]] != expected:
+        raise InvalidGateInput
+    for item, (criterion_id, criterion_text) in zip(
+        audit["criteria"], SINGLE_RED_CRITERIA, strict=True
+    ):
+        if (
+            item["text"] != criterion_text
+            or not item["blocking"]
+            or item["verdict"] == "insufficient_evidence"
+            or any(citation["kind"] not in SINGLE_RED_KINDS for citation in item["evidence"])
+        ):
+            raise InvalidGateInput
+        if item["id"] != criterion_id:
+            raise InvalidGateInput
+        if item["id"] == "assertion":
+            evidence_kinds = {citation["kind"] for citation in item["evidence"]}
+            if "mutant" not in evidence_kinds or not evidence_kinds.intersection(
+                {"command", "test"}
+            ):
+                raise InvalidGateInput
+    decision = (
+        "single_red_ready_for_debate"
+        if all(item["verdict"] == "pass" for item in audit["criteria"])
+        else "single_red_repair"
+    )
+    return {
+        "schema": 1,
+        "decision": decision,
+        "feature": args.feature,
+        "phase": "red",
+        "iteration": args.iteration,
+        "reviewer_id": "single",
+        "reviewer_agent_id": args.reviewer_agent_id,
+        "reviewer_source": args.reviewer_source,
+        "audit_path": str(audit_path.resolve()),
+        "audit_sha256": hashlib.sha256(audit_path.read_bytes()).hexdigest(),
+        "delegation_receipt_path": str(receipt_path.resolve()),
+        "delegation_receipt_sha256": hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
+        "failed_criteria": [
+            item["id"] for item in audit["criteria"] if item["verdict"] == "fail"
+        ],
+    }
 
 
 def validate_receipt(path: Path, *, route: str | None) -> dict[str, Any]:
@@ -426,6 +546,15 @@ def build_parser() -> argparse.ArgumentParser:
     focused.add_argument("--focused-reviewer-agent-id", required=True)
     focused.add_argument("--reviewer-source", required=True)
     focused.add_argument("--output", required=True)
+
+    single = subparsers.add_parser("single")
+    single.add_argument("--feature", required=True)
+    single.add_argument("--iteration", required=True, type=int)
+    single.add_argument("--audit", required=True)
+    single.add_argument("--delegation-receipt", required=True)
+    single.add_argument("--reviewer-agent-id", required=True)
+    single.add_argument("--reviewer-source", required=True)
+    single.add_argument("--output", required=True)
     return parser
 
 
@@ -436,6 +565,8 @@ def main() -> int:
             result = initial_decision(args)
         elif args.command == "provenance":
             result = provenance_decision(args)
+        elif args.command == "single":
+            result = single_red_decision(args)
         else:
             result = focused_decision(args)
         write_json(Path(args.output), result)

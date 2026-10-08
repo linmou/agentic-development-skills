@@ -130,7 +130,11 @@ def _staged_sha256(root: Path, path: Path, env: dict[str, str]) -> str:
 
 def reviewer_audit_name(name: str, feature: str) -> bool:
     """Return whether a filename is a reviewer-owned audit for this feature."""
-    return name.startswith(f"{feature}_red_audit") or name == f"{feature}_red_focused_iteration2.json"
+    return (
+        name.startswith(f"{feature}_red_audit")
+        or name.startswith(f"{feature}_red_single_iteration")
+        or name == f"{feature}_red_focused_iteration2.json"
+    )
 
 
 def _bound_sha256(
