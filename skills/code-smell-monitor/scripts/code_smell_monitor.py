@@ -33,6 +33,7 @@ PYTHON_PIP_PACKAGES = {
 NODE_NPX_PACKAGES = {
     "eslint": "eslint",
     "jscpd": "jscpd",
+    "knip": "knip",
     "madge": "madge",
     "depcheck": "depcheck",
     "tsc": "typescript",
@@ -61,7 +62,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run scoped code smell monitor tools.")
     parser.add_argument("--repo", default=".", help="Repository root.")
     parser.add_argument("--scope", nargs="+", default=["."], help="Files or directories to inspect, relative to repo.")
-    parser.add_argument("--out", default="", help="Output directory. Defaults to .codex/code_smell_monitor/<timestamp>.")
+    parser.add_argument("--out", default="", help="Output directory. Defaults to .code-smell-monitor/<timestamp>.")
     parser.add_argument("--install", choices=["missing", "never"], default="missing", help="Install missing common tools for detected stacks.")
     parser.add_argument("--changed-only", action="store_true", help="Replace scope with git changed files under the repo.")
     parser.add_argument("--fail-on-tool-error", action="store_true", help="Exit non-zero when any tool cannot run cleanly.")
@@ -259,6 +260,48 @@ def audit_command(repo: Path) -> list[str]:
     return ["npm", "audit", "--json"]
 
 
+def run_secret_check(repo: Path, raw_dir: Path) -> dict[str, Any]:
+    command = [
+        "gitleaks",
+        "detect",
+        "--no-banner",
+        "--redact",
+        "--report-format",
+        "json",
+        "--report-path",
+        str(raw_dir / "gitleaks.json"),
+    ]
+    if not executable_exists("gitleaks"):
+        result = {
+            "cmd": command,
+            "exit_code": 127,
+            "stdout": "",
+            "stderr": "gitleaks not found",
+            "duration_seconds": 0,
+            "timed_out": False,
+        }
+    else:
+        result = run_command(command, repo, timeout=600)
+    write_raw(raw_dir, "gitleaks", result)
+    return {"name": "gitleaks", **result}
+
+
+def jscpd_args(paths: list[str], raw_dir: Path) -> list[str]:
+    ignored = ",".join(
+        f"**/{directory}/**"
+        for directory in (".git", "node_modules", ".code-smell-monitor", "coverage", "dist", "build")
+    )
+    return [
+        "--reporters",
+        "json",
+        "--output",
+        str(raw_dir / "jscpd_report"),
+        "--ignore",
+        ignored,
+        *paths,
+    ]
+
+
 def run_js_checks(repo: Path, paths: list[str], raw_dir: Path, has_typescript: bool, install_mode: str) -> list[dict[str, Any]]:
     package = package_json(repo)
     scripts = package.get("scripts", {})
@@ -269,7 +312,8 @@ def run_js_checks(repo: Path, paths: list[str], raw_dir: Path, has_typescript: b
         commands.append(("package_lint", run_node_script(repo, "lint"), 600))
     if paths:
         commands.append(("eslint", node_runner(repo, "eslint", ["--format", "json", *paths], install_mode), 600))
-        commands.append(("jscpd", node_runner(repo, "jscpd", ["--reporters", "json", "--output", str(raw_dir / "jscpd_report"), *paths], install_mode), 600))
+        commands.append(("jscpd", node_runner(repo, "jscpd", jscpd_args(paths, raw_dir), install_mode), 600))
+        commands.append(("knip_dead_code", node_runner(repo, "knip", ["--reporter", "json"], install_mode), 600))
         commands.append(("madge_circular", node_runner(repo, "madge", ["--circular", "--json", *paths], install_mode), 600))
     commands.append(("depcheck", node_runner(repo, "depcheck", ["--json"], install_mode), 600))
     commands.append(("package_audit", audit_command(repo), 600))
@@ -334,6 +378,27 @@ def extract_headlines(raw_dir: Path) -> dict[str, Any]:
     if isinstance(depcheck, dict):
         headlines["unused_dependencies"] = depcheck.get("dependencies", [])
         headlines["missing_dependencies"] = depcheck.get("missing", {})
+
+    knip = load_json(raw_dir / "knip_dead_code.json")
+    if isinstance(knip, dict):
+        categories = ("files", "dependencies", "devDependencies", "unlisted", "exports", "types", "duplicates")
+        issues = knip.get("issues")
+        if isinstance(issues, list):
+            findings: dict[str, int] = {}
+            for issue in issues:
+                if not isinstance(issue, dict):
+                    continue
+                for category in categories:
+                    value = issue.get(category)
+                    if isinstance(value, list):
+                        findings[category] = findings.get(category, 0) + len(value)
+            headlines["knip_findings"] = findings
+        else:
+            headlines["knip_findings"] = {
+                category: len(knip.get(category, []))
+                for category in categories
+                if isinstance(knip.get(category), list)
+            }
 
     return headlines
 
@@ -400,7 +465,7 @@ def main() -> int:
 
     stack = detect_stack(repo, files)
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    out_dir = Path(args.out).resolve() if args.out else repo / ".codex" / "code_smell_monitor" / timestamp
+    out_dir = Path(args.out).resolve() if args.out else repo / ".code-smell-monitor" / timestamp
     raw_dir = out_dir / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -417,6 +482,8 @@ def main() -> int:
         results.extend(py_results)
     if stack["javascript"]:
         results.extend(run_js_checks(repo, js_paths, raw_dir, stack["typescript"], args.install))
+    if stack["javascript"] or stack["python"]:
+        results.append(run_secret_check(repo, raw_dir))
 
     summary = {
         "repo": str(repo),

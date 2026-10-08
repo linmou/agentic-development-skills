@@ -15,7 +15,7 @@ Intent: Map smell requirements to common deterministic tools so the monitor stay
 ## Dead or Unused Code
 
 - Python: `ruff` for unused imports and variables, `vulture` for suspected unused functions/classes/modules.
-- JavaScript/TypeScript: `eslint` for unused variables/imports, `depcheck` for suspected unused dependencies.
+- JavaScript/TypeScript: `eslint` for unused variables/imports, `knip` for unused files/exports/types/dependencies, and `depcheck` for an additional suspected-unused-dependency signal.
 - Dynamic imports, decorators, routing, registries, plugin hooks, and reflection make dead-code findings suspect.
 
 ## Coupling and Dependencies
@@ -33,6 +33,7 @@ Intent: Map smell requirements to common deterministic tools so the monitor stay
 - Python: `bandit` for code-level security. Use the project dependency manager audit only if already configured.
 - JavaScript/TypeScript: `npm audit`, `pnpm audit`, or `yarn npm audit` according to the lockfile/package manager.
 - Separate dependency vulnerabilities from code-level unsafe patterns.
+- Repository secrets: Gitleaks or an equivalent secret scanner when available. Record the scanner as unavailable when it is not installed.
 
 ## Observability and Debuggability
 
