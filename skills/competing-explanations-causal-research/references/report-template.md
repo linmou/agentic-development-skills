@@ -2,7 +2,7 @@
 
 **Intent:** Present a decision-useful causal comparison without hiding uncertainty or converting a relative ranking into a claim of certainty.
 
-Use this template for every `completed` or `evidence_limited` response after analysis. Keep the six section headings, field labels, and their order. `brief` responses may use compact entries, but must retain every section and mark unavailable fields; `standard` and `full` responses should complete every applicable field. A response with `detail: full` also includes the evidence-ledger view defined in [the evidence-ledger protocol](evidence-ledger.md).
+Use this template for every response with `execution_status: completed` after analysis, regardless of `evidence_status`. Keep the six section headings, field labels, and their order. `brief` responses may use compact entries, but must retain every section and mark unavailable fields; `standard` and `full` responses should complete every applicable field. A response with `detail: full` also includes the evidence-ledger view defined by [the evidence-ledger protocol](evidence-ledger.md).
 
 ## Scope and outcome
 
@@ -18,7 +18,7 @@ Summarise the key outcome measurements, antecedents, process evidence, later obs
 
 ## Competing models
 
-| Model | Mechanism chain | Distinguishing prediction | Supporting evidence | Refuting / alternative evidence | Failure or anomaly evidence | Current status |
+| Model | Mechanism chain | Distinguishing prediction | Supporting evidence | Refuting / alternative evidence | Failure or anomaly evidence | Current model-ruling status |
 |---|---|---|---|---|---|---|
 
 ## Process and counterfactual assessment

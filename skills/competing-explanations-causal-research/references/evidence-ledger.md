@@ -37,7 +37,7 @@ Use the narrowest claim directly entailed by a source. A source controlled by th
 
 For every material model, record all four arms:
 
-| Model | Arm | Search target and sources | Period and scope | Depth / detection opportunity | Status | Result and limitation |
+| Model | Arm | Search target and sources | Period and scope | Depth / detection opportunity | Search-arm status | Result and limitation |
 |---|---|---|---|---|---|---|
 | M1 | support | | | | found / none found / limited / not run | |
 | M1 | refutation | | | | | |
@@ -56,7 +56,7 @@ Separate a complete-looking story from evidence that the transition actually occ
 
 ## 6. Comparison and stop record
 
-| Model | Coverage | Prediction fit | Refutation / anomaly fit | Process evidence | Counterfactual evidence | Source independence | Current status | Residual / next test |
+| Model | Coverage | Prediction fit | Refutation / anomaly fit | Process evidence | Counterfactual evidence | Source independence | Current model-ruling status | Residual / next test |
 |---|---|---|---|---|---|---|---|---|
 | M1 | | | | | | | | |
 

@@ -4,13 +4,13 @@
 
 ## Version
 
-`1`. Add optional fields for compatible changes. Do not silently repurpose a field; make a breaking change a new major version and document any temporary alias with a clear winner and retirement date.
+`2`. Add optional fields for compatible changes. Do not silently repurpose a field; make a breaking change a new major version and document any temporary alias with a clear winner and retirement date.
 
 ## Request
 
 | Field | Class | Required / default | Meaning |
 |---|---|---|---|
-| `contract_version` | control | optional; `1` | Version to apply. Fail closed for an unsupported major version. |
+| `contract_version` | control | optional; `2` | Version to apply. Fail closed for an unsupported major version. |
 | `outcome` | content | required | The event, state, change, difference, or decision to explain. |
 | `scope` | content | optional; infer from the outcome and supplied context | Boundaries such as analysis unit, period, geography, population, and intended decision. |
 | `evidence_seeds` | seed | optional; `[]` | Files, links, records, or claims that are leads to assess, not accepted proof. |
@@ -35,7 +35,8 @@ This request completes the capability at the level permitted by available eviden
 
 | Field | Default / condition | Meaning |
 |---|---|---|
-| `status` | always | `completed`, `evidence_limited`, `needs_clarification`, or `blocked`. These are callee statuses, never caller states. |
+| `execution_status` | always | `completed`, `needs_clarification`, or `blocked`. Indicates whether the investigation completed; these are callee statuses, never caller states. |
+| `evidence_status` | required for a completed investigation; optional after a partial analysis | `supported`, `provisional`, or `insufficient`. Indicates how strongly the available evidence supports causal attribution. Omit it when clarification or blocking occurs before evidence assessment. |
 | `report` | always unless blocked before analysis | The causal comparison with citations and bounded conclusion. |
 | `limitations` | always; `[]` if none identified | Scope, timing, source, or inference limits. |
 | `errors` | always; `[]` on success | Fail-closed errors, including an unsupported contract version. |
@@ -47,7 +48,7 @@ The skill has no validator, persistence template, or mandatory stored attribute.
 
 ### Report-format requirement
 
-For every response with `status: completed` or `status: evidence_limited`, `report` must be rendered using [the report template](report-template.md), with these six headings in this order:
+For every response with `execution_status: completed`, `report` must be rendered using [the report template](report-template.md), with these six headings in this order. A completed investigation uses the report even when `evidence_status` is `insufficient`:
 
 1. `Scope and outcome`
 2. `Evidence roles and quality`

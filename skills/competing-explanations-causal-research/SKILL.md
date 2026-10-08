@@ -27,9 +27,11 @@ Before making a causal claim:
 4. **Test symmetrically.** Search every material model for supporting evidence, refuting evidence, alternative explanations, and failure or anomalous cases. Count repeated reports of the same underlying material once.
 5. **Compare before combining.** First compare models on timing, prediction fit, process evidence, counterfactual evidence, anomalies, scope, and source independence. Only then identify mechanisms as primary, joint, complementary, substitutive, or period-specific.
 6. **Make a bounded ruling.** Name the relatively leading explanation or a tie, mechanisms that may amplify it, explanations still unexcluded, and the missing evidence most likely to change the ranking. Never claim exhaustive or uniquely proven causation from an open-world search.
-7. **Render the report in the required format.** Every `completed` or `evidence_limited` response after analysis must use [the report template](references/report-template.md) as its structure. Keep the section order and headings, including in a brief response; brevity permits shorter entries, not omitted decision-critical sections. A response with `detail: full` also includes the evidence-ledger view defined in [the evidence-ledger protocol](references/evidence-ledger.md).
+7. **Render the report in the required format.** Every response with `execution_status: completed` after analysis must use [the report template](references/report-template.md) as its structure, regardless of its `evidence_status`. Keep the section order and headings, including in a brief response; brevity permits shorter entries, not omitted decision-critical sections. A response with `detail: full` also includes the evidence-ledger view defined by [the evidence-ledger protocol](references/evidence-ledger.md).
 
-If the requested outcome cannot be identified from the prompt, ask one minimal clarification before researching. If the evidence cannot meet a gate, continue only with an explicitly preliminary or evidence-limited conclusion.
+The response envelope has two independent dimensions: `execution_status` records whether the investigation completed, while `evidence_status` records the strength of causal support. A completed investigation may therefore have `evidence_status: insufficient` when no supported cause is identified.
+
+If the requested outcome cannot be identified from the prompt, ask one minimal clarification before researching. If the evidence cannot meet a gate, continue only with an explicitly preliminary conclusion and an `evidence_status` of `provisional` or `insufficient`.
 
 ## Workflow
 
@@ -57,25 +59,25 @@ For each material model, seek support, refutation, alternatives, and failures. T
 
 Give strong disconfirming evidence more weight than a large count of weak confirming sources. Assess explanatory coverage, discriminating predictions, process reality, counterfactual stability, anomaly fit, boundary clarity, and source independence. A model-wide ranking does not automatically establish every causal role within its chain.
 
-Use these status labels:
+Use these model-ruling labels:
 
 - **Relatively leading explanation**: strongest within the current candidate set; not a claim of unique cause.
 - **Jointly leading explanations**: no supported basis to rank the leading mechanisms apart.
 - **Complementary or amplifying mechanism**: may change the strength or reach of another mechanism without explaining the result alone.
 - **Unexcluded explanation**: plausible but inadequately tested or evidenced.
 - **Weakened explanation**: materially challenged in its stated scope.
-- **Evidence-limited**: timing, access, coverage, or quality prevents a reliable ranking.
+- **Insufficient evidence**: timing, access, coverage, or quality prevents a reliable ranking.
 
 ### 6. Report for a decision
 
-Use [the report template](references/report-template.md) for every response, not only for a full report. Preserve its section order and headings: **Scope and outcome**, **Evidence roles and quality**, **Competing models**, **Process and counterfactual assessment**, **Relative ruling**, and **Limitations, residuals, and next evidence**. For `brief` detail, keep each section concise and mark a section `unknown`, `unavailable`, or `not run` when it cannot be completed; do not silently remove it. For `standard` and `full`, complete every template field that is applicable and explain any omitted or unavailable evidence. For `detail: full`, also provide the evidence-ledger view defined in [the evidence-ledger protocol](references/evidence-ledger.md), as required by the invocation contract.
+Use [the report template](references/report-template.md) for every response with `execution_status: completed`, not only for a full report. Preserve its section order and headings: **Scope and outcome**, **Evidence roles and quality**, **Competing models**, **Process and counterfactual assessment**, **Relative ruling**, and **Limitations, residuals, and next evidence**. For `brief` detail, keep each section concise and mark a section `unknown`, `unavailable`, or `not run` when it cannot be completed; do not silently remove it. For `standard` and `full`, complete every template field that is applicable and explain any omitted or unavailable evidence. For `detail: full`, also provide the evidence-ledger view defined by [the evidence-ledger protocol](references/evidence-ledger.md), as required by the invocation contract.
 
 Before returning the response, run this report-format check:
 
 - all six template sections are present and in order;
 - the frozen outcome, unit, period, geography or population, intended decision, and cutoff are stated, or explicitly marked unknown or unavailable;
 - evidence roles and timing are stated, including any time-uncertain material;
-- the competing-model table includes every material model, its mechanism chain, distinguishing prediction, supporting evidence, contrary evidence, failure or anomaly evidence, and current status;
+- the competing-model table includes every material model, its mechanism chain, distinguishing prediction, supporting evidence, contrary evidence, failure or anomaly evidence, and current model-ruling status;
 - the relative ruling addresses leading, complementary or amplifying, unexcluded or weakened, and boundedness status, explicitly stating when a category has no supported entry;
 - limitations, residuals, and at least one next discriminating evidence item are explicit;
 - material factual claims have adjacent citations, and material statements are identified as fact, inference, or unknown.
