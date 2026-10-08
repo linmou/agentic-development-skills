@@ -32,7 +32,7 @@ Extract owns domain writes. Host: Request → invoke → Response → resume. Au
 - **C4b** — Field API quality (D1–D7) → `call-contract-field-rubric.md`  
   - **How to score:** `single-agent-multi-pass-scoring.md` (inventory/crosswalk → strict → contradiction → lock).  
   - **Opaque labels ≠ field API.** Opaque = coupling. D1–D7 = interface design.  
-  - **Gate 4:** name fill paths for **storage-mandatory** attrs; do not equate “minimal Request works” with D2=5.
+  - **Gate 4:** prove **output constructibility** for every mandatory declared output and required internal implementation artifact, with bounded failure evidence; use a conditional persistence crosswalk when the extract writes artifacts. Do not expose internal storage fields as public API or equate “minimal Request works” with D2=5.
 
 ### C5 — Standalone trigger (blocking)
 Extract description and procedure work without the host.
@@ -51,5 +51,7 @@ Assets moved, host is adapter, no second write engine, grep clean, contract on c
 | Reverse host name | extract tree (grep) |
 | Dual protocols/scripts | both `references/`, `scripts/` |
 | Contract + fields | extract call-contract + C4b multi-pass |
-| Storage mandatory attrs (write engines) | validators, templates, persistence hard gates |
+| Mandatory output artifacts and construction paths | contract, capability declarations, resolvers, validators |
+| Required internal implementation artifacts | producers, dependencies/capabilities, construction paths, validators |
+| Persistence attributes (when applicable) | validators, templates, persistence hard gates |
 | Host redefines schema | host adapter |

@@ -28,19 +28,19 @@ Optional: `capability` (one line); `out_dir` (default `./.skill-extract-verify/`
    *Done when:* C1–C6 known; if contract, multi-pass A–D known. Do not invent principles.
 
 2. **Gather evidence** — Read both `SKILL.md` files and progressive-disclosure targets. List both trees. Grep: host name in extract; shared protocol/scripts; how the extract is invoked / subagent; host tokens on callee.  
-   For **C4b / write engines**, also open validators, memory templates, and persistence hard gates — not only the call-contract file.  
-   *Done when:* every criterion has a path/grep hit or “not found”; storage sources located if extract writes files.
+   For **C4b**, also open output schemas, capability declarations, resolvers, validators, and sources for required internal artifacts. If the extract persists artifacts, inspect memory templates and persistence hard gates as a subordinate check.  
+   *Done when:* every criterion has a path/grep hit or “not found”; interface and implementation construction sources are located; persistence is marked applicable or n/a.
 
 3. **Score topology (C1–C3, C4a, C5–C6)** — Apply `extraction-split-rubric.md`.  
    *Done when:* those criteria have scores, hard gates, evidence, verdicts.
 
 4. **Score C4b with multi-pass (if contract)** — Follow `single-agent-multi-pass-scoring.md` **in order**:
-   - **Pass A** — Request inventory + **storage↔contract fill-path crosswalk** (Gap=y ⇒ gate 4 fail)
+   - **Pass A** — Request inventory + **mandatory-output construction crosswalk** + **implementation crosswalk** for required internal artifacts (any Gap=y ⇒ gate 4 fail); add a conditional persistence crosswalk when applicable
    - **Pass B** — Strict D1–D7 + hard gates; each Di needs evidence **and** a counterevidence attempt
    - **Pass C** — Contradiction hunt (mandatory if you authored the contract this session or any Di=5)
    - **Pass D** — Lock scores; do not re-raise after C without new artifact text  
    Then apply C4b decision policy.  
-   *Done when:* multi-pass output block complete; no all-5s without Pass C log.
+   *Done when:* output, implementation, and applicable persistence crosswalks are complete; multi-pass output block is complete; no all-5s without Pass C log.
 
 5. **Report** — Write `out_dir/skill_extract_verify_report.md` from `references/report-template.md` (include C4b multi-pass block). Chat summary: overall, blocking fails, top 3 fixes.  
    *Done when:* report exists; overall `pass` only if every **blocking** criterion is `pass`.
