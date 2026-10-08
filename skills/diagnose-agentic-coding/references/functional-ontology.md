@@ -19,7 +19,9 @@ These are functional dependencies. [artifact-flow.md](artifact-flow.md) supplies
 
 ## Diagnostic anchors
 
-Use an L1 node, a producer/consumer edge, an interaction, or a residual outside the representation. Express interactions as `factor A × factor B → changed artifact/action mechanism → outcome`, with observable conditions.
+Use an L1 node, a producer/consumer edge, an interaction, or a residual outside the representation. Configuration is represented through the same graph: it is the role/content of an artifact or an effective operating condition, not a fourth attribution category. Express interactions as `factor A × factor B → changed artifact/action mechanism → outcome`, with observable conditions. A defective configuration artifact is traced to its producing action; incorrect delivery is an edge problem; individually acceptable constraints that become incompatible together are an interaction.
+
+Separate three diagnostic levels: failure localization (where a node, edge, or interaction deviated), causal provenance/origin (the upstream action, source, capability, policy, or external condition that produced it), and transferable mechanism (recurrence conditions and an intervention that addresses it). Rootness is bounded by the evidence and investigation boundary. Preserve multiple jointly necessary or amplifying causes and distinguish causal origin from intervention target. If no mechanism is sufficiently supported, report root cause undetermined rather than inferring one.
 
 The six functions describe work that the system must realize. The responsible actor may be a human, model, harness, tool, evaluator, or a combination; infer that allocation from the case.
 

@@ -14,6 +14,18 @@ A consumer is another actor performing an action. L1 functions classify these ac
 
 Inspection results, test results, and observations are separate evidence artifacts about SYS. They may be partial and must not be treated as the complete state without coverage evidence. Record SYS versions with commits, hashes, snapshots, timestamps, migration IDs, deployment IDs, or equivalent grounded locators. A Change Set is optional diagnostic evidence derived from two SYS versions (`ΔSYS_t = SYS_{t+1} - SYS_t`), not a mandatory artifact type.
 
+## Configuration provenance and effective conditions
+
+Configuration artifacts include `SKILL.md`, `AGENTS.md`, system/developer prompts, tool policies, harness settings, and project rules. Reconstruct each relevant artifact as a versioned input with source/provenance, temporal validity, delivery or availability evidence, observed consumption, and the action or handoff it affected. A file's presence does not prove delivery or use, and intended settings do not prove effective runtime conditions. Represent effective conditions as configuration evidence or SYS observations according to their diagnostic role.
+
+| Configuration mechanism | Attribution | Required trace |
+| --- | --- | --- |
+| Defective instruction or rule | Node | Upstream authoring action → artifact → faithful consuming action |
+| Correct artifact delivered stale, truncated, or to the wrong consumer | Edge | Producing artifact/version → delivery/routing action → consuming action |
+| Individually acceptable constraints become incompatible together | Interaction | Contributing artifacts/conditions → combined mechanism → changed action or handoff |
+
+Do not label every configuration issue an interaction. Trace configuration defects upstream through the actions and handoffs that produced and propagated them when evidence allows.
+
 ## Artifact meanings and functional decomposition
 
 | L1 action | Inputs | Output artifact | Meaning | Consumed by L1 actions |
@@ -104,5 +116,7 @@ Supply candidate deviations to causal research using:
 | Interaction | Multiple conditions change a specific transformation or handoff | Supported combination of actions or conditions |
 
 These are unranked leads. The dependency determines which mechanism the evidence supports. Trace upstream and preserve rivals when the same output could arise from different paths.
+
+For each leading mechanism, distinguish the localized deviation, upstream causal provenance, and recurrence conditions and scope limits. Record the likely intervention point separately from the deepest supported mechanism. One case can support a case-specific mechanism or a transferable hypothesis; stronger generalization needs repeated cases, matched comparisons, or controlled intervention evidence.
 
 Useful sources include exact instruction/context snapshots, tool arguments and returns, repository revisions, evaluator configuration, and feedback followed by subsequent actions. When authorized, matched replays or narrow checks can distinguish mechanisms. Keep the case's development method and other material conditions explicit when comparing runs.

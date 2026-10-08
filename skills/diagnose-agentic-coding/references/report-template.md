@@ -25,6 +25,19 @@ Record dependency status and preserve its comparison, citations, limitations, an
 
 If the returned analysis lacks a material link, resubmit that gap to the dependency before extending the causal ruling.
 
+## Rootness, provenance, and transferability
+
+For each leading or unresolved explanation, record:
+
+- **Failure location:** Node, Edge, or Interaction and the concrete artifact/action or SYS transition.
+- **Causal provenance:** upstream source, producing action, capability, policy, or external condition, with the path and evidence.
+- **Causal status:** supported mechanism(s), plausible but unresolved causes, unexcluded rivals, and evidence gaps.
+- **Transferability:** recurrence conditions, case scope limits, and evidence needed before generalizing beyond the case.
+- **Intervention:** candidate corrective target, distinguished from causal origin, and a testable prediction.
+- **Stopping rationale:** why causal tracing stopped at the declared boundary and which next observation would most change the diagnosis.
+
+If no candidate explanation is sufficiently supported, state **root cause undetermined** and preserve the next discriminating observation. Do not infer a unique actor-level root from a localized artifact or from an execution record alone.
+
 ## Attribution and corrective implication
 
 For each leading mechanism, identify the input, producing actor/action, output artifact/version, relevant SYS_t → SYS_{t+1} transition, consuming actor/action, supported deviation, and outcome path. Distinguish production, delivery, consumption, or interaction attribution according to the returned evidence. If ER and SYS disagree, state that disagreement explicitly.

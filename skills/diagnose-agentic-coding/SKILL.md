@@ -5,7 +5,7 @@ description: Diagnose agentic coding failures, degraded trajectories, and false 
 
 # Diagnose Agentic Coding
 
-Explain an agentic coding outcome well enough to locate a supported artifact-level mechanism and choose a corrective intervention. The diagnostic unit is the joint system of actors, tools, environment, task, and evaluator.
+Explain an agentic coding outcome well enough to locate a supported artifact-level mechanism, trace its causal provenance, and choose a corrective intervention. The diagnostic unit is the joint system of actors, tools, environment, task, and evaluator. Rootness means the deepest evidence-supported causal mechanism within the declared investigation boundary that explains the failure and identifies recurrence conditions; it is not necessarily the earliest artifact, oldest actor, or best intervention point.
 
 ## Required references and dependency
 
@@ -35,9 +35,13 @@ Done when the outcome and available evidence boundary are explicit.
 
 Inspect material events in time order. Reconstruct concrete SYS versions and transitions where evidence permits, then map all six L1 functions to actors, input instances, actions, output instances, and downstream consumers using [artifact-flow.md](references/artifact-flow.md). Keep SYS (what the target system actually is), SM (the agent's representation), and ER (what actions were recorded) separate. Mark each function observed, inferred, unobserved, or outside the case boundary with a reason.
 
-Assign stable artifact IDs and versions. Version SYS with commits, hashes, snapshots, timestamps, database migrations, deployment identifiers, or other grounded evidence. Record exact source locations, production time, availability, observed consumption, and deviations from each artifact's intended meaning. Treat inspection results as evidence about SYS, not as SYS itself; do not infer complete SYS from a partial inspection. Link the functional view to the corresponding artifact → (actor, action) → artifact paths and SYS transitions. Classify method-dependent consumption edges as applicable, inapplicable, or unknown from the development method and its source.
+Assign stable artifact IDs and versions. Version SYS with commits, hashes, snapshots, timestamps, database migrations, deployment identifiers, or other grounded evidence. Record exact source locations, production time, availability, observed consumption, and deviations from each artifact's intended meaning. Reconstruct relevant configuration artifacts (system/developer instructions, skills, project rules, tool policies, and harness settings) as versioned inputs, including provenance, temporal validity, delivery/availability, and evidence of effective consumption. Distinguish existence from delivery and use; infer effective runtime conditions from evidence, not intended settings alone. Trace defective configuration upstream through the actions and handoffs that produced or propagated it. Treat inspection results as evidence about SYS, not as SYS itself; do not infer complete SYS from a partial inspection. Link the functional view to the corresponding artifact → (actor, action) → artifact paths and SYS transitions. Classify method-dependent consumption edges as applicable, inapplicable, or unknown from the development method and its source.
 
 Done when each material action is grounded in artifacts or an explicit evidence gap, and feedback edges resolve to concrete instances at the appropriate time.
+
+### 3a. Trace provenance and transferability
+
+Separate failure location (Node, Edge, or Interaction) from causal provenance. Trace upstream through user/request sources, model or agent behavior, harness/developer actions, and third-party or environment conditions as far as evidence and the declared boundary support. Preserve joint causes and competing explanations; do not promote a plausible hypothesis to a proven cause. Record recurrence conditions, scope limits, evidence needed to test transfer beyond this case, and the intervention target separately from causal origin. A single trace ordinarily supports a case-specific mechanism or transferable hypothesis, not a stable cross-task capability claim.
 
 ### 3. Submit the causal-research request
 
@@ -47,7 +51,7 @@ Invoke the dependency's complete causal comparison for this target. Local-only a
 
 Done when a standard Response is available or a missing-dependency/access blocker is recorded.
 
-For a completed investigation, map the returned comparison to artifact paths and preserve the contract's evidence assessment and unresolved links. For clarification, obtain the missing boundary and resubmit. For blocking, report errors and descriptive findings. A malformed response or unsupported version requires a valid dependency response before a causal ruling.
+For a completed investigation, map the returned comparison to artifact paths and preserve the contract's evidence assessment and unresolved links. For clarification, obtain the missing boundary and resubmit. For blocking, report errors and descriptive findings. A malformed response or unsupported version requires a valid dependency response before a causal ruling. If no candidate is sufficiently supported, report root cause undetermined; several proposed explanations do not establish a cause.
 
 ### 4. Ground the returned attribution
 
