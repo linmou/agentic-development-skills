@@ -170,9 +170,9 @@ def _validate_edge_handoff(
         )
 
 
-def _validate_edge_handoffs(manifest: dict[str, object]) -> None:
+def _validate_edge_handoffs(manifest: dict[str, object], allow_empty: bool = False) -> None:
     handoffs = manifest.get("edge_handoffs")
-    if not isinstance(handoffs, list) or not handoffs:
+    if not isinstance(handoffs, list) or (not handoffs and not allow_empty):
         raise StateValidationError("coverage manifest requires a non-empty edge_handoffs list")
 
     integration = cast(dict[str, object], manifest["integration"])
@@ -190,10 +190,47 @@ def _validate_edge_handoffs(manifest: dict[str, object]) -> None:
         _validate_edge_handoff(handoff, index, passed_test_paths)
 
 
-def validate_coverage_manifest(path_value: str, tested_sha: str) -> dict[str, object]:
+def _validate_staged_edges(manifest: dict[str, object], component_id: str) -> None:
+    components = manifest.get("integrated_components")
+    if (
+        not isinstance(components, list)
+        or not components
+        or any(not isinstance(item, str) or not item.strip() for item in components)
+        or len(set(components)) != len(components)
+        or component_id not in components
+    ):
+        raise StateValidationError("coverage manifest integrated_components must include the current component exactly once")
+
+    deferred = manifest.get("deferred_edges")
+    if not isinstance(deferred, list):
+        raise StateValidationError("coverage manifest requires a deferred_edges list")
+
+    handoffs = cast(list[dict[str, object]], manifest["edge_handoffs"])
+    seen: set[str] = set()
+    for is_handoff, edges in ((True, handoffs), (False, deferred)):
+        for edge in edges:
+            if not isinstance(edge, dict):
+                raise StateValidationError("coverage manifest edges must be objects")
+            for field in ("edge_id", "producer", "consumer"):
+                if not isinstance(edge.get(field), str) or not str(edge[field]).strip():
+                    raise StateValidationError(f"coverage manifest edge {field} must be a non-empty string")
+            edge_id = cast(str, edge["edge_id"])
+            if edge_id in seen:
+                raise StateValidationError(f"coverage manifest repeats edge_id: {edge_id}")
+            seen.add(edge_id)
+            if edge["producer"] not in components:
+                raise StateValidationError(f"coverage manifest edge {edge_id} producer must be integrated")
+            if is_handoff and edge["consumer"] not in components:
+                raise StateValidationError(f"coverage manifest edge {edge_id} consumer must be integrated")
+            if not is_handoff and edge["consumer"] in components:
+                raise StateValidationError(f"coverage manifest deferred edge {edge_id} consumer is already integrated")
+
+
+def validate_coverage_manifest(path_value: str, tested_sha: str, component_id: str) -> dict[str, object]:
     manifest = _read_coverage_manifest(path_value)
-    if manifest.get("schema_version") != 2:
-        raise StateValidationError("coverage manifest requires schema_version=2")
+    version = manifest.get("schema_version")
+    if version not in (2, 3):
+        raise StateValidationError("coverage manifest requires schema_version=2 or 3")
     if manifest.get("status") != "passed":
         raise StateValidationError("coverage manifest status must be passed")
     if manifest.get("tested_integration_sha") != tested_sha:
@@ -201,7 +238,9 @@ def validate_coverage_manifest(path_value: str, tested_sha: str) -> dict[str, ob
 
     _validate_coverage_section(manifest, "integration", "tests/integration/")
     _validate_coverage_section(manifest, "e2e", "tests/e2e/")
-    _validate_edge_handoffs(manifest)
+    _validate_edge_handoffs(manifest, allow_empty=version == 3)
+    if version == 3:
+        _validate_staged_edges(manifest, component_id)
 
     return manifest
 
@@ -241,7 +280,7 @@ def validate_transition(
     coverage_manifest: dict[str, object] | None = None
     if transition.name == "integration_coverage_passed":
         coverage_manifest = validate_coverage_manifest(
-            evidence["coverage_manifest"], evidence["tested_integration_sha"]
+            evidence["coverage_manifest"], evidence["tested_integration_sha"], cast(str, component_id)
         )
 
     result: dict[str, object] = {

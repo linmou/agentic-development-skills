@@ -217,6 +217,83 @@ def test_cli_accepts_a_machine_validated_integration_e2e_coverage_manifest(tmp_p
     assert payload["coverage_manifest"]["status"] == "passed"
 
 
+def test_staged_coverage_promotes_producer_before_consumer_exists(tmp_path: Path):
+    manifest = tmp_path / "staged-coverage.json"
+    manifest.write_text(json.dumps({
+        "schema_version": 3,
+        "status": "passed",
+        "tested_integration_sha": "def456",
+        "integrated_components": ["101"],
+        "edge_handoffs": [],
+        "deferred_edges": [{"edge_id": "101->102", "producer": "101", "consumer": "102"}],
+        "integration": {
+            "tests": [{"path": "tests/integration/test_101_contract.py", "added": True, "passed": True}],
+            "command": "pytest tests/integration/test_101_contract.py",
+            "exit_code": 0,
+        },
+        "e2e": {
+            "tests": [{"path": "tests/e2e/test_101_flow.py", "added": True, "passed": True}],
+            "command": "pytest tests/e2e/test_101_flow.py",
+            "exit_code": 0,
+        },
+    }), encoding="utf-8")
+
+    payload = validate_cli("integrating", "integration_coverage_passed", "main_agent", "101", {
+        "coverage_manifest": str(manifest), "tested_integration_sha": "def456",
+    })
+    assert payload["to_state"] == "integration_coverage_ready"
+
+
+def test_staged_coverage_rejects_inconsistent_deferred_edges(tmp_path: Path):
+    base = {
+        "schema_version": 3,
+        "status": "passed",
+        "tested_integration_sha": "def456",
+        "integrated_components": ["101"],
+        "edge_handoffs": [],
+        "deferred_edges": [{"edge_id": "101->102", "producer": "101", "consumer": "102"}],
+        "integration": {"tests": [{"path": "tests/integration/test_101.py", "added": True, "passed": True}], "command": "pytest tests/integration/test_101.py", "exit_code": 0},
+        "e2e": {"tests": [{"path": "tests/e2e/test_101.py", "added": True, "passed": True}], "command": "pytest tests/e2e/test_101.py", "exit_code": 0},
+    }
+    cases = [
+        ({"integrated_components": ["101", "102"]}, "already integrated"),
+        ({"deferred_edges": [{"edge_id": "101->102", "producer": "999", "consumer": "102"}]}, "producer must be integrated"),
+        ({"deferred_edges": [{"edge_id": "101->102", "producer": "101", "consumer": "101"}]}, "already integrated"),
+        ({"deferred_edges": [{"edge_id": "", "producer": "101", "consumer": "102"}]}, "edge_id"),
+        ({"integrated_components": []}, "current component"),
+        ({"deferred_edges": None}, "deferred_edges list"),
+    ]
+    for index, (change, error) in enumerate(cases):
+        manifest = tmp_path / f"invalid-{index}.json"
+        manifest.write_text(json.dumps({**base, **change}), encoding="utf-8")
+        result = subprocess.run([
+            sys.executable, str(SCRIPT), "--state", "integrating", "--transition", "integration_coverage_passed",
+            "--actor", "main_agent", "--component-id", "101", "--evidence", f"coverage_manifest={manifest}",
+            "--evidence", "tested_integration_sha=def456",
+        ], capture_output=True, text=True)
+        assert result.returncode == 2
+        assert error in result.stderr
+
+
+def test_staged_coverage_completes_handoff_when_consumer_is_integrated(tmp_path: Path):
+    handoff = {
+        "edge_id": "101->102", "producer": "101", "consumer": "102",
+        "test_path": "tests/integration/test_handoff.py", "passed": True,
+        "upstream_output_consumed": True, "synthetic_boundary_replacement": False,
+    }
+    manifest = tmp_path / "consumer-coverage.json"
+    manifest.write_text(json.dumps({
+        "schema_version": 3, "status": "passed", "tested_integration_sha": "def456",
+        "integrated_components": ["101", "102"], "edge_handoffs": [handoff], "deferred_edges": [],
+        "integration": {"tests": [{"path": handoff["test_path"], "added": True, "passed": True}], "command": "pytest tests/integration/test_handoff.py", "exit_code": 0},
+        "e2e": {"tests": [{"path": "tests/e2e/test_flow.py", "added": True, "passed": True}], "command": "pytest tests/e2e/test_flow.py", "exit_code": 0},
+    }), encoding="utf-8")
+    payload = validate_cli("integrating", "integration_coverage_passed", "main_agent", "102", {
+        "coverage_manifest": str(manifest), "tested_integration_sha": "def456",
+    })
+    assert payload["to_state"] == "integration_coverage_ready"
+
+
 def test_cli_rejects_coverage_without_new_passed_e2e_test(tmp_path: Path):
     manifest = tmp_path / "coverage.json"
     manifest.write_text(
