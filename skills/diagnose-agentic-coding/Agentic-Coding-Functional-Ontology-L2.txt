@@ -1,0 +1,90 @@
+flowchart TD
+
+    subgraph L1["1. Objective Alignment & Governance"]
+        A11["1.1 Task & Success Definition"]
+        A12["1.2 Objective Representation<br/>& Preservation"]
+        A13["1.3 Action Boundary<br/>& Autonomy Governance"]
+        A14["1.4 Evaluation Alignment<br/>& Integrity"]
+    end
+
+    subgraph L2["2. Problem & State Understanding"]
+        B21["2.1 Information Acquisition<br/>& Observation"]
+        B22["2.2 System & State<br/>Representation"]
+        B23["2.3 Problem & Causal<br/>Understanding"]
+    end
+
+    subgraph L3["3. Solution Formation"]
+        C31["3.1 Candidate Solution<br/>Generation"]
+        C32["3.2 Solution Evaluation<br/>& Selection"]
+        C33["3.3 Solution Design<br/>& Planning"]
+    end
+
+    subgraph L4["4. Action Execution & Coordination"]
+        D41["4.1 Capability & Interface Use"]
+        D42["4.2 Action & Change Realization"]
+        D43["4.3 Coordination & Integration"]
+    end
+
+    subgraph L5["5. Monitoring, Adaptation & Recovery"]
+        E51["5.1 Trajectory Monitoring<br/>& Feedback Assessment"]
+        E52["5.2 Adaptation, Recovery<br/>& Escalation"]
+    end
+
+    subgraph L6["6. Verification & Completion"]
+        F61["6.1 Verification Planning<br/>& Evidence Acquisition"]
+        F62["6.2 Outcome & Constraint<br/>Assessment"]
+        F63["6.3 Evidence Sufficiency<br/>& Coverage Assessment"]
+        F64["6.4 Completion Decision<br/>& Status Communication"]
+    end
+
+    SUCCESS["Successful Agentic Coding"]
+
+    %% Objective structure
+    A11 -->|"grounds"| A12
+    A11 -->|"defines evaluation target"| A14
+    A12 -->|"provides objective"| C31
+    A12 -->|"provides selection criteria"| C32
+    A13 -->|"constrains"| C32
+    A13 -->|"constrains"| D41
+
+    %% Understanding
+    B21 -->|"supplies observations"| B22
+    B22 -->|"supports explanation"| B23
+
+    %% Understanding to solution
+    B23 -->|"informs"| C31
+    B22 -->|"informs design context"| C33
+
+    %% Solution formation
+    C31 -->|"provides alternatives"| C32
+    C32 -->|"selects strategy for"| C33
+
+    %% Execution
+    C33 -->|"specifies intended actions"| D41
+    D41 -->|"enables"| D42
+    D43 -->|"coordinates / integrates"| D42
+
+    %% Monitoring feedback loop
+    D42 -->|"produces execution outcomes"| E51
+    E51 -->|"updates observations"| B21
+    E51 -->|"signals deviation"| E52
+
+    E52 -->|"request new understanding"| B21
+    E52 -->|"trigger reconsideration"| C31
+    E52 -->|"retry / reroute"| D41
+
+    %% Verification
+    A11 -->|"defines success claims"| F61
+    A14 -->|"aligns evaluation"| F61
+    D42 -->|"produces artifact/result"| F61
+
+    F61 -->|"provides evidence"| F62
+    A12 -->|"provides intended outcome"| F62
+    A13 -->|"provides constraints"| F62
+
+    F62 -->|"assessment results"| F63
+    F63 -->|"sufficient evidence"| F64
+    F64 -->|"legitimate completion"| SUCCESS
+
+    F62 -.->|"detected failure"| E52
+    F63 -.->|"insufficient evidence"| F61

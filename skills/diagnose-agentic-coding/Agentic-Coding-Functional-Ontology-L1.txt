@@ -1,0 +1,31 @@
+flowchart LR
+
+    O["1. Objective Alignment<br/>& Governance"]
+    U["2. Problem & State<br/>Understanding"]
+    S["3. Solution<br/>Formation"]
+    E["4. Action Execution<br/>& Coordination"]
+    M["5. Monitoring, Adaptation<br/>& Recovery"]
+    V["6. Verification<br/>& Completion"]
+
+    R["Resulting System State"]
+    SUCCESS["Successful Agentic Coding"]
+
+    O -->|"provides target & constraints"| S
+    U -->|"provides current-state model"| S
+
+    S -->|"specifies intended change"| E
+    O -->|"constrains legitimate action"| E
+
+    E -->|"changes"| R
+
+    R -->|"produces observations"| M
+    M -->|"updates understanding"| U
+    M -->|"triggers solution revision"| S
+    M -->|"adjusts / recovers execution"| E
+
+    O -->|"defines success conditions"| V
+    R -->|"provides candidate outcome"| V
+
+    V -->|"sufficient evidence of satisfaction"| SUCCESS
+
+    V -.->|"insufficient / failed"| M
