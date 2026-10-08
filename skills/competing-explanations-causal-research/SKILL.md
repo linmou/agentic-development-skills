@@ -27,6 +27,7 @@ Before making a causal claim:
 4. **Test symmetrically.** Search every material model for supporting evidence, refuting evidence, alternative explanations, and failure or anomalous cases. Count repeated reports of the same underlying material once.
 5. **Compare before combining.** First compare models on timing, prediction fit, process evidence, counterfactual evidence, anomalies, scope, and source independence. Only then identify mechanisms as primary, joint, complementary, substitutive, or period-specific.
 6. **Make a bounded ruling.** Name the relatively leading explanation or a tie, mechanisms that may amplify it, explanations still unexcluded, and the missing evidence most likely to change the ranking. Never claim exhaustive or uniquely proven causation from an open-world search.
+7. **Render the report in the required format.** Every `completed` or `evidence_limited` response after analysis must use [the report template](references/report-template.md) as its structure. Keep the section order and headings, including in a brief response; brevity permits shorter entries, not omitted decision-critical sections. A response with `detail: full` also includes the evidence-ledger view defined in [the evidence-ledger protocol](references/evidence-ledger.md).
 
 If the requested outcome cannot be identified from the prompt, ask one minimal clarification before researching. If the evidence cannot meet a gate, continue only with an explicitly preliminary or evidence-limited conclusion.
 
@@ -67,7 +68,19 @@ Use these status labels:
 
 ### 6. Report for a decision
 
-Use [the report template](references/report-template.md) for a full report. A concise answer still includes: the frozen outcome; evidence roles; competing models with predictions and contrary evidence; the relative ruling; limitations, residuals, and the next discriminating evidence.
+Use [the report template](references/report-template.md) for every response, not only for a full report. Preserve its section order and headings: **Scope and outcome**, **Evidence roles and quality**, **Competing models**, **Process and counterfactual assessment**, **Relative ruling**, and **Limitations, residuals, and next evidence**. For `brief` detail, keep each section concise and mark a section `unknown`, `unavailable`, or `not run` when it cannot be completed; do not silently remove it. For `standard` and `full`, complete every template field that is applicable and explain any omitted or unavailable evidence. For `detail: full`, also provide the evidence-ledger view defined in [the evidence-ledger protocol](references/evidence-ledger.md), as required by the invocation contract.
+
+Before returning the response, run this report-format check:
+
+- all six template sections are present and in order;
+- the frozen outcome, unit, period, geography or population, intended decision, and cutoff are stated, or explicitly marked unknown or unavailable;
+- evidence roles and timing are stated, including any time-uncertain material;
+- the competing-model table includes every material model, its mechanism chain, distinguishing prediction, supporting evidence, contrary evidence, failure or anomaly evidence, and current status;
+- the relative ruling addresses leading, complementary or amplifying, unexcluded or weakened, and boundedness status, explicitly stating when a category has no supported entry;
+- limitations, residuals, and at least one next discriminating evidence item are explicit;
+- material factual claims have adjacent citations, and material statements are identified as fact, inference, or unknown.
+
+If a check cannot be satisfied because evidence or access is limited, keep the required section and state the limitation there. A response that omits a required section or substitutes a free-form narrative is incomplete, even when its conclusion is otherwise sound.
 
 Explain the decision consequence without turning a provisional causal inference into a recommendation certainty.
 

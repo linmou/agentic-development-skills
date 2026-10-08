@@ -45,6 +45,19 @@ This request completes the capability at the level permitted by available eviden
 
 The skill has no validator, persistence template, or mandatory stored attribute. `artifacts` is therefore empty by default and no Request field fills storage.
 
+### Report-format requirement
+
+For every response with `status: completed` or `status: evidence_limited`, `report` must be rendered using [the report template](report-template.md), with these six headings in this order:
+
+1. `Scope and outcome`
+2. `Evidence roles and quality`
+3. `Competing models`
+4. `Process and counterfactual assessment`
+5. `Relative ruling`
+6. `Limitations, residuals, and next evidence`
+
+The `brief` detail level may shorten entries but may not remove a heading or field label. `standard` and `full` responses must complete all applicable template fields and explicitly mark unavailable or unrun work. A response with `detail: full` must also include the evidence-ledger view from [evidence-ledger.md](evidence-ledger.md) in `evidence_ledger`. The response is invalid if it returns a free-form narrative without these sections, even when `report` is otherwise populated.
+
 ## Caller obligations
 
 Callers may pack available context into the documented fields and render the returned report. Do not require or supply caller phase names, workflow tokens, or a caller-specific response schema. A caller that needs more research must make a new Request; it must not independently rewrite the causal comparison as a fallback.

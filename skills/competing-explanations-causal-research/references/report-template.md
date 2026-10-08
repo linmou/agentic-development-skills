@@ -2,6 +2,8 @@
 
 **Intent:** Present a decision-useful causal comparison without hiding uncertainty or converting a relative ranking into a claim of certainty.
 
+Use this template for every `completed` or `evidence_limited` response after analysis. Keep the six section headings, field labels, and their order. `brief` responses may use compact entries, but must retain every section and mark unavailable fields; `standard` and `full` responses should complete every applicable field. A response with `detail: full` also includes the evidence-ledger view defined in [the evidence-ledger protocol](evidence-ledger.md).
+
 ## Scope and outcome
 
 - **Question and intended decision:**
