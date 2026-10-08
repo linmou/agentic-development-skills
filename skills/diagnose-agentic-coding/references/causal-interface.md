@@ -4,7 +4,7 @@
 
 The host reconstructs the six L1 functions, artifact instances, SYS versions and transitions, method-dependent edges, and evidence gaps. It presents the returned attribution in the case graph. It does not rank rival explanations or issue a causal ruling independently.
 
-The `competing-explanations-causal-research` dependency owns evidence assessment, rival-model construction, symmetric testing, ranking, causal statuses, stopping, and the versioned Request/Response contract. Read its [SKILL.md](../../competing-explanations-causal-research/SKILL.md) and current [call contract](../../competing-explanations-causal-research/references/call-contract.md) when invoking it.
+The `competing-explanations-causal-research` skill owns evidence assessment, rival-model construction, symmetric testing, ranking, execution and evidence statuses, stopping, and the versioned Request/Response contract. Load that skill and use its current call contract when invoking it.
 
 ## Request
 
@@ -22,6 +22,6 @@ Include `caller_tag` only when correlation is useful. Provide accessible sources
 
 ## Response handling
 
-Map the response status and evidence assessment defined by the current call contract to concrete L1 actions, artifact paths, and SYS transitions. For clarification or blocking, obtain the missing boundary or report errors and descriptive findings as required by that contract. A malformed response or unsupported version does not support a causal ruling.
+Map the response's `execution_status` and `evidence_status` defined by the current call contract to concrete L1 actions, artifact paths, and SYS transitions. For clarification or blocking, obtain the missing boundary or report errors and descriptive findings as required by that contract. A malformed response or unsupported version does not support a causal ruling.
 
 If the comparison lacks a material artifact link, proposes a new mechanism, or new evidence changes the case, submit an updated Request. The host adds graph references and presentation; causal revisions return to the dependency.

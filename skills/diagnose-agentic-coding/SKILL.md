@@ -15,7 +15,7 @@ Read the functional and artifact references to reconstruct the two graph views. 
 
 Read the causal interface before invoking the dependency and the report template when writing the result.
 
-Every causal diagnosis invokes `competing-explanations-causal-research`, including cases supported entirely by local traces. The dependency owns evidence assessment, rival-model construction, symmetric testing, ranking, causal statuses, and stopping. This host owns artifact reconstruction, L1 mapping, and presentation of the returned attribution. The causal interface and the dependency's versioned [call contract](../competing-explanations-causal-research/references/call-contract.md) define the boundary.
+Every causal diagnosis invokes the `competing-explanations-causal-research` skill, including cases supported entirely by local traces. That skill owns evidence assessment, rival-model construction, symmetric testing, ranking, execution and evidence statuses, and stopping. This host owns artifact reconstruction, L1 mapping, and presentation of the returned attribution. The causal interface and the dependency's versioned call contract define the boundary.
 
 If the dependency cannot be found or loaded, report the missing dependency and retain the descriptive graph with its unknowns. A causal ruling requires the dependency.
 
