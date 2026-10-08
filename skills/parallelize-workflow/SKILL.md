@@ -1,6 +1,6 @@
 ---
 name: parallelize-workflow
-description: Transform a serial skill or operational workflow into a new bounded parallel workflow while preserving semantics. Use when Codex needs to analyze a single-process skill, generate a monitor-worker or monitor-single-process-agent workflow, persist monitor and worker instruction Markdown, implement executable state-machine enforcement scripts, define task/resource/state contracts, or verify that a parallel redesign has not drifted from the original workflow.
+description: Transform a serial skill or operational workflow into a new bounded parallel workflow while preserving semantics. Use when you need to analyze a single-process skill, generate a monitor-worker or monitor-single-process-agent workflow, persist monitor and worker instruction Markdown, implement executable state-machine enforcement scripts, define task/resource/state contracts, or verify that a parallel redesign has not drifted from the original workflow.
 ---
 
 # Parallelize Workflow

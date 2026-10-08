@@ -27,7 +27,7 @@ Optional: `capability` (one line); `out_dir` (default `./.skill-extract-verify/`
    - if call contract: `references/call-contract-field-rubric.md` (C4b) **and** `references/single-agent-multi-pass-scoring.md`  
    *Done when:* C1–C6 known; if contract, multi-pass A–D known. Do not invent principles.
 
-2. **Gather evidence** — Read both `SKILL.md` files and progressive-disclosure targets. List both trees. Grep: host name in extract; shared protocol/scripts; `$extracted` / subagent; host tokens on callee.  
+2. **Gather evidence** — Read both `SKILL.md` files and progressive-disclosure targets. List both trees. Grep: host name in extract; shared protocol/scripts; how the extract is invoked / subagent; host tokens on callee.  
    For **C4b / write engines**, also open validators, memory templates, and persistence hard gates — not only the call-contract file.  
    *Done when:* every criterion has a path/grep hit or “not found”; storage sources located if extract writes files.
 

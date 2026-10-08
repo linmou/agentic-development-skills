@@ -5,14 +5,14 @@
 | Surface | Root |
 |---------|------|
 | rewrote draft without learn interrupt | caller step not checkable; goal conflict favors draft |
-| checked learnt/ without running $skill | false done via related files |
+| checked learnt/ without running the skill | false done via related files |
 | skill not in session list | harness discovery, not skill body |
 
 A new surface after patch is not success if the supported causal mechanism still prevents the gold observable.
 
 ## Open-world causal diagnosis
 
-Invoke `$competing-explanations-causal-research` through its versioned Request/Response contract. Set `outcome` to the exact missing gold for one identified run, environment revision, and tested target-skill variant. Supply the case, trace, score, dependency manifest, environment record, repository state, and relevant prior runs as evidence seeds rather than accepted explanations.
+Invoke `competing-explanations-causal-research` through its versioned Request/Response contract. Set `outcome` to the exact missing gold for one identified run, environment revision, and tested target-skill variant. Supply the case, trace, score, dependency manifest, environment record, repository state, and relevant prior runs as evidence seeds rather than accepted explanations.
 
 Do not limit the research to predefined layers, actors, mechanisms, relationships, or intervention types. Generate plausible rival models before selecting a target; distinguish direct observations from inferences; seek support and refutation symmetrically; and preserve material uncertainty. Prior failure labels, human theories, and earlier diagnoses remain evidence seeds, not conclusions.
 

@@ -64,7 +64,7 @@
 
 | From | To | Mechanism | Notes |
 |------|-----|-----------|-------|
-| host | extracted | subagent / $name / none | |
+| host | extracted | subagent / skill name / none | |
 
 ## Dual-path risks
 

@@ -8,7 +8,7 @@ The case looks like **real work**: conversation already in progress, human speak
 
 | Lab (weak primary) | Ecological (primary) |
 |--------------------|----------------------|
-| “Use `$skill` at `/path` with this feedback” | Resume multi-turn work; human message is the probe |
+| “Use the skill at `/path` with this feedback” | Resume multi-turn work; human message is the probe |
 | Gold answers in the prompt | Gold only in meta score sheet |
 | Empty or toy cwd | Real project root / realistic files |
 | Single turn always | Prefix + probe (or full multi-turn seed) |

@@ -15,10 +15,10 @@ A **failure label** is a short name for what went wrong on a case. It is for hum
 | Weak (ambiguous / one-off) | Stronger (if those phrases actually repeat in *that* skill) |
 |----------------------------|---------------------------------------------------------------|
 | unit / move / block | open co-review, learn-screen, learn interrupt, hard gate name from skill |
-| no_skill_no_X | never ran `$skill-name` / skipped learn interrupt |
+| no_skill_no_X | never ran the skill / skipped learn interrupt |
 | prose_only_* | rewrote draft without \<repeated skill step\> |
 
-If the skill under test does not repeat a phrase, **do not invent one**—describe with daily words + the skill’s `$name` or path.
+If the skill under test does not repeat a phrase, **do not invent one**—describe with daily words + the skill’s name or path.
 
 ## Pattern
 
@@ -37,7 +37,7 @@ skipped <repeated skill step>
 | Good | Why |
 |------|-----|
 | rewrote open co-review draft without learn-screen | procedure + daily words |
-| checked learnt/ without running $persist-rubrics-context | observable + skill name |
+| checked learnt/ without running persist-rubrics-context | observable + skill name |
 | skipped learn interrupt | repeated host phrase |
 | skill not listed in session skill list | harness precondition, plain |
 
@@ -53,5 +53,5 @@ Always pair the label with one sentence of surface fact:
 
 ```text
 failure_label: skipped learn interrupt
-what_happened: agent edited the draft and never opened $persist-rubrics-context/SKILL.md
+what_happened: agent edited the draft and never opened persist-rubrics-context/SKILL.md
 ```

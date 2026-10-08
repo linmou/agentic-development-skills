@@ -1,6 +1,6 @@
 # Single-agent multi-pass scoring (distilled from multi-debate)
 
-Use this **inside** `$skill-extract-verify` when scoring rubrics (especially **C4b**).  
+Use this **inside** `skill-extract-verify` when scoring rubrics (especially **C4b**).  
 It replaces the need to spawn three reviewers for routine extract audits, by forcing the **same evidence moves** multi-debate used when it beat a solo extract-verify score.
 
 ## What multi-debate caught that solo extract-verify missed
@@ -122,7 +122,7 @@ Fix: ...
 
 ## When to still use full multi-debate
 
-Use `$review-with-multi-debate` (true parallel reviewers) when:
+Use `review-with-multi-debate` (true parallel reviewers) when:
 
 - C4b is blocking and Pass C leaves **unresolved** tension (you can argue both ways at ≥0.8 confidence)
 - User demands independent audits on disk
