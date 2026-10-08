@@ -14,7 +14,7 @@ Show the relevant L1 functions and the case graph:
 
 `input artifacts → (actor, action) → output artifacts → (consumer, action)`
 
-Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md). Include concrete SYS locators and versions, artifact versions, times, and availability versus actual-use evidence. Keep SYS, SM, and ER distinct; report inspection/test results as evidence about SYS. Include method-dependent edge evidence when the development method materially affects the diagnosis. Account for all six functions, including unobserved or out-of-boundary ones.
+Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md) and apply [diagnostic-definitions.md](diagnostic-definitions.md). Include concrete SYS locators and versions, artifact versions, times, and availability versus actual-use evidence. Keep SYS, SM, and ER distinct; report inspection/test results as evidence about SYS. Include method-dependent edge evidence when the development method materially affects the diagnosis. Account for all six functions, including unobserved or out-of-boundary ones.
 
 ## Returned causal comparison
 
@@ -25,14 +25,14 @@ Record dependency status and preserve its comparison, citations, limitations, an
 
 If the returned analysis lacks a material link, resubmit that gap to the dependency before extending the causal ruling.
 
-## Rootness, provenance, and transferability
+## Multi-Level Failure Attribution
 
 For each leading or unresolved explanation, record:
 
-- **Failure location:** Node, Edge, or Interaction and the concrete artifact/action or SYS transition.
-- **Causal provenance:** upstream source, producing action, capability, policy, or external condition, with the path and evidence.
+- **Error location (Level 1):** Node, Edge, or Interaction and the concrete artifact/action or SYS transition.
+- **Root causal mechanism (Level 2):** upstream source, producing action, capability, policy, or external condition, with the path and evidence.
 - **Causal status:** supported mechanism(s), plausible but unresolved causes, unexcluded rivals, and evidence gaps.
-- **Transferability:** recurrence conditions, case scope limits, and evidence needed before generalizing beyond the case.
+- **Generalization conditions (Level 3):** recurrence conditions, case scope limits, and evidence needed before generalizing beyond the case.
 - **Intervention:** candidate corrective target, distinguished from causal origin, and a testable prediction.
 - **Stopping rationale:** why causal tracing stopped at the declared boundary and which next observation would most change the diagnosis.
 

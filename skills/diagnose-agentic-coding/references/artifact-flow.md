@@ -89,7 +89,7 @@ Use two compact records, allowing unknown values with reasons:
 | Artifact or SYS ID/version | Type and concrete content | Source locator | Production/version time | Producing actor/action and L1, or state transition | Observed / inferred / unobserved |
 | --- | --- | --- | --- | --- | --- |
 
-| Input ID/version | Consuming actor/action, L1, time | Expected consumption and method applicability | Availability evidence | Actual-use evidence | Output ID/version | Deviation or gap |
+| Input ID/version | Consuming actor/action, L1, time | Expected consumption and method context | Availability evidence | Actual-use evidence | Output ID/version | Deviation or gap |
 | --- | --- | --- | --- | --- | --- | --- |
 
 Assign event IDs where an action repeats. Preserve versions across revisions and feedback loops; a later artifact cannot establish what was available earlier. Record the input bundle for each material action and trace its outputs to subsequent consuming actions. Mark all six functions observed, inferred, unobserved, or outside the analysis boundary.

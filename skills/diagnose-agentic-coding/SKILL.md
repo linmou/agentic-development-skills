@@ -9,9 +9,9 @@ Explain an agentic coding outcome well enough to locate a supported artifact-lev
 
 ## Required references and dependency
 
-The normative references are [functional-ontology.md](references/functional-ontology.md), [artifact-flow.md](references/artifact-flow.md), [causal-interface.md](references/causal-interface.md), and [report-template.md](references/report-template.md). `references/archive/` contains historical material for provenance only; it is not an alternate ontology or workflow.
+The normative references are [diagnostic-definitions.md](references/diagnostic-definitions.md), [functional-ontology.md](references/functional-ontology.md), [artifact-flow.md](references/artifact-flow.md), [causal-interface.md](references/causal-interface.md), and [report-template.md](references/report-template.md). `references/archive/` contains historical material for provenance only; it is not an alternate ontology or workflow.
 
-Read the functional and artifact references to reconstruct the two graph views. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
+Read the diagnostic definitions, functional, and artifact references to reconstruct the graph views and apply the Node, Edge, Interaction, and three-level attribution definitions. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
 
 Read the causal interface before invoking the dependency and the report template when writing the result.
 
@@ -41,7 +41,7 @@ Done when each material action is grounded in artifacts or an explicit evidence 
 
 ### 3a. Trace provenance and transferability
 
-Separate failure location (Node, Edge, or Interaction) from causal provenance. Trace upstream through user/request sources, model or agent behavior, harness/developer actions, and third-party or environment conditions as far as evidence and the declared boundary support. Preserve joint causes and competing explanations; do not promote a plausible hypothesis to a proven cause. Record recurrence conditions, scope limits, evidence needed to test transfer beyond this case, and the intervention target separately from causal origin. A single trace ordinarily supports a case-specific mechanism or transferable hypothesis, not a stable cross-task capability claim.
+Apply the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md): establish Level 1 error location, trace Level 2 root causal mechanism through user/request sources, model or agent behavior, harness/developer actions, and third-party or environment conditions, then state Level 3 generalization conditions. Preserve joint causes and competing explanations; do not promote a plausible hypothesis to a proven cause. Record recurrence conditions, scope limits, evidence needed to test transfer beyond this case, and the intervention target separately from causal origin. A single trace ordinarily supports a case-specific mechanism or transferable hypothesis, not a stable cross-task capability claim.
 
 ### 3. Submit the causal-research request
 
