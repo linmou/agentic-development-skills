@@ -14,20 +14,20 @@ Show the relevant L1 functions and the case graph:
 
 `input artifacts → (actor, action) → output artifacts → (consumer, action)`
 
-Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md). Include concrete source locators, versions, times, and availability versus actual-use evidence. Record applicability for each material method-dependent edge and the reason. Account for all six functions, including unobserved or out-of-boundary ones.
+Use the artifact and consumption records in [artifact-flow.md](artifact-flow.md). Include concrete SYS locators and versions, artifact versions, times, and availability versus actual-use evidence. Keep SYS, SM, and ER distinct; report inspection/test results as evidence about SYS. Record applicability for each material method-dependent edge and the reason. Account for all six functions, including unobserved or out-of-boundary ones.
 
 ## Returned causal comparison
 
 Record dependency status and preserve its comparison, citations, limitations, and errors. Use its evidence ledger for source links.
 
-| Returned hypothesis/status | L1 actions and artifact path | Supporting evidence | Contrary evidence / missing links | Discriminating prediction |
+| Returned hypothesis/status | L1 actions, artifact path, and SYS transition | Supporting evidence | Contrary evidence / missing links | Discriminating prediction |
 | --- | --- | --- | --- | --- |
 
 If the returned analysis lacks a material link, resubmit that gap to the dependency before extending the causal ruling.
 
 ## Attribution and corrective implication
 
-For each leading mechanism, identify the input, producing actor/action, output artifact/version, consuming actor/action, supported deviation, and outcome path. Distinguish production, delivery, consumption, or interaction attribution according to the returned evidence.
+For each leading mechanism, identify the input, producing actor/action, output artifact/version, relevant SYS_t → SYS_{t+1} transition, consuming actor/action, supported deviation, and outcome path. Distinguish production, delivery, consumption, or interaction attribution according to the returned evidence. If ER and SYS disagree, state that disagreement explicitly.
 
 State the intervention target, expected mechanism change, and evidence that would test it. Preserve uncertainty about responsibility where the records cannot locate the failure. Remediation is a separate authorized task.
 

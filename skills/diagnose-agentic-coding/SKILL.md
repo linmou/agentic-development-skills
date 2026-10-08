@@ -9,7 +9,7 @@ Explain an agentic coding outcome well enough to locate a supported artifact-lev
 
 ## Required references and dependency
 
-Read [functional-ontology.md](references/functional-ontology.md) and [artifact-flow.md](references/artifact-flow.md) to reconstruct the two graph views. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. L2 descriptions are illustrative background.
+Read [functional-ontology.md](references/functional-ontology.md) and [artifact-flow.md](references/artifact-flow.md) to reconstruct the two graph views. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. L2 descriptions are illustrative background. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
 
 Read [report-template.md](references/report-template.md) for reporting.
 
@@ -31,9 +31,9 @@ Done when the outcome and available evidence boundary are explicit.
 
 ### 2. Reconstruct functions through artifacts
 
-Inspect material events in time order. Map all six L1 functions to actors, input instances, actions, output instances, and downstream consumers using [artifact-flow.md](references/artifact-flow.md). Mark each function observed, inferred, unobserved, or outside the case boundary with a reason.
+Inspect material events in time order. Reconstruct concrete SYS versions and transitions where evidence permits, then map all six L1 functions to actors, input instances, actions, output instances, and downstream consumers using [artifact-flow.md](references/artifact-flow.md). Keep SYS (what the target system actually is), SM (the agent's representation), and ER (what actions were recorded) separate. Mark each function observed, inferred, unobserved, or outside the case boundary with a reason.
 
-Assign stable artifact IDs and versions. Record exact source locations, production time, availability, observed consumption, and deviations from each artifact's intended meaning. Link the functional view to the corresponding artifact → (actor, action) → artifact paths. Classify method-dependent consumption edges as applicable, inapplicable, or unknown from the development method and its source.
+Assign stable artifact IDs and versions. Version SYS with commits, hashes, snapshots, timestamps, database migrations, deployment identifiers, or other grounded evidence. Record exact source locations, production time, availability, observed consumption, and deviations from each artifact's intended meaning. Treat inspection results as evidence about SYS, not as SYS itself; do not infer complete SYS from a partial inspection. Link the functional view to the corresponding artifact → (actor, action) → artifact paths and SYS transitions. Classify method-dependent consumption edges as applicable, inapplicable, or unknown from the development method and its source.
 
 Done when each material action is grounded in artifacts or an explicit evidence gap, and feedback edges resolve to concrete instances at the appropriate time.
 
@@ -56,7 +56,7 @@ For `completed`, map the returned comparison to artifact paths. For `evidence_li
 
 ### 4. Ground the returned attribution
 
-Render the returned comparison with L1 and artifact instance references. For each leading mechanism, identify the producer/action, affected artifact and version, downstream consumer/action, supported deviation, outcome path, and intervention target.
+Render the returned comparison with L1, artifact instance, and SYS version/transition references. For each leading mechanism, identify the producer/action, affected artifact or SYS version, downstream consumer/action, supported deviation, outcome path, and intervention target.
 
 Check whether the response supports production failure, handoff failure, consumption failure, or an interaction. Preserve unresolved alternatives and missing links. Actor attribution requires evidence about the responsible action and inputs available then.
 
