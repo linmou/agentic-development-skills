@@ -1,100 +1,96 @@
 ---
 name: diagnose-agentic-behavior
-description: Diagnose why an agent behaved as it did in any domain (coding, browsing, research, tool use, multi-agent, conversation) by inducing a task-specific ontology before reading the outcome, mapping the trace onto it, and delegating causal comparison to competing-explanations-causal-research. Use for agent trace analysis, failure postmortems, unexpected successes, contrastive "why X rather than Y" questions, model-versus-harness attribution, and ontology sufficiency review.
+description: Diagnose why an agent failed in any domain (coding, browsing, research, tool use, multi-agent, conversation) by inducing a task-specific ontology without reading the trace, mapping the trace onto it, and delegating causal comparison to competing-explanations-causal-research. Use for agent failure postmortems, agent trace analysis, model-versus-harness attribution, and ontology sufficiency review.
 ---
 
 # Diagnose Agentic Behavior
 
-Explain an agent's behavior well enough to locate a supported mechanism, trace its causal provenance, and choose a corrective or reinforcing intervention. The diagnostic unit is the joint system of actors, tools, environment, task, and evaluator. Rootness means the deepest evidence-supported causal mechanism within the declared investigation boundary; it is not necessarily the earliest event, the oldest actor, or the best intervention point.
+Explain an agent failure well enough to locate a supported mechanism, trace its causal provenance, and choose a corrective intervention. The diagnostic unit is the joint system of actors, tools, environment, task, and evaluator. Rootness means the deepest evidence-supported causal mechanism within the declared investigation boundary; it is not necessarily the earliest event, the oldest actor, or the best intervention point.
 
-Unlike `diagnose-agentic-coding`, this skill has no predefined domain ontology. It keeps a fixed **meta-ontology** (the grammar) and induces a **task ontology** (the vocabulary) for each case from the task, not from the trace. The trace is evidence and is mapped onto the task ontology; it is never re-modelled as a second ontology.
+Unlike `diagnose-agentic-coding`, this skill has no predefined domain ontology. It keeps a fixed **meta-ontology** (the grammar) and induces a **task ontology** (the vocabulary) for each case from the task. The trace is evidence and is mapped onto the task ontology as the single case schema.
 
 ## Required references and dependency
 
 Normative references:
 
-- [meta-ontology.md](references/meta-ontology.md): fixed grammar every case uses.
+- [meta-ontology.md](references/meta-ontology.md): fixed grammar, the World/Belief/Record layers, and evidence statuses.
 - [diagnostic-definitions.md](references/diagnostic-definitions.md): Node, Edge, Interaction, and the three attribution levels.
-- [ontology-induction.md](references/ontology-induction.md): outcome-blind derivation of the expected task ontology, admission rules, and versioning.
-- [case-graph.md](references/case-graph.md): mapping trace spans onto the task ontology, the residual log, and the optional agent task model.
+- [ontology-induction.md](references/ontology-induction.md): trace-blind derivation of the expected task ontology, admission rules, versioning, and the expressibility check.
+- [case-graph.md](references/case-graph.md): mapping trace spans onto the task ontology, the residual log, candidate deviations, and the agent task model.
 - [causal-interface.md](references/causal-interface.md): boundary with the causal-research dependency.
 - [report-template.md](references/report-template.md): report structure.
-- [lenses/](references/lenses/): optional coverage audits. A lens is a checklist, never a required schema or traversal.
+- [lenses/](references/lenses/README.md): coverage checklists applied to the task ontology.
 
-Every causal diagnosis invokes the `competing-explanations-causal-research` skill, including cases supported entirely by local traces. That skill owns evidence assessment, rival-model construction, symmetric testing, ranking, statuses, and stopping. This host owns target framing, ontology induction, trace mapping, and presentation of the returned attribution.
+Every causal diagnosis invokes the `competing-explanations-causal-research` skill, including cases supported entirely by local traces. That skill owns evidence assessment, rival-model construction, symmetric testing, ranking, statuses, and stopping. This host owns target framing, ontology induction, trace mapping, the expressibility check, and presentation of the returned attribution.
 
 If the dependency cannot be found or loaded, report the missing dependency and retain the descriptive case graph with its unknowns. A causal ruling requires the dependency.
 
 ## Inputs
 
-Obtain or infer: the task and its specification, the environment and its affordances, the behavior to explain, the contrast case, success conditions (if any), action boundary, analysis unit, attempt/time boundary, evidence cutoff, intended decision, and available traces, state snapshots, configurations, evaluator outputs, and human reports. Ask one minimal question when the target or a material boundary is unknowable.
+Obtain or infer: the task and its specification, the environment and its affordances, the intended outcome and success conditions, the observed deviation, action boundary, analysis unit, attempt/time boundary, evidence cutoff, intended decision, and available traces, state snapshots, configurations, evaluator outputs, and human reports. Ask one minimal question when the target or a material boundary is unknowable.
 
 ## Workflow
 
-### 1. Freeze a contrastive target
+### 1. Freeze the failure target
 
-Record `analysis unit + behavior X + foil Y + attempt/time + evidence cutoff + intended decision`. The foil defines relevance: only factors that differ between the paths to X and to Y are candidate causes. A failure diagnosis is the special case where Y is the intended outcome; a success or surprise diagnosis names a plausible alternative behavior as Y. If the requester gives no foil, propose the most decision-relevant one and state it.
+Record `analysis unit + intended outcome + observed deviation + attempt/time + evidence cutoff + intended decision`. State the success conditions so each is checkable against World evidence. Distinguish the observed deviation from candidate mechanisms.
 
-Done when X, Y, and the evidence boundary are explicit, and the outcome is distinguished from candidate mechanisms.
+Done when the intended outcome, the observed deviation, and the evidence boundary are explicit.
 
-### 2. Induce the expected task ontology, outcome-blind
+### 2. Induce the expected task ontology, trace-blind
 
-Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and foil, **before reading how the run went**. Backward-chain from success conditions (or from the conditions that would produce Y) to the required artifact roles, functions, producers, consumers, state locators, and completion evidence. Every type must pass the admission rules.
+Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and the frozen target. Backward-chain from the success conditions to the required artifact roles, functions, producers, consumers, state locators, completion evidence, and the decision points where a run could leave the success path. Every type passes the admission rules.
 
-Freeze the result as `O_v0` with its derivation sources. If the outcome has already been seen, say so and record which types were added after exposure; they carry lower weight as unbiased expectations.
+Keep the trace, evaluator verdicts, and postmortems out of this step. When a subagent is available, derive `O_v0` in a fresh subagent given only the task specification, configuration, affordances, and frozen target. Freeze the result as `O_v0`, marking any type derived after trace exposure as `post-exposure`.
 
-Done when `O_v0` is frozen and each type has a definition, an is/is-not boundary, and a derivation source.
+Done when `O_v0` is frozen and each type has a definition, an is/is-not boundary, a derivation source, and an exposure status.
 
 ### 3. Map the trace onto the ontology
 
-Following [case-graph.md](references/case-graph.md), scan the trace in time order and annotate material events as instances of `O_v0` types: `input artifacts → (actor, action) → output artifacts → (consumer, action)`, with world-state transitions. Keep the three layers separate: **World** (what actually is), **Belief** (the agent's representation), **Record** (what was logged or claimed). Record availability and use separately.
+Following [case-graph.md](references/case-graph.md), scan the trace in time order and annotate each material event as an instance of an `O_v0` type, keeping the layers defined in [meta-ontology.md](references/meta-ontology.md) separate. Then walk the ontology to find **absences** (expected artifacts, actions, or handoffs that never occurred) and complete coverage past the first salient anomaly. Log every material event that does not map cleanly in the **residual log**.
 
-Use the ontology for two things scanning alone cannot do: detect **absences** (expected artifacts, actions, or handoffs that never occurred) and enforce **coverage** past the first salient anomaly.
-
-Log every material event that does not map cleanly in the **residual log**, with its span and the reason it does not fit. Do not open-code the trace into a parallel ontology.
-
-Done when each material event is mapped or logged as a residual, each expected type is marked observed, inferred, absent, or outside the boundary, and feedback edges resolve to concrete versions.
+Done when each material event is mapped or logged as a residual, each expected type carries an evidence status, and feedback edges resolve to concrete versions.
 
 ### 4. Audit coverage with lenses
 
-Apply each relevant lens in [lenses/](references/lenses/) as a checklist against the task ontology, not the trace. For each lens function, ask whether some task-ontology type plays that role. Record gaps as questions, not findings. A gap becomes a revision only if it passes the admission rules.
+Apply each relevant lens as described in [lenses/README.md](references/lenses/README.md).
 
 Done when each applied lens is recorded as covered, gap-noted, or not applicable.
 
-### 5. Revise the ontology from residuals
+### 5. Revise the ontology and list candidate deviations
 
-Revise only when a residual or lens gap justifies it. Prefer refining an existing type (identity, version, boundary) over adding one. A new type must pass the admission rules, especially the **discrimination** test. Record each change as `O_vN → O_vN+1` with the triggering residual, then remap affected events.
+Revise only when a residual or lens gap justifies it, following the revision rules in [ontology-induction.md](references/ontology-induction.md), then remap affected events. List candidate deviations from [case-graph.md](references/case-graph.md). When a task-model divergence is among them, build the **agent task model** now.
 
-When a rival hypothesis needs it, infer the **agent task model** (the goal, deliverables, and completion criterion the agent appears to have operated under) as a Belief-layer artifact, cited from behavior and marked inferred. Compare it with the expected ontology; divergence is a candidate mechanism, not a finding.
-
-Done when residuals are resolved, carried as explicit gaps, or rejected with a reason.
+Done when every residual is resolved, carried as an explicit gap, or rejected with a reason, and candidate deviations are listed.
 
 ### 6. Submit the causal-research request
 
-Execute the dependency's workflow using the Request in [causal-interface.md](references/causal-interface.md), including the current ontology version and residual log. The dependency may challenge the graph and propose explanations outside it.
+Execute the dependency's workflow using the Request in [causal-interface.md](references/causal-interface.md). The dependency may challenge the graph and propose explanations outside it.
 
-**Expressibility symmetry:** if the dependency reports that a rival cannot be stated in the current ontology, extend the ontology under the admission rules and resubmit before ranking is accepted. Do not let vocabulary decide the ranking.
+Done when a standard Response is available or a missing-dependency or access blocker is recorded.
 
-Done when a standard Response is available or a missing-dependency or access blocker is recorded. If no candidate is sufficiently supported, report **root cause undetermined**.
+### 7. Check expressibility and ground the attribution
 
-### 7. Ground the returned attribution
+Run the **expressibility check** in [ontology-induction.md](references/ontology-induction.md) on every returned model. A gap leads to an ontology extension, a remap, and a new Request before the ranking is accepted. Build or revise the agent task model here when a returned model depends on it.
 
-Render the returned comparison on the case graph using the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md). For each leading mechanism, identify the producer and action, the affected artifact or world-state version, the downstream consumer and action, the supported deviation, the outcome path, and the intervention target. Check whether it is a production, handoff, consumption, or interaction mechanism. Actor attribution requires evidence about the action and the inputs available at that time.
+Then render the returned comparison on the case graph using the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md). For each leading mechanism, identify the producer and action, the affected artifact or world-state version, the downstream consumer and action, the supported deviation, the outcome path, and the intervention target, and classify it as production, handoff, consumption, or interaction. Actor attribution requires evidence about the action and the inputs available at that time. If no candidate is sufficiently supported, report **root cause undetermined**.
 
-If the comparison lacks a material link, proposes a new mechanism, or new evidence changes the case, send an updated Request. The host adds graph references and presentation; causal revisions return to the dependency.
+If the comparison lacks a material link, or new evidence changes the case, send an updated Request; causal revisions return to the dependency.
 
-Done when every reported attribution traces to a returned causal claim and a concrete path in the case graph.
+Done when every returned model's chain maps onto the case graph or its gap is recorded as unresolved, and every reported attribution traces to a returned causal claim and a concrete case-graph path.
 
-### 8. Assess representation and register the case
+### 8. Assess representation and propose lens types
 
-Ask whether the final ontology expresses the returned mechanism and distinguishes the intended intervention. Then record the case ontology, its revision log, and which rivals forced extensions. Propose a type for promotion into a lens only when it recurs across cases with a stated alignment; promotion requires human review. Level 3 generalization claims must be phrased in types that recur across cases; a single case supports only a case-specific mechanism or a transferable hypothesis.
+Ask whether the final ontology expresses the returned mechanism and distinguishes the intended intervention. For any case type worth adding to a lens, write a proposal with its definition, the reason it is not specific to this task, and the source case. Promotion requires human review.
+
+Done when the representation verdict is recorded and each lens proposal is listed with its reason, or "none" is stated.
 
 ### 9. Report
 
-Use the report template. Preserve the dependency's ruling, status, limitations, errors, next discriminating evidence, and stop reason. Include the frozen ontology, its revision log, the case-graph path, and the residual log even in a concise report.
+Use the report template. Preserve the dependency's ruling, status, limitations, errors, next discriminating evidence, and stop reason. When a saved diagnosis is requested, persist the request, response, ontology versions, case graph, residual log, and source references alongside the report.
 
-Persist the request, response, ontology versions, case graph, and source references alongside the report when a saved diagnosis is requested. Keep observations, inferences, and unknowns explicit.
+Done when every report-template section is present, filled or marked unknown, and requested artifacts are saved.
 
 ## Light mode
 
-For a simple, low-stakes case, skip step 2's full derivation: use the control-loop lens as `O_v0`, map the trace, and keep the residual log. Escalate to full induction if residuals accumulate or rivals cannot be expressed. The dependency is still required for a causal ruling.
+For a simple, low-stakes case, use the control-loop lens as `O_v0` instead of a full derivation, as an explicit exception to the lens rule, and skip step 4. Map the trace and keep the residual log. Escalate to full induction when residuals accumulate or a returned model fails the expressibility check. The dependency is still required for a causal ruling.
