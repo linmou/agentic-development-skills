@@ -2,32 +2,30 @@
 
 **Intent:** Define the fixed grammar that every case uses, so that task ontologies differ in vocabulary but remain comparable and auditable.
 
-The meta-ontology contains no domain types. Domain types live in the task ontology ([ontology-induction.md](ontology-induction.md)) and in optional lenses.
+The meta-ontology contains no domain types. Domain types live in the task ontology ([ontology-induction.md](ontology-induction.md)) and in lenses.
 
 ## Primitives
 
 | Primitive | Definition | Required attributes |
 | --- | --- | --- |
 | Actor | An entity that performs actions: model, agent instance, human, harness, tool, evaluator, or external service. | ID, kind, role in this case |
-| Action | A concrete event by an actor that consumes inputs and may produce artifacts or change world state. | Event ID, actor, time or order, function (task-ontology type), inputs, outputs |
-| Artifact | An identifiable unit of meaning in a semantic role: an instruction, plan, claim, message, tool result, file, record, or verdict. A role, not a file; one source may hold several, and one artifact may span sources. | ID, task-ontology type, version, source span, producer action |
-| Handoff | The provision of an artifact version to a consuming action. | Artifact version, route, consumer action, availability evidence, use evidence |
-| World state | The actual state of what the agent acts on or reasons about at a grounded version or time: a repository, web page, database, environment, document, or other agent. | Locator type (from the task ontology), version or time, evidence |
-| Configuration | Instructions, skills, prompts, policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and handoffs; it is not a separate attribution category. | Provenance, version, temporal validity, delivery and use evidence |
+| Action | A concrete event by an actor that consumes inputs and may produce artifacts or change environment state. | Event ID, actor, time or order, function (task-ontology type), inputs, outputs |
+| Artifact | An identifiable unit of meaning in a semantic role: an instruction, plan, claim, message, tool result, file, or verdict. A role, not a file; one source may hold several, and one artifact may span sources. | ID, task-ontology type, version, source span, producer action |
+| Data flow | The delivery of an artifact version into a consuming action's context. | Artifact version, route, consumer action, in-context evidence, use evidence |
+| Environment state | The actual state of what the agent acts on or reasons about at a grounded version or time: a repository, web page, database, document, or other agent. | Locator type (from the task ontology), version or time, evidence |
+| Scaffold configuration | System prompt, skills, project rules, tool definitions and policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and data flows; it is not a separate attribution category. | Provenance, version, temporal validity, in-context and use evidence |
 
-## Three layers
+## Environment state, belief state, and trace
 
-Keep these layers separate in every case:
+These three follow the POMDP reading of an agent: the agent cannot see the environment state directly, acts on its belief state, and leaves a trace. Keep them distinct in every case:
 
-- **World:** what actually is. Inspections, tests, and observations are evidence about World, not World itself; partial inspection does not establish complete state.
-- **Belief:** the agent's representation of the problem, the world, and the task. Inferred from cited behavior unless explicitly recorded, and always marked inferred when inferred.
-- **Record:** what was logged, reported, or claimed (tool returns, transcripts, completion claims). A record is not proof of world state; disagreement between Record and World is itself a finding.
-
-For the task itself, the same split applies: the expected task ontology is the analyst's model of what the task requires; the **agent task model** is a Belief-layer artifact describing what the agent appears to have treated as the task.
+- **Environment state:** what actually is. It is established only by grounded evidence (snapshots, hashes, independent inspection); partial inspection does not establish complete state.
+- **Belief state:** the agent's representation of the problem and the environment. It is inferred from cited actions unless explicitly recorded, and is always marked inferred when inferred. It includes the **agent task model**: the goal, deliverables, constraints, and completion criterion the agent appears to have operated under ([annotated-trace.md](annotated-trace.md)).
+- **Trace:** the logged sequence of actions with their **observations** (tool returns, page contents, messages received) and **claims** (the agent's assertions, including completion claims). Observations and claims are evidence about environment state, not the state itself; a disagreement between a claim and environment state is itself a finding.
 
 ## Evidence status
 
-Every artifact, action, handoff, and state version carries one status:
+Every artifact, action, data flow, and state version carries one status:
 
 - **Observed:** directly present in a cited source span.
 - **Inferred:** supported by cited evidence but not directly present; state the inference.
@@ -35,11 +33,23 @@ Every artifact, action, handoff, and state version carries one status:
 - **Unobserved:** expected, but the evidence cannot show whether it occurred (logging gap).
 - **Outside boundary:** excluded by the declared scope, with a reason.
 
-Absent and unobserved are different. Do not convert a logging gap into an absence.
+Absent and unobserved are different: a logging gap stays unobserved.
 
 ## Structural anchors
 
 Node, Edge, and Interaction, and the three attribution levels, are defined in [diagnostic-definitions.md](diagnostic-definitions.md). They are part of the meta-ontology and do not change between cases.
+
+## Aliases to diagnose-agentic-coding
+
+| This skill | `diagnose-agentic-coding` |
+| --- | --- |
+| Environment state | System State (SYS) |
+| Belief state | State Model (SM) |
+| Trace (actions, observations, claims) | Execution Record (ER), plus completion status |
+| Data flow | Artifact handoff (Edge) |
+| In context / used | Availability / actual use |
+| Claim–environment-state disagreement | ER–SYS disagreement, false completion |
+| Control-loop lens functions C1–C6 | L1 functions 1–6 |
 
 ## Stability
 

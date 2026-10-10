@@ -12,27 +12,27 @@ These describe **where and how a mechanism operates**, not necessarily its causa
 
 ### Node: action transformation
 
-A Node is a concrete `(actor, action)` event classified by a task-ontology function. It consumes available inputs and may produce artifacts, change World, or both.
+A Node is a concrete `(actor, action)` event classified by a task-ontology function. It consumes the inputs in its context and may produce artifacts, change environment state, or both.
 
 **Node deviation:** an action produces a result that departs from a supported case-specific expectation.
 
-**Is:** incorrect interpretation or use of an available artifact; incorrect reasoning, decision, execution, or verification; incorrect artifact production or world-state change.
+**Is:** incorrect interpretation or use of an available artifact; incorrect reasoning, decision, execution, or verification; incorrect artifact production or environment-state change.
 
 **Is not:** a function type without a concrete action instance; automatically responsible when its input was already defective; automatically a model failure, since actors include humans, harnesses, tools, and evaluators.
 
-### Edge: artifact handoff
+### Edge: data flow
 
-An Edge is the provision of an identifiable artifact version to a consuming action. The task ontology defines **potential** dependencies; the case graph records actual or missing handoffs.
+An Edge is the delivery of an identifiable artifact version into a consuming action's context. The task ontology defines **potential** dependencies; the annotated trace records actual or missing data flows.
 
-**Edge deviation:** a causally relevant handoff is missing or defective.
+**Edge deviation:** a causally relevant data flow is missing or defective.
 
-**Is:** missing delivery; incorrect routing, truncation, or version; failure to make an artifact available to its consumer.
+**Is:** missing delivery; incorrect routing, truncation, or version; failure to put an artifact in its consumer's context.
 
-**Is not:** a mandatory workflow transition; a failure merely because a potential dependency was not exercised; misinterpretation of a correctly delivered artifact, which belongs to the consuming Node.
+**Is not:** a mandatory workflow transition; a failure merely because a potential dependency was not exercised; misuse of an artifact that was in context, which belongs to the consuming Node.
 
 ### Interaction: joint mechanism
 
-An Interaction is a mechanism in which the effect of one factor depends on another. Factors may be artifacts, Nodes, Edges, world state, capabilities, or operating conditions.
+An Interaction is a mechanism in which the effect of one factor depends on another. Factors may be artifacts, Nodes, Edges, environment state, capabilities, or operating conditions.
 
 **Is:** incompatible instructions and tool constraints; a model tendency that matters only under a particular harness policy; a mechanism whose outcome changes when the combination changes.
 
@@ -46,7 +46,7 @@ Node and Edge are locations; Interaction is a causal relationship over locations
 
 *Where and how did the run depart from what the intended outcome required?*
 
-Locate Node, Edge, and Interaction instances, affected artifact and world-state versions, and absences, with evidence and uncertainty. Location is not causation and not responsibility.
+Locate Node, Edge, and Interaction instances, affected artifact and environment-state versions, and errors of omission, with evidence and uncertainty. Location is not causation and not responsibility.
 
 ### Level 2: Root causal mechanism
 
@@ -62,11 +62,11 @@ State recurrence conditions, scope limits, testable predictions, and candidate i
 
 | Level | Object | Result |
 | --- | --- | --- |
-| 1. Location | Node / Edge / Interaction / absence | Localized departure |
+| 1. Location | Node / Edge / Interaction / error of omission | Localized departure |
 | 2. Root mechanism | Causal provenance | Why it occurred |
 | 3. Generalization | Mechanism and its conditions | Where it may recur and how to prevent it |
 
-**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node), and no verification of the claim–source binding occurred (absence). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous; the agent task model treated "a figure from a cited page" as completion. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
+**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node, error of commission), and no verification of the claim–source binding occurred (error of omission). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous, and the scaffold's completion check required only that a figure be cited. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
 
 ## Cross-cutting principles
 

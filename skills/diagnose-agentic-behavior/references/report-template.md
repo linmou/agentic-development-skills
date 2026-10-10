@@ -1,6 +1,6 @@
 # Diagnosis Report
 
-**Intent:** Present the induced ontology, the evidence-grounded case graph, and the dependency's bounded causal comparison.
+**Intent:** Present the frozen task ontology, the evidence-grounded annotated trace, and the dependency's bounded causal comparison.
 
 ## Target and evidence boundary
 
@@ -8,31 +8,30 @@ Record the analysis unit, intended outcome and success conditions, observed devi
 
 ## Task ontology
 
-- `O_v0`: types with definitions, is/is-not boundaries, derivation sources, and exposure status (`pre-exposure` or `post-exposure`), and whether it was derived in a blinded subagent.
-- Revision log: each `O_vN → O_vN+1` with its trigger and admission evidence.
-- Returned models that forced extensions through the expressibility check, and any unresolved gaps.
+- `O_v0`: types with definitions, is/is-not boundaries, derivation sources, and exposure status, and whether it was derived in a blinded subagent.
 - Lens audit: each applied lens and whether it was covered, gap-noted, or not applicable.
+- Representation gaps: returned links that mapped to no type, with their raw spans.
 
-## Case graph
+## Annotated trace
 
 Show the material path:
 
 `input artifacts → (actor, action, function) → output artifacts → (consumer, action, function)`
 
-Include artifact and world-state versions with locators, times, availability versus use evidence, and Record–World disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition. Include the agent task model if built, marked inferred.
+Include artifact and environment-state versions with locators, times, in-context versus use evidence, and claim–environment-state disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition. Include the agent task model if built, marked inferred.
 
 ## Returned causal comparison
 
 Record dependency status and preserve its comparison, citations, limitations, and errors.
 
-| Returned hypothesis/status | Case-graph path | Supporting evidence | Contrary evidence / missing links | Discriminating prediction |
+| Returned hypothesis/status | Annotated-trace path | Supporting evidence | Contrary evidence / missing links | Discriminating prediction |
 | --- | --- | --- | --- | --- |
 
 ## Attribution
 
 For each leading or unresolved explanation:
 
-- **Location (Level 1):** Node, Edge, Interaction, or absence, with the concrete artifact, action, or world-state transition.
+- **Location (Level 1):** Node, Edge, Interaction, or error of omission, with the concrete artifact, action, or environment-state transition.
 - **Root mechanism (Level 2):** upstream source, producing action, capability, policy, or external condition, with path and evidence.
 - **Causal status:** supported mechanisms, unresolved causes, unexcluded rivals, and gaps.
 - **Generalization (Level 3):** recurrence conditions in task-independent terms with the case types mapped to them, scope limits, and evidence needed before generalizing.
@@ -43,10 +42,10 @@ If no candidate is sufficiently supported, state **root cause undetermined** and
 
 ## Representation and lens proposals
 
-State whether the final ontology expresses the mechanism and distinguishes the intervention. List each proposed lens type with its definition, the reason it is not specific to this task, and the source case, or state "none". Promotion requires human review.
+State whether `O_v0` expressed the mechanism and distinguished the intervention, citing representation gaps and residuals. List each proposed lens type with its definition, the reason it is not specific to this task, and the source case, or state "none". Promotion requires human review.
 
 ## Saved and concise reports
 
-A saved diagnosis includes the exact Request, Response, all ontology versions, the case graph, the residual log, and source references, with host annotations kept distinct from the returned comparison.
+A saved diagnosis includes the exact Request, Response, `O_v0`, the annotated trace, the residual log, and source references, with host annotations kept distinct from the returned comparison.
 
-A concise report still includes the target, `O_v0` and revisions, the material case-graph path, the returned ruling with rivals, evidence gaps, and the next discriminating evidence.
+A concise report still includes the target, `O_v0`, the material annotated-trace path, the returned ruling with rivals, evidence gaps, and the next discriminating evidence.
