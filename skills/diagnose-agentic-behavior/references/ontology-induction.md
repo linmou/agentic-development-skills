@@ -63,3 +63,7 @@ The ontology must not decide the causal ranking. On every completed Response:
 2. Map each link onto the annotated trace: an artifact, action, data flow, environment-state transition, or decision point.
 3. A link that maps to no type is a **representation gap**. Render it with its raw trace spans, record it, and keep the model at its returned rank.
 4. Record which returned models had gaps; that record is evidence for the representation verdict and for lens proposals.
+
+## Agent task model
+
+The agent's own operative view of the task is a belief-state artifact in the annotated trace ([annotated-trace.md](annotated-trace.md)), compared with the frozen ontology. Its elements never become ontology types.

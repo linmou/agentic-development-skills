@@ -20,7 +20,7 @@ The meta-ontology contains no domain types. Domain types live in the task ontolo
 These three follow the POMDP reading of an agent: the agent cannot see the environment state directly, acts on its belief state, and leaves a trace. Keep them distinct in every case:
 
 - **Environment state:** what actually is. It is established only by grounded evidence (snapshots, hashes, independent inspection); partial inspection does not establish complete state.
-- **Belief state:** the agent's representation of the problem and the environment. It is inferred from cited actions unless explicitly recorded, and is always marked inferred when inferred.
+- **Belief state:** the agent's representation of the problem and the environment. It is inferred from cited actions unless explicitly recorded, and is always marked inferred when inferred. It includes the **agent task model**: the goal, deliverables, constraints, and completion criterion the agent appears to have operated under ([annotated-trace.md](annotated-trace.md)).
 - **Trace:** the logged sequence of actions with their **observations** (tool returns, page contents, messages received) and **claims** (the agent's assertions, including completion claims). Observations and claims are evidence about environment state, not the state itself; a disagreement between a claim and environment state is itself a finding.
 
 ## Evidence status

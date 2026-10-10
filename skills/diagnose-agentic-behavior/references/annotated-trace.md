@@ -58,10 +58,20 @@ After annotation, list candidate deviations as unranked leads for the causal dep
 | Context delivery failure | Correct output exists; delivery, truncation, routing, or access evidence | Data flow into the consumer |
 | Context misuse | Correct version in context; use ignores or contradicts it | Consuming action |
 | Stale context | Version and timing evidence show an outdated version was used | Version selection or synchronization |
+| Task-model divergence | Agent task model differs from the task ontology in a way the record links to the observed deviation | Objective delivery, instruction, or model behavior |
 | False success claim | A claim, tool return, or completion claim contradicted by environment-state evidence | Verification or reporting action |
 | Interaction effect | Multiple conditions jointly change an action or data flow | The supported combination |
 
 The dependency decides which the evidence supports.
+
+## Agent task model
+
+The agent task model is the belief-state artifact describing what the agent appears to have treated as the task. Build it in step 3 when a task-model divergence is among the candidate deviations, or in step 5 when a returned model depends on it.
+
+| Element | Inferred content | Supporting spans | Contrary spans | Task-ontology counterpart | Divergence |
+| --- | --- | --- | --- | --- | --- |
+
+Elements typically include the operative goal, deliverables, constraints honored, and completion criterion. Every element is marked inferred and cites actions. A divergence counts as a candidate only when the record states how it leads to the observed deviation. The agent task model is compared with the frozen task ontology and stays outside it.
 
 ## Scaffold configuration
 

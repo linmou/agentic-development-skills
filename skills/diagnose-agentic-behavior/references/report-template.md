@@ -18,7 +18,7 @@ Show the material path:
 
 `input artifacts → (actor, action, function) → output artifacts → (consumer, action, function)`
 
-Include artifact and environment-state versions with locators, times, in-context versus use evidence, and claim–environment-state disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition.
+Include artifact and environment-state versions with locators, times, in-context versus use evidence, and claim–environment-state disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition. Include the agent task model if built, marked inferred.
 
 ## Returned causal comparison
 

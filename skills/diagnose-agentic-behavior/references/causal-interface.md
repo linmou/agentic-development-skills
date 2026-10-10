@@ -12,7 +12,7 @@ Submit the Request version supported by the dependency's current call contract w
 
 - `outcome`: the frozen observed deviation from the intended outcome.
 - `scope`: analysis unit, attempt/time boundary, environment, success conditions, and intended decision.
-- `evidence_seeds`: source locations or excerpts; the frozen task ontology `O_v0`; annotated-trace records; expected-type coverage including errors of omission; the residual log with carried residuals as raw spans; candidate deviations and supplied theories as unranked leads.
+- `evidence_seeds`: source locations or excerpts; the frozen task ontology `O_v0`; annotated-trace records; expected-type coverage including errors of omission; the residual log with carried residuals as raw spans; the agent task model if built; candidate deviations and supplied theories as unranked leads.
 - `constraints`: evidence cutoff, permitted sources and tests, access limits, and the requirement to mark unknown links.
 - `detail`: `full` for an auditable ledger.
 - `output_language`: the requester's language.
