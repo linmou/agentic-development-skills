@@ -1,10 +1,10 @@
 # Canonical Diagnostic Definitions
 
-**Intent:** Define where a behavior mechanism operates, how its cause is attributed, and how any generalization is bounded. Adapted from `diagnose-agentic-coding` and made domain-independent: functions and artifact types come from the case's task ontology, not from a fixed list.
+**Intent:** Define where a failure mechanism operates, how its cause is attributed, and how any generalization is bounded. Adapted from `diagnose-agentic-coding` and made domain-independent: functions and artifact types come from the case's task ontology, not from a fixed list.
 
-## Contrastive framing
+## Failure framing
 
-Every diagnosis explains behavior X relative to a foil Y. A deviation is a point where the path to X departs from what the path to Y would require. For a failure diagnosis, Y is the intended outcome and the definitions below read as failure definitions.
+Every diagnosis explains an observed deviation from an intended outcome. A deviation is a point where the run departs from what the success conditions require.
 
 ## Node, Edge, and Interaction
 
@@ -38,13 +38,13 @@ An Interaction is a mechanism in which the effect of one factor depends on anoth
 
 **Is not:** a third physical location in the graph; mere coexistence of several errors; a sequential chain without evidence of joint dependence.
 
-Node and Edge are locations; Interaction is a causal relationship over locations and conditions. They may coexist. Configuration is not an extra category; represent it as artifacts, conditions, or properties of actions and handoffs.
+Node and Edge are locations; Interaction is a causal relationship over locations and conditions. They may coexist. Configuration is represented as defined in [meta-ontology.md](meta-ontology.md).
 
 ## Three attribution levels
 
 ### Level 1: Location
 
-*Where and how did the path to X depart from what Y required?*
+*Where and how did the run depart from what the intended outcome required?*
 
 Locate Node, Edge, and Interaction instances, affected artifact and world-state versions, and absences, with evidence and uncertainty. Location is not causation and not responsibility.
 
@@ -58,13 +58,13 @@ Trace upstream through artifacts, actions, actors, capabilities, configuration, 
 
 *When would the same mechanism produce similar behavior again?*
 
-State recurrence conditions, scope limits, testable predictions, and candidate interventions. Phrase conditions in task-ontology types that recur across cases, with the alignment stated. One case supports a case-specific mechanism or a transferable hypothesis, not a stable capability claim.
+State recurrence conditions, scope limits, testable predictions, and candidate interventions. Phrase conditions in task-independent terms, with the case types mapped to them, so another case can test the claim. One case supports a case-specific mechanism or a transferable hypothesis, not a stable capability claim.
 
 | Level | Object | Result |
 | --- | --- | --- |
 | 1. Location | Node / Edge / Interaction / absence | Localized departure |
 | 2. Root mechanism | Causal provenance | Why it occurred |
-| 3. Generalization | Mechanism and its conditions | Where it may recur and how to prevent or reinforce it |
+| 3. Generalization | Mechanism and its conditions | Where it may recur and how to prevent it |
 
 **Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node), and no verification of the claim–source binding occurred (absence). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous; the agent task model treated "a figure from a cited page" as completion. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
 
@@ -75,5 +75,5 @@ State recurrence conditions, scope limits, testable predictions, and candidate i
 3. Causation need not be singular.
 4. Rootness is evidence-bounded.
 5. Transferability must be qualified.
-6. Vocabulary must not decide the ranking (expressibility symmetry).
+6. Vocabulary must not decide the ranking: the host checks every returned model for expressibility ([ontology-induction.md](ontology-induction.md)).
 7. Causal inference is delegated to `competing-explanations-causal-research`.

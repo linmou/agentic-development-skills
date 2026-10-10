@@ -13,7 +13,7 @@ The meta-ontology contains no domain types. Domain types live in the task ontolo
 | Artifact | An identifiable unit of meaning in a semantic role: an instruction, plan, claim, message, tool result, file, record, or verdict. A role, not a file; one source may hold several, and one artifact may span sources. | ID, task-ontology type, version, source span, producer action |
 | Handoff | The provision of an artifact version to a consuming action. | Artifact version, route, consumer action, availability evidence, use evidence |
 | World state | The actual state of what the agent acts on or reasons about at a grounded version or time: a repository, web page, database, environment, document, or other agent. | Locator type (from the task ontology), version or time, evidence |
-| Configuration | Instructions, skills, prompts, policies, and harness settings that condition actions. Represented as artifacts or operating conditions, not as a separate blame category. | Provenance, version, temporal validity, delivery and use evidence |
+| Configuration | Instructions, skills, prompts, policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and handoffs; it is not a separate attribution category. | Provenance, version, temporal validity, delivery and use evidence |
 
 ## Three layers
 
