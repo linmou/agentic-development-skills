@@ -1,46 +1,48 @@
 # Meta-Ontology
 
-**Intent:** Define the fixed grammar that every case uses, so that task ontologies differ in vocabulary but remain comparable and auditable.
+**Intent:** Define the fixed grammar every case uses, so that task ontologies differ in vocabulary but remain comparable. It contains no domain types; those live in the task ontology ([ontology-induction.md](ontology-induction.md)). Changing this file changes the method, not a case, and requires human review.
 
-The meta-ontology contains no domain types. Domain types live in the task ontology ([ontology-induction.md](ontology-induction.md)) and in optional lenses.
+## Layer 1: Primitives
 
-## Primitives
-
-| Primitive | Definition | Required attributes |
+| Primitive | Is | Is not |
 | --- | --- | --- |
-| Actor | An entity that performs actions: model, agent instance, human, harness, tool, evaluator, or external service. | ID, kind, role in this case |
-| Action | A concrete event by an actor that consumes inputs and may produce artifacts or change world state. | Event ID, actor, time or order, function (task-ontology type), inputs, outputs |
-| Artifact | An identifiable unit of meaning in a semantic role: an instruction, plan, claim, message, tool result, file, record, or verdict. A role, not a file; one source may hold several, and one artifact may span sources. | ID, task-ontology type, version, source span, producer action |
-| Handoff | The provision of an artifact version to a consuming action. | Artifact version, route, consumer action, availability evidence, use evidence |
-| World state | The actual state of what the agent acts on or reasons about at a grounded version or time: a repository, web page, database, environment, document, or other agent. | Locator type (from the task ontology), version or time, evidence |
-| Configuration | Instructions, skills, prompts, policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and handoffs; it is not a separate attribution category. | Provenance, version, temporal validity, delivery and use evidence |
+| Actor | An entity that performs actions, identified by ID and kind: model, agent instance, human, harness, tool, evaluator, or external service. | A role or permission; those are artifacts. |
+| Action | One concrete event by one actor, classified by a task-ontology function, that consumes artifacts and may produce new artifacts or new artifact versions. | A function (the type it instantiates), or a planned step that never ran. |
+| Artifact | A versioned unit of content in a task-ontology role: an instruction, plan, message, tool result, claim, file, verdict, configuration content, or the state of a repository, page, or database. Versions are grounded by a task-ontology locator. | A file or source as such: one source may hold several artifacts, and one artifact may span sources. |
 
-## Three layers
+**Operating condition:** a setting that acts without entering any context, such as a truncation limit, permission, or timeout. It is a property of the Node or Edge it governs, not an artifact. Configuration that does enter context (system prompt, skill, project rule, tool definition) is an artifact.
 
-Keep these layers separate in every case:
+## Layer 2: Node, Edge, and Interaction
 
-- **World:** what actually is. Inspections, tests, and observations are evidence about World, not World itself; partial inspection does not establish complete state.
-- **Belief:** the agent's representation of the problem, the world, and the task. Inferred from cited behavior unless explicitly recorded, and always marked inferred when inferred.
-- **Record:** what was logged, reported, or claimed (tool returns, transcripts, completion claims). A record is not proof of world state; disagreement between Record and World is itself a finding.
+Node and Edge are composed of primitives and form a directed graph. An Interaction is a hyperedge over that graph. Node and Edge are typed by the task ontology (function, artifact role); Interaction has no task-ontology type.
 
-For the task itself, the same split applies: the expected task ontology is the analyst's model of what the task requires; the **agent task model** is a Belief-layer artifact describing what the agent appears to have treated as the task.
+| Structure | Composed of | Is | Is not |
+| --- | --- | --- | --- |
+| Node | `(actor, action)` | One concrete action by one actor, classified by a task-ontology function. | A function without an action instance; the artifacts it consumes or produces, which arrive and leave on Edges. |
+| Edge | `(producing Node or source, artifact version, consuming Node)` | The delivery of an artifact version into a consuming Node. Delivery establishes *in context*; only a reference or resulting action establishes *use*. | Use of the artifact, which is evidenced at the consuming Node. A mandatory workflow transition. |
+| Interaction | Two or more Nodes and Edges: a hyperedge over the annotated trace | Members whose joint effect on an outcome differs from what each produces alone, such as two conflicting instructions delivered into one Node, or a model tendency that matters only under a harness truncation limit. | A type declared before freezing; Nodes that merely coexist; a sequential chain without evidence of joint dependence. |
+
+Capabilities and operating conditions join an Interaction through the Node or Edge that carries them.
+
+## Runtime factors
+
+Runtime factors add no types; they are distinctions among Layer 1 artifacts that every case keeps.
+
+| Factor | Is | Is not |
+| --- | --- | --- |
+| Environment state | Artifacts that hold what actually is (a repository, page, database, document, or other agent), at versions grounded by snapshots, hashes, or independent inspection. Changing the environment produces a new version; inspecting it consumes one. | What the trace or the agent says it is; established by partial inspection. |
+| Belief state | The agent's representation of the task and the environment, including the agent task model ([annotated-trace.md](annotated-trace.md)): artifacts inferred from cited actions unless the agent recorded them. | Environment state; directly observed, unless the agent recorded it. |
+| Trace | The logged sequence of Nodes, carrying two artifact roles every task ontology inherits: **observations** (tool returns, page contents, messages received) and **claims** (the agent's assertions, including completion claims). | Environment state: observations and claims are evidence about it. Complete: logging gaps exist. |
 
 ## Evidence status
 
-Every artifact, action, handoff, and state version carries one status:
+Each annotated instance (artifact version, Node, or Edge) is:
 
 - **Observed:** directly present in a cited source span.
 - **Inferred:** supported by cited evidence but not directly present; state the inference.
-- **Absent:** expected by the task ontology, and the evidence boundary is complete enough to say it did not occur.
-- **Unobserved:** expected, but the evidence cannot show whether it occurred (logging gap).
+
+Each expected type with no instance is:
+
+- **Absent:** the evidence boundary is complete enough to say it did not occur.
+- **Unobserved:** the evidence cannot show whether it occurred (logging gap).
 - **Outside boundary:** excluded by the declared scope, with a reason.
-
-Absent and unobserved are different. Do not convert a logging gap into an absence.
-
-## Structural anchors
-
-Node, Edge, and Interaction, and the three attribution levels, are defined in [diagnostic-definitions.md](diagnostic-definitions.md). They are part of the meta-ontology and do not change between cases.
-
-## Stability
-
-Changes to this file are changes to the method, not to a case. They require human review and must preserve comparability with earlier case records.
