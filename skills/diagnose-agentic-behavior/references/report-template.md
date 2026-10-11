@@ -18,7 +18,7 @@ Show the material path:
 
 `input artifacts → (actor, action, function) → output artifacts → (consumer, action, function)`
 
-Include artifact and environment-state versions with locators, times, in-context versus use evidence, and claim–environment-state disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition. Include the agent task model if built, marked inferred.
+Include artifact versions, including environment-state versions, with locators, times, in-context versus use evidence, and claim–environment-state disagreements. Include expected-type coverage with each evidence status. Include the residual log with every disposition. Include the agent task model if built, marked inferred.
 
 ## Returned causal comparison
 
@@ -31,7 +31,7 @@ Record dependency status and preserve its comparison, citations, limitations, an
 
 For each leading or unresolved explanation:
 
-- **Location (Level 1):** Node, Edge, Interaction, or error of omission, with the concrete artifact, action, or environment-state transition.
+- **Location (Level 1):** Node, Edge, Interaction, or error of omission, with the concrete artifact version, Node, or Edge.
 - **Root mechanism (Level 2):** upstream source, producing action, capability, policy, or external condition, with path and evidence.
 - **Causal status:** supported mechanisms, unresolved causes, unexcluded rivals, and gaps.
 - **Generalization (Level 3):** recurrence conditions in task-independent terms with the case types mapped to them, scope limits, and evidence needed before generalizing.

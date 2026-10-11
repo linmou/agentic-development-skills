@@ -17,4 +17,4 @@ Typical dependencies: C1 constrains all others; C2 informs C3, C4, C6; C3 specif
 
 ## Light mode
 
-When used as `O_v0`, instantiate each function with domain-specific artifact names and environment-state locators for the case, and record the instantiation. Residuals that do not fit are the signal to restart with a full derivation.
+When used as `O_v0`, instantiate each function with domain-specific artifact names and locators for the case, and record the instantiation. Residuals that do not fit are the signal to restart with a full derivation.

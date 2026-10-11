@@ -13,8 +13,8 @@ Unlike `diagnose-agentic-coding`, this skill has no predefined domain ontology. 
 
 Normative references:
 
-- [meta-ontology.md](references/meta-ontology.md): fixed grammar, environment state, belief state, and trace, evidence statuses, and aliases to `diagnose-agentic-coding`.
-- [diagnostic-definitions.md](references/diagnostic-definitions.md): Node, Edge, Interaction, and the three attribution levels.
+- [meta-ontology.md](references/meta-ontology.md): fixed grammar: Layer 1 primitives (Actor, Action, Artifact) and operating conditions, Layer 2 Node, Edge, and Interaction, runtime factors (environment state, belief state, trace), and evidence statuses.
+- [diagnostic-definitions.md](references/diagnostic-definitions.md): failure framing and the three attribution levels; fixed like the meta-ontology.
 - [ontology-induction.md](references/ontology-induction.md): trace-blind derivation of the task ontology, admission rules, freezing, and the expressibility check.
 - [annotated-trace.md](references/annotated-trace.md): annotating trace spans against the ontology, the residual log, candidate deviations, and the agent task model.
 - [causal-interface.md](references/causal-interface.md): boundary with the causal-research dependency.
@@ -39,7 +39,7 @@ Done when the intended outcome, the observed deviation, and the evidence boundar
 
 ### 2. Induce, audit, and freeze the task ontology, trace-blind
 
-Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and the frozen target. Backward-chain from the success conditions to the required artifact roles, functions, producers, consumers, environment-state locators, completion evidence, and the decision points where a run could leave the success path. Every type passes the admission rules.
+Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and the frozen target. Backward-chain from the success conditions to the required artifact roles, functions, producers, consumers, locators, completion evidence, and the decision points where a run could leave the success path. Every type passes the admission rules.
 
 Before freezing, apply each relevant lens as described in [lenses/README.md](references/lenses/README.md), and close any gap that passes the admission rules. Keep the trace, evaluator verdicts, and postmortems out of this step. When a subagent is available, run this step in a fresh subagent given only the task specification, configuration, affordances, and frozen target.
 
@@ -49,9 +49,9 @@ Done when `O_v0` is frozen, each type has a definition, an is/is-not boundary, a
 
 ### 3. Annotate the trace
 
-Following [annotated-trace.md](references/annotated-trace.md), scan the trace in time order and annotate each material action as an instance of an `O_v0` type, keeping environment state, belief state, and trace distinct as defined in [meta-ontology.md](references/meta-ontology.md). Then walk the ontology to find **errors of omission** (expected artifacts, actions, or data flows that never occurred) and complete coverage past the first salient anomaly. Log every material action that does not map cleanly in the **residual log** with a disposition, and list candidate deviations. When a task-model divergence is among them, build the **agent task model** as a belief-state artifact.
+Following [annotated-trace.md](references/annotated-trace.md), scan the trace in time order and annotate each material action as an instance of an `O_v0` type, keeping environment state, belief state, and trace distinct as defined in [meta-ontology.md](references/meta-ontology.md). Then walk the ontology to find **errors of omission** (expected artifacts, Nodes, or Edges that never occurred) and complete coverage past the first salient anomaly. Log every material action that does not map cleanly in the **residual log** with a disposition, and list candidate deviations. When a task-model divergence is among them, build the **agent task model** as a belief-state artifact.
 
-Done when each material action is annotated or logged as a residual with a disposition, each expected type carries an evidence status, data flows resolve to concrete versions, and candidate deviations are listed.
+Done when each material action is annotated or logged as a residual with a disposition, each expected type carries an evidence status, Edges resolve to concrete versions, and candidate deviations are listed.
 
 ### 4. Submit the causal-research request
 
@@ -63,7 +63,7 @@ Done when a standard Response is available or a missing-dependency or access blo
 
 Run the **expressibility check** in [ontology-induction.md](references/ontology-induction.md) on every returned model. The ontology stays frozen: a link that maps to no type is rendered with its raw trace spans and recorded as a representation gap, and the model keeps its returned rank. Build or revise the agent task model here when a returned model depends on it.
 
-Then render the returned comparison on the annotated trace using the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md). For each leading mechanism, identify the producer and action, the affected artifact or environment-state version, the downstream consumer and action, the supported deviation, the outcome path, and the intervention target, and classify it as production, data flow, consumption, or interaction. Actor attribution requires evidence about the action and the inputs in context at that time. If no candidate is sufficiently supported, report **root cause undetermined**.
+Then render the returned comparison on the annotated trace using Node, Edge, and Interaction from [meta-ontology.md](references/meta-ontology.md) and the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md). For each leading mechanism, identify the producer and action, the affected artifact version, the downstream consumer and action, the supported deviation, the outcome path, and the intervention target, and classify it as production (Node), delivery (Edge), consumption (Node), or Interaction. Actor attribution requires evidence about the action and the inputs in context at that time. If no candidate is sufficiently supported, report **root cause undetermined**.
 
 If the comparison lacks a material link, or new evidence changes the case, send an updated Request; causal revisions return to the dependency.
 

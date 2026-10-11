@@ -2,32 +2,32 @@
 
 **Intent:** Annotate trace evidence against the frozen task ontology, record what does not fit, and nominate candidate deviations.
 
-The annotated trace is the single schema for a case: trace spans labeled as instances of task-ontology types, linked into a produce/consume graph. Primitives, environment state, belief state, trace, and evidence statuses are defined in [meta-ontology.md](meta-ontology.md).
+The annotated trace is the single schema for a case: trace spans labeled as instances of task-ontology types, linked into a produce/consume graph. Primitives, Node, Edge, Interaction, runtime factors, and evidence statuses are defined in [meta-ontology.md](meta-ontology.md).
 
 ## General form
 
 `input artifacts → (actor, action, function) → output artifacts → (consumer, action, function)`
 
-with environment-state transitions `S_t → (actor, action) → observation + S_{t+1}` wherever the resulting state can be grounded. When `S_{t+1}` is unknown, record the gap and leave the transition open.
+An action that changes the environment outputs a new environment-state artifact version. When that version cannot be grounded, record the gap.
 
 ## Annotation procedure
 
 1. Scan the trace in time order. Assign event IDs; repeated actions get distinct IDs.
 2. For each material action, identify the actor, the action, its function (a task-ontology type), the inputs in context at that time, and its outputs.
 3. Assign each output an artifact ID and version. Establish what was in context at a time only from versions that existed then.
-4. For each data flow, record **in-context** evidence (delivered into the consumer's context, file present, message sent) and **use** evidence (explicit reference, argument, resulting action) as separate fields. Delivery establishes in context; only references or resulting actions establish use. Logging gaps leave either uncertain.
-5. Ground environment-state versions with the locators defined in the task ontology.
+4. For each Edge, record **in-context** evidence (delivered into the consumer's context, file present, message sent) and **use** evidence (explicit reference, argument, resulting action) as separate fields. Logging gaps leave either uncertain.
+5. Ground artifact versions, especially environment-state versions, with the locators defined in the task ontology.
 6. After the scan, walk the task ontology and assign every expected type an evidence status. This is how errors of omission are found.
 7. Complete the annotation before nominating candidate deviations, so coverage extends past the first salient anomaly.
 
 ## Records
 
-Artifact and state record:
+Artifact record:
 
-| Artifact or state ID/version | Type | Concrete content (span) | Source locator | Time | Producer action, or state transition | Status |
+| Artifact ID/version | Type | Concrete content (span) | Source locator | Time | Producer action or source | Status |
 | --- | --- | --- | --- | --- | --- | --- |
 
-Data-flow record:
+Edge record:
 
 | Input ID/version | Consumer action, function, time | Expected use | In-context evidence | Use evidence | Output ID/version | Deviation or gap |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -55,12 +55,12 @@ After annotation, list candidate deviations as unranked leads for the causal dep
 | Bad input | Input content at action time compared with the task requirement or environment state | Upstream production or refresh |
 | Error of commission | Adequate inputs in context, incorrect reasoning or execution, incorrect output | Producing action |
 | Error of omission | Expected type with status `absent` | Whatever should have produced it |
-| Context delivery failure | Correct output exists; delivery, truncation, routing, or access evidence | Data flow into the consumer |
+| Context delivery failure | Correct output exists; delivery, truncation, routing, or access evidence | Edge into the consumer |
 | Context misuse | Correct version in context; use ignores or contradicts it | Consuming action |
 | Stale context | Version and timing evidence show an outdated version was used | Version selection or synchronization |
 | Task-model divergence | Agent task model differs from the task ontology in a way the record links to the observed deviation | Objective delivery, instruction, or model behavior |
 | False success claim | A claim, tool return, or completion claim contradicted by environment-state evidence | Verification or reporting action |
-| Interaction effect | Multiple conditions jointly change an action or data flow | The supported combination |
+| Interaction effect | Multiple conditions jointly change a Node or Edge | The supported combination |
 
 The dependency decides which the evidence supports.
 
@@ -75,7 +75,7 @@ Elements typically include the operative goal, deliverables, constraints honored
 
 ## Configuration
 
-Configuration is represented as defined in [meta-ontology.md](meta-ontology.md). Record its delivery and use through annotation step 4. Infer effective runtime conditions from evidence; intended settings alone establish only intent.
+Configuration content is an artifact and a setting that never enters context is an operating condition ([meta-ontology.md](meta-ontology.md)). Record its delivery and use through annotation step 4. Infer effective runtime conditions from evidence; intended settings alone establish only intent.
 
 | Configuration mechanism | Anchor | Required trace |
 | --- | --- | --- |

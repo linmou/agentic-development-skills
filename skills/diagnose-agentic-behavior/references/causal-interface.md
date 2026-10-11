@@ -22,7 +22,7 @@ Include `caller_tag` only when correlation is useful. Local-only access is a sou
 
 ## Response handling
 
-- **Completed:** run the expressibility check in [ontology-induction.md](ontology-induction.md) on every returned model, then map the statuses to concrete actions, artifact paths, environment-state transitions, and errors of omission in the annotated trace. Representation gaps are rendered with raw spans and leave the returned ranking unchanged.
+- **Completed:** run the expressibility check in [ontology-induction.md](ontology-induction.md) on every returned model, then map the statuses to concrete artifact versions, Nodes, Edges, and errors of omission in the annotated trace. Representation gaps are rendered with raw spans and leave the returned ranking unchanged.
 - **Clarification or blocking:** obtain the missing boundary, or report errors and descriptive findings.
 - **Malformed response or unsupported version:** no causal ruling.
 - **Missing material link or new evidence:** submit an updated Request. The host adds trace references and presentation; causal revisions return to the dependency.

@@ -2,7 +2,7 @@
 
 **Intent:** Derive the task ontology from the task without reading the trace, freeze it, and keep it fixed for the whole case.
 
-The task ontology supplies the vocabulary for one case: which artifact roles, functions, environment-state locators, and completion evidence the task requires. It is the analyst's expectation, not ground truth. Its value is that it is fixed before the trace is read and never adapted to the run, so it can reveal errors of omission, resist hindsight, and stay comparable across cases.
+The task ontology supplies the vocabulary for one case: which artifact roles, functions, locators, and completion evidence the task requires. It is the analyst's expectation, not ground truth. Its value is that it is fixed before the trace is read and never adapted to the run, so it can reveal errors of omission, resist hindsight, and stay comparable across cases.
 
 ## Inputs to derivation (trace-blind)
 
@@ -19,12 +19,12 @@ The derivation excludes the trace, evaluator verdicts, and human postmortems. Kn
 ## Derivation procedure
 
 1. **Success conditions.** State what must be true at the end for the intended outcome. Make each condition checkable against environment-state evidence.
-2. **Backward chaining.** For each condition, identify the intermediate artifacts or environment-state changes it depends on, who produces them, and who consumes them. Repeat until you reach inputs the task supplies.
+2. **Backward chaining.** For each condition, identify the intermediate artifact versions, including environment-state versions, it depends on, who produces them, and who consumes them. Repeat until you reach inputs the task supplies.
 3. **Functions.** Name the actions that produce each required artifact. A function is a class of action defined by what it produces and consumes, not by a fixed workflow position.
-4. **Environment-state locators.** For each environment-state entity, define how a version is grounded in this domain (commit hash, URL plus retrieval time, database snapshot, message ID, conversation turn) and how strong that evidence is.
+4. **Locators.** For each artifact role, especially environment state, define how a version is grounded in this domain (commit hash, URL plus retrieval time, database snapshot, message ID, conversation turn) and how strong that evidence is.
 5. **Completion evidence.** Define what evidence would justify a completion claim, separate from the claim itself.
 6. **Decision points.** Make explicit the decisions, inputs, and checks where a run could leave the success path. These give later rivals somewhere to attach.
-7. **Expected dependencies.** Record potential producer→consumer data flows. They are expectations: an unexercised potential dependency becomes a deviation only with case evidence of causal relevance.
+7. **Expected dependencies.** Record potential producer→consumer Edges. They are expectations: an unexercised potential Edge becomes a deviation only with case evidence of causal relevance.
 8. **Lens audit.** Apply the relevant lenses ([lenses/README.md](lenses/README.md)) and add any type a gap justifies under the admission rules.
 
 ## Type record
@@ -32,12 +32,12 @@ The derivation excludes the trace, evaluator verdicts, and human postmortems. Kn
 | Field | Content |
 | --- | --- |
 | ID | Short stable identifier |
-| Kind | Artifact role, function, environment-state entity, decision point, or completion evidence |
+| Kind | Artifact role, function, decision point, or completion evidence |
 | Definition | One sentence |
 | Is / Is not | Boundary examples that separate it from neighboring types |
 | Derivation source | The task, configuration, affordance, or lens it was derived from |
 | Expected producers / consumers | Functions or actors |
-| Locator | For environment state: how versions are grounded |
+| Locator | How versions of the artifact are grounded |
 | Exposure | `pre-exposure` or `post-exposure` |
 
 ## Admission rules
@@ -60,7 +60,7 @@ Freeze the audited ontology as `O_v0` before the trace is read. It stays fixed t
 The ontology must not decide the causal ranking. On every completed Response:
 
 1. For each returned model, take its mechanism chain (`condition → decision/action → intermediate change → outcome`).
-2. Map each link onto the annotated trace: an artifact, action, data flow, environment-state transition, or decision point.
+2. Map each link onto the annotated trace: an artifact version, Node, Edge, or decision point.
 3. A link that maps to no type is a **representation gap**. Render it with its raw trace spans, record it, and keep the model at its returned rank.
 4. Record which returned models had gaps; that record is evidence for the representation verdict and for lens proposals.
 
