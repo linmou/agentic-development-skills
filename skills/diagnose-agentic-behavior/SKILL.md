@@ -39,13 +39,15 @@ Done when the intended outcome, the observed deviation, and the evidence boundar
 
 ### 2. Induce, audit, and freeze the task ontology, trace-blind
 
-Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and the frozen target. Backward-chain from the success conditions to the required artifact roles, functions, producers, consumers, locators, completion evidence, and the decision points where a run could leave the success path. Every type passes the admission rules.
+Following [ontology-induction.md](references/ontology-induction.md), derive the task ontology from the task specification, environment affordances, configuration, and the frozen target. [meta-ontology.md](references/meta-ontology.md) is the only taxonomy. Backward-chain from the success conditions to the required artifact roles (including environment-state roles, with locators and completion evidence), the functions that produce and consume them, and the potential Edges between them, and mark the functions and Edges where a run could leave the success path as divergence points. Every type passes the admission rules.
 
-Before freezing, apply each relevant lens as described in [lenses/README.md](references/lenses/README.md), and close any gap that passes the admission rules. Keep the trace, evaluator verdicts, and postmortems out of this step. When a subagent is available, run this step in a fresh subagent given only the task specification, configuration, affordances, and frozen target.
+If a concept fits none of the three kinds, record it as a taxonomy gap and stop for human review; do not invent a kind.
+
+Before freezing, apply each relevant lens as described in [lenses/README.md](references/lenses/README.md), and close any gap that passes the admission rules; a lens suggests what to type, never a new kind. Keep the trace, evaluator verdicts, and postmortems out of this step. When a subagent is available, run this step in a fresh subagent given only the meta-ontology, task specification, configuration, affordances, and frozen target.
 
 Freeze the result as `O_v0`. It is the ontology for the rest of the case.
 
-Done when `O_v0` is frozen, each type has a definition, an is/is-not boundary, a derivation source, and an exposure status, and each applied lens is recorded as covered, gap-noted, or not applicable.
+Done when `O_v0` is frozen, each type names its meta-ontology kind and has a definition, an is/is-not boundary, a derivation source, and an exposure status, any taxonomy gap is recorded for review, and each applied lens is recorded as covered, gap-noted, or not applicable.
 
 ### 3. Annotate the trace
 
