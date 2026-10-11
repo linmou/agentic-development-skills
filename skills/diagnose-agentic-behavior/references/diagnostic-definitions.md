@@ -66,7 +66,7 @@ State recurrence conditions, scope limits, testable predictions, and candidate i
 | 2. Root mechanism | Causal provenance | Why it occurred |
 | 3. Generalization | Mechanism and its conditions | Where it may recur and how to prevent it |
 
-**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node, error of commission), and no verification of the claim–source binding occurred (error of omission). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous, and the scaffold's completion check required only that a figure be cited. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
+**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node, error of commission), and no verification of the claim–source binding occurred (error of omission). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous, and the harness's completion check required only that a figure be cited. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
 
 ## Cross-cutting principles
 

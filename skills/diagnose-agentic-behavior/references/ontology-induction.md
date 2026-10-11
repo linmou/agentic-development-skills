@@ -11,7 +11,7 @@ Use:
 - Task specification, user request, intended outcome, and success conditions.
 - The frozen failure target from step 1.
 - Environment affordances: available tools, observable state, permissions, and limits.
-- Scaffold configuration delivered to the agent.
+- Configuration delivered to the agent.
 - Domain knowledge and lenses, as prompts for coverage only.
 
 The derivation excludes the trace, evaluator verdicts, and human postmortems. Knowing the observed deviation from the frozen target is expected; knowing how the run unfolded is exposure. When a subagent is available, derive `O_v0` in a fresh subagent given only the inputs above, which makes the blinding real rather than self-reported. When exposure has already happened, record what was seen and mark the affected types `post-exposure`.

@@ -13,7 +13,7 @@ The meta-ontology contains no domain types. Domain types live in the task ontolo
 | Artifact | An identifiable unit of meaning in a semantic role: an instruction, plan, claim, message, tool result, file, or verdict. A role, not a file; one source may hold several, and one artifact may span sources. | ID, task-ontology type, version, source span, producer action |
 | Data flow | The delivery of an artifact version into a consuming action's context. | Artifact version, route, consumer action, in-context evidence, use evidence |
 | Environment state | The actual state of what the agent acts on or reasons about at a grounded version or time: a repository, web page, database, document, or other agent. | Locator type (from the task ontology), version or time, evidence |
-| Scaffold configuration | System prompt, skills, project rules, tool definitions and policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and data flows; it is not a separate attribution category. | Provenance, version, temporal validity, in-context and use evidence |
+| Configuration | System prompt, skills, project rules, tool definitions and policies, and harness settings that condition actions. Represented as artifacts, operating conditions, or properties of actions and data flows; it is not a separate attribution category. | Provenance, version, temporal validity, in-context and use evidence |
 
 ## Environment state, belief state, and trace
 

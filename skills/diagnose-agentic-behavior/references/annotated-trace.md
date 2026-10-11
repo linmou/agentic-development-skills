@@ -73,9 +73,9 @@ The agent task model is the belief-state artifact describing what the agent appe
 
 Elements typically include the operative goal, deliverables, constraints honored, and completion criterion. Every element is marked inferred and cites actions. A divergence counts as a candidate only when the record states how it leads to the observed deviation. The agent task model is compared with the frozen task ontology and stays outside it.
 
-## Scaffold configuration
+## Configuration
 
-Scaffold configuration is represented as defined in [meta-ontology.md](meta-ontology.md). Record its delivery and use through annotation step 4. Infer effective runtime conditions from evidence; intended settings alone establish only intent.
+Configuration is represented as defined in [meta-ontology.md](meta-ontology.md). Record its delivery and use through annotation step 4. Infer effective runtime conditions from evidence; intended settings alone establish only intent.
 
 | Configuration mechanism | Anchor | Required trace |
 | --- | --- | --- |

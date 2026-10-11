@@ -27,7 +27,7 @@ If the dependency cannot be found or loaded, report the missing dependency and r
 
 ## Inputs
 
-Obtain or infer: the task and its specification, the environment and its affordances, the intended outcome and success conditions, the observed deviation, action boundary, analysis unit, attempt/time boundary, evidence cutoff, intended decision, and available traces, environment-state snapshots, scaffold configuration, evaluator outputs, and human reports. Ask one minimal question when the target or a material boundary is unknowable.
+Obtain or infer: the task and its specification, the environment and its affordances, the intended outcome and success conditions, the observed deviation, action boundary, analysis unit, attempt/time boundary, evidence cutoff, intended decision, and available traces, environment-state snapshots, configuration, evaluator outputs, and human reports. Ask one minimal question when the target or a material boundary is unknowable.
 
 ## Workflow
 
