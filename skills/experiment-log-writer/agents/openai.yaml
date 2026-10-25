@@ -1,0 +1,4 @@
+interface:
+  display_name: "Experiment Log Writer"
+  short_description: "Write reproducible, provenance-linked experiment logs"
+  default_prompt: "Use $experiment-log-writer to create or update a reproducible experiment log."

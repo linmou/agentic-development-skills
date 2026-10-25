@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Experiment"
+  short_description: "Run disciplined automated experiment loops"
+  default_prompt: "Use $auto-exp to run an automatic experiment with logged hypotheses, results, and reproducible commands."

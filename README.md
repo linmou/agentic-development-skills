@@ -1,8 +1,8 @@
 # Agentic Development Skills
 
-Intent: store the eleven skills used for agentic coding and skill development in one public repository, while exposing each skill as an independent directory.
-Updated: 2026-08-26
-Commit: cfafd19 (speckit-orchestrate import)
+Intent: store skills for agentic coding, research experiments, and skill development in one public repository, while exposing each skill as an independent directory.
+Updated: 2026-10-25
+Commit: 0df9e1a (base revision for the auto-exp and experiment-log-writer import)
 
 ## Layout
 
@@ -27,6 +27,10 @@ Included skills:
 - `writing-great-skills`
 - `handoff-context`
 - `speckit-orchestrate`
+- `auto-exp`
+- `experiment-log-writer`
+
+`auto-exp` requires `experiment-log-writer`; install both directories together. The writer includes its versioned call contract and experiment log template. Both skills were imported from the local Codex skill collection with their workflow and UI metadata preserved. The `~/.codex/prompts/auto_exp.md` mention in `auto-exp` identifies a legacy invocation trigger; that prompt file is not a runtime dependency.
 
 ## Runtime links
 
