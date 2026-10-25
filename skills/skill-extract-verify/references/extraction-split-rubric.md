@@ -46,7 +46,7 @@ Score every dimension under the criterion you are judging.
 ## C2 — One-way dependency (blocking)
 
 ### Dimensions
-1. **Host → extract reference** — Host names `$extracted`, path, or subagent.
+1. **Host → extract reference** — Host names the extracted skill, its path, or a subagent.
 2. **No reverse import** — Extract tree does not name the host skill as a dependency.
 3. **No host tokens on callee** — Extract does not collect/issue host checkpoint tokens.
 
@@ -54,7 +54,7 @@ Score every dimension under the criterion you are judging.
 |-------|--------------|-------------------|---------------------------|
 | 1 | No invoke path | Extract requires host by name/states | Callee issues PERSIST_OK / REVIEW_OK / … |
 | 3 | Invoke present but informal | Historical host name in comments only | Tokens mentioned only as “do not issue” |
-| 5 | Clear subagent/`$name` path | Grep clean of host skill name as dependency | Callee never owns host tokens |
+| 5 | Clear subagent / skill-name path | Grep clean of host skill name as dependency | Callee never owns host tokens |
 
 ### Hard gates
 1. Host references extract  
@@ -83,7 +83,7 @@ Score every dimension under the criterion you are judging.
 
 ### Hard gates
 1. No dual writers for the same domain memory  
-2. Host invoke path exists (subagent or `$extracted`)  
+2. Host invoke path exists (subagent or the extracted skill)  
 3. Audit/fallback does not implement domain writes without calling extract  
 4. Extract does not advance host sections  
 
@@ -129,7 +129,7 @@ Then score **C4b** with `call-contract-field-rubric.md`.
 
 ### Dimensions
 1. **Description independence** — Frontmatter works without naming the host as required context.
-2. **Runnable alone** — Human/agent can run `$extracted` on the capability with only extract docs.
+2. **Runnable alone** — Human/agent can run the extracted skill on the capability with only extract docs.
 
 | Score | Description | Runnable alone |
 |-------|-------------|----------------|

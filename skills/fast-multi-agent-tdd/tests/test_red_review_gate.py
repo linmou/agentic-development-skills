@@ -121,6 +121,221 @@ def write_initial_set(tmp_path: Path) -> tuple[Path, list[Path]]:
     return receipt, paths
 
 
+SINGLE_RED_TEXTS = {
+    "scope": "Only planned test-like paths changed during Red.",
+    "baseline": "The Red evidence has a valid baseline, scope, and provenance.",
+    "execution": "The targeted test ran and failed for missing behavior.",
+    "seam": "The failure exercises one behavior named in the request map.",
+    "assertion": "Each new assertion has an independent oracle and a named shortcut or mutant that would fail.",
+}
+
+
+def write_single_audit(
+    tmp_path: Path,
+    *,
+    verdict: str = "pass",
+    reviewer_agent_id: str = "agent:single-reviewer",
+    reviewer_source: str = "test.delegate",
+) -> Path:
+    (tmp_path / "single_role_receipt.json").write_text(
+        json.dumps(
+            {
+                "schema": 1,
+                "feature": "selector",
+                "role": "single_red_reviewer",
+                "reviewer_agent_id": reviewer_agent_id,
+                "reviewer_source": reviewer_source,
+            }
+        )
+    )
+    criteria = [
+        criterion(
+            criterion_id,
+            verdict,
+            text=text,
+            evidence=(
+                [
+                    {"kind": "test", "location": f"{criterion_id}.log"},
+                    {"kind": "mutant", "location": f"{criterion_id}.mutant"},
+                ]
+                if criterion_id == "assertion"
+                else [{"kind": "test", "location": f"{criterion_id}.log"}]
+            ),
+        )
+        for criterion_id, text in SINGLE_RED_TEXTS.items()
+    ]
+    payload = audit("single", criteria)
+    payload.update(
+        {
+            "reviewer_agent_id": reviewer_agent_id,
+            "reviewer_source": reviewer_source,
+        }
+    )
+    path = tmp_path / "selector_red_single_iteration1.json"
+    path.write_text(json.dumps(payload))
+    return path
+
+
+def run_single(
+    tmp_path: Path,
+    audit_path: Path,
+    *,
+    reviewer_agent_id: str = "agent:single-reviewer",
+    reviewer_source: str = "test.delegate",
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(GATE),
+            "single",
+            "--feature",
+            "selector",
+            "--iteration",
+            "1",
+            "--audit",
+            str(audit_path),
+            "--delegation-receipt",
+            str(tmp_path / "single_role_receipt.json"),
+            "--reviewer-agent-id",
+            reviewer_agent_id,
+            "--reviewer-source",
+            reviewer_source,
+            "--output",
+            str(tmp_path / "single_gate.json"),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: verify a bounded single-review pass.
+def test_single_red_review_passes_only_the_fixed_readiness_contract(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path)
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads((tmp_path / "single_gate.json").read_text())
+    assert payload["decision"] == "single_red_ready_for_debate"
+    assert payload["failed_criteria"] == []
+    assert payload["audit_sha256"] == hashlib.sha256(audit_path.read_bytes()).hexdigest()
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: preserve repair output for a failed single review.
+def test_single_red_review_returns_repair_without_advancing(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path, verdict="fail")
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads((tmp_path / "single_gate.json").read_text())
+    assert payload["decision"] == "single_red_repair"
+    assert payload["failed_criteria"] == list(SINGLE_RED_TEXTS)
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: report only the concrete failed readiness criterion.
+def test_single_red_review_reports_mixed_readiness_without_broadening_scope(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path)
+    replace_audit(
+        audit_path,
+        lambda payload: (
+            payload["criteria"][2].update({"verdict": "fail"}),
+            payload.update({"overall_verdict": "fail"}),
+        ),
+    )
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    payload = json.loads((tmp_path / "single_gate.json").read_text())
+    assert payload["decision"] == "single_red_repair"
+    assert payload["failed_criteria"] == ["execution"]
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: reject scope expansion in the single reviewer.
+def test_single_red_review_rejects_changed_criterion_text(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path)
+    replace_audit(
+        audit_path,
+        lambda payload: payload["criteria"][0].update({"text": "Review every requirement."}),
+    )
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout)["decision"] == "normal_three_reviewer_follow_up"
+    assert not (tmp_path / "single_gate.json").exists()
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: reject ambiguous or unsupported single-review findings.
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        lambda payload: payload["criteria"][0].update(
+            {"verdict": "insufficient_evidence", "evidence": []}
+        ),
+        lambda payload: payload["criteria"][4].update(
+            {"evidence": [{"kind": "semantic_opinion", "location": "review.md"}]}
+        ),
+        lambda payload: payload.update({"open_questions": ["Is this required?"]}),
+    ],
+    ids=["insufficient-evidence", "unsupported-citation", "open-question"],
+)
+def test_single_red_review_rejects_non_objective_evidence(
+    tmp_path: Path, mutation: Any
+) -> None:
+    audit_path = write_single_audit(tmp_path)
+    replace_audit(audit_path, mutation)
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout)["decision"] == "normal_three_reviewer_follow_up"
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: require a concrete shortcut witness for assertion findings.
+def test_single_red_review_requires_mutant_and_execution_evidence_for_assertions(
+    tmp_path: Path,
+) -> None:
+    audit_path = write_single_audit(tmp_path)
+    replace_audit(
+        audit_path,
+        lambda payload: payload["criteria"][4].update(
+            {"evidence": [{"kind": "test", "location": "assertion.log"}]}
+        ),
+    )
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout)["decision"] == "normal_three_reviewer_follow_up"
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: bind single-review provenance to the delegated reviewer.
+def test_single_red_review_rejects_reused_or_mismatched_identity(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path, reviewer_agent_id="agent:actual")
+
+    result = run_single(tmp_path, audit_path)
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout)["decision"] == "normal_three_reviewer_follow_up"
+
+
+# Responsible file: scripts/red_review_gate.py; purpose: require a handoff receipt for single-review provenance.
+def test_single_red_review_rejects_mismatched_delegation_receipt(tmp_path: Path) -> None:
+    audit_path = write_single_audit(tmp_path, reviewer_agent_id="agent:actual")
+    receipt = tmp_path / "single_role_receipt.json"
+    payload = json.loads(receipt.read_text())
+    payload["reviewer_agent_id"] = "agent:other"
+    receipt.write_text(json.dumps(payload))
+
+    result = run_single(tmp_path, audit_path, reviewer_agent_id="agent:actual")
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout)["decision"] == "normal_three_reviewer_follow_up"
+
+
 def run_initial(
     tmp_path: Path,
     receipt: Path,

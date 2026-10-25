@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -115,6 +116,17 @@ def reviewer_audit_dir(repo: Path) -> Path:
     path = repo / "audits"
     path.mkdir(exist_ok=True)
     return path
+
+
+# Responsible file: scripts/tdd_snapshot.py; purpose: keep bounded single-review audits outside phase snapshots.
+def test_single_red_audit_uses_reviewer_owned_snapshot_naming(tmp_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location("tdd_snapshot", SNAPSHOT)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    assert module.reviewer_audit_name("feature_red_single_iteration1.json", "feature")
+    assert not module.reviewer_audit_name("other_red_single_iteration1.json", "feature")
 
 
 def provenance_receipt(repo: Path, feature: str, roles: Path, *, iteration: int = 1) -> Path:

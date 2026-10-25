@@ -19,6 +19,7 @@ Included skills:
 - `fast-multi-agent-tdd`
 - `code-smell-monitor`
 - `diagnose-agentic-coding`
+- `diagnose-agentic-behavior`
 - `review-with-multi-debate`
 - `auto-skill-test-improve-loop`
 - `formalize-workflow-state-machine`

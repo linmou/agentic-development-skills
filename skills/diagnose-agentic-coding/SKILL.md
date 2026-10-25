@@ -1,153 +1,78 @@
 ---
 name: diagnose-agentic-coding
-description: Diagnose root causes of failed, degraded, unsafe, inefficient, or falsely completed agentic coding runs using a hierarchical functional ontology and competing causal explanations. Use for agent trace or trajectory diagnosis, benchmark failure analysis, coding-agent postmortems, model-versus-harness attribution, tool-use and coordination failures, verifier or completion errors, recurring agentic coding failure patterns, and proposals to refine an insufficient ontology. Do not use for ordinary debugging when only the code defect—not the behavior of the coding agent or its surrounding system—is under analysis.
+description: Diagnose agentic coding failures, degraded trajectories, and false completion using L1 functional and artifact produce-consumption graphs, with competing-explanations-causal-research for causal comparison. Use for agent trace analysis, coding-agent postmortems, model-versus-harness attribution, coordination failures, and ontology sufficiency review.
 ---
 
 # Diagnose Agentic Coding
 
-## Purpose
+Explain an agentic coding outcome well enough to locate a supported artifact-level mechanism, trace its causal provenance, and choose a corrective intervention. The diagnostic unit is the joint system of actors, tools, environment, task, and evaluator. Rootness means the deepest evidence-supported causal mechanism within the declared investigation boundary that explains the failure and identifies recurrence conditions; it is not necessarily the earliest artifact, oldest actor, or best intervention point.
 
-Explain why an agentic coding outcome occurred well enough to choose a corrective intervention. Treat the ontology as a structured hypothesis generator, not a list of labels and not proof of causation. Diagnose failures in the joint system of model, harness, tools, environment, task, evaluator, and their interactions.
+## Required references and dependency
 
-Keep localization optional and skip it by default. Traverse the compact L1/L2 hierarchy directly unless the evidence volume makes localization useful.
+The normative references are [diagnostic-definitions.md](references/diagnostic-definitions.md), [functional-ontology.md](references/functional-ontology.md), [artifact-flow.md](references/artifact-flow.md), [causal-interface.md](references/causal-interface.md), and [report-template.md](references/report-template.md). `references/archive/` contains historical material for provenance only; it is not an alternate ontology or workflow.
 
-Read:
+Read the diagnostic definitions, functional, and artifact references to reconstruct the graph views and apply the Node, Edge, Interaction, and three-level attribution definitions. The artifact graph decomposes the L1 functional graph as `input artifacts → (actor, action) → output artifacts → (consumer, action)`. L1 functions classify actions; use IDs 1–6 for diagnosis. Treat System State (SYS) as a first-class external state entity alongside the six semantic artifacts; it is not a seventh L1 function or mandatory document.
 
-- [functional-ontology.md](references/functional-ontology.md) before mapping hypotheses.
-- [diagnostic-protocol.md](references/diagnostic-protocol.md) for evidence roles, candidate construction, tests, ranking, stopping, and ontology adaptation.
-- [report-template.md](references/report-template.md) before reporting a diagnosis.
+Read the causal interface before invoking the dependency and the report template when writing the result.
 
-## Required inputs
+Every causal diagnosis invokes the `competing-explanations-causal-research` skill, including cases supported entirely by local traces. That skill owns evidence assessment, rival-model construction, symmetric testing, ranking, execution and evidence statuses, and stopping. This host owns artifact reconstruction, L1 mapping, and presentation of the returned attribution. The causal interface and the dependency's versioned call contract define the boundary.
 
-Obtain or infer:
+If the dependency cannot be found or loaded, report the missing dependency and retain the descriptive graph with its unknowns. A causal ruling requires the dependency.
 
-- the task, intended goal, success conditions, constraints, and authorized action boundary;
-- the observed outcome to explain, distinguished from nearby symptoms;
-- the analysis unit and evidence cutoff;
-- available task specifications, conversation/tool traces, patches, repository state, test or verifier output, environment/configuration, and human reports.
+## Inputs
 
-Ask one minimal question only when the outcome or a boundary that materially changes the diagnosis is unknowable. Otherwise proceed, label missing evidence, and reduce conclusion strength.
-
-Treat every supplied diagnosis, evaluator label, and user theory as an evidence seed rather than accepted truth.
+Obtain or infer the task, intended outcome, success conditions, action boundary, observed deviation, analysis unit, attempt/time boundary, evidence cutoff, development method, and available traces, repository states, patches, test results, configurations, and human reports. Ask one minimal question when the target or a material boundary is unknowable. Preserve method-dependent consumption evidence and method uncertainty when they materially affect the diagnosis.
 
 ## Workflow
 
-### 1. Freeze the diagnostic target
+### 1. Freeze the target
 
-Write a one-sentence explanandum containing:
+Record `analysis unit + intended outcome + observed deviation + attempt/time + evidence cutoff + intended decision`. Distinguish the outcome from candidate intermediate mechanisms.
 
-`analysis unit + intended outcome + observed deviation + relevant time/attempt + evidence cutoff`
+Done when the outcome and available evidence boundary are explicit.
 
-Separate the terminal outcome from manifestations. For example, “tests failed” may be the outcome to explain; “the agent edited the wrong module” is a candidate intermediate mechanism, not automatically the root cause.
+### 2. Reconstruct functions through artifacts
 
-### 2. Reconstruct the evidence record
+Inspect material events in time order. Reconstruct concrete SYS versions and transitions where evidence permits, then map all six L1 functions to actors, input instances, actions, output instances, and downstream consumers using [artifact-flow.md](references/artifact-flow.md). Keep SYS (what the target system actually is), SM (the agent's representation), and ER (what actions were recorded) separate. Mark each function observed, inferred, unobserved, or outside the case boundary with a reason.
 
-Order material observations by time. Mark each as one of:
+Assign stable artifact IDs and versions. Version SYS with commits, hashes, snapshots, timestamps, database migrations, deployment identifiers, or other grounded evidence. Record exact source locations, production time, availability, observed consumption, and deviations from each artifact's intended meaning. Reconstruct relevant configuration artifacts (system/developer instructions, skills, project rules, tool policies, and harness settings) as versioned inputs, including provenance, temporal validity, delivery/availability, and evidence of effective consumption. Distinguish existence from delivery and use; infer effective runtime conditions from evidence, not intended settings alone. Trace defective configuration upstream through the actions and handoffs that produced or propagated it. Treat inspection results as evidence about SYS, not as SYS itself; do not infer complete SYS from a partial inspection. Link the functional view to the corresponding artifact → (actor, action) → artifact paths and SYS transitions. Record method-dependent edge evidence when the development method or its source materially affects the diagnosis.
 
-- outcome measurement;
-- antecedent condition;
-- mechanism/process evidence;
-- later corroboration;
-- human report;
-- inference;
-- unknown timing.
+Done when each material action is grounded in artifacts or an explicit evidence gap, and feedback edges resolve to concrete instances at the appropriate time.
 
-Record source independence and reliability. Do not treat repeated summaries of the same log event as independent evidence. Distinguish absence of evidence from a search with a credible opportunity to detect the event.
+### 3a. Trace provenance and transferability
 
-Use safe read-only inspection and non-destructive tests when available. Do not implement a fix unless the user asks for one.
+Apply the three levels in [diagnostic-definitions.md](references/diagnostic-definitions.md): establish Level 1 error location, trace Level 2 root causal mechanism through user/request sources, model or agent behavior, harness/developer actions, and third-party or environment conditions, then state Level 3 generalization conditions. Preserve joint causes and competing explanations; do not promote a plausible hypothesis to a proven cause. Record recurrence conditions, scope limits, evidence needed to test transfer beyond this case, and the intervention target separately from causal origin. A single trace ordinarily supports a case-specific mechanism or transferable hypothesis, not a stable cross-task capability claim.
 
-### 3. Traverse the functional ontology
+### 3. Submit the causal-research request
 
-Start at all six L1 functions and inspect relevant L2 functions and causal handoffs. Expand only branches that could discriminate among live explanations.
+Execute the dependency's workflow in the current agent context using the Request defined in [causal-interface.md](references/causal-interface.md). Provide accessible sources or excerpts, with artifact IDs as case evidence in the existing fields. The dependency can challenge the graph and consider explanations outside it.
 
-Generate candidates from four representational forms:
+Invoke the dependency's complete causal comparison for this target. Local-only access is a source constraint, not a reason to bypass the dependency.
 
-1. **Node deviation** — a required function was not performed adequately.
-2. **Edge deviation** — individually plausible functions failed to pass the needed information, constraint, plan, observation, or evidence.
-3. **Configuration deviation** — an interaction among factors failed although no factor alone is sufficient.
-4. **Residual explanation** — evidence suggests a factor, relation, or configuration not represented in the current ontology.
+Done when a standard Response is available or a missing-dependency/access blocker is recorded.
 
-Do not equate the last observed failure with the originating cause. Trace upstream until reaching a mechanism whose removal would plausibly prevent or materially reduce the outcome within the declared boundary.
+For a completed investigation, map the returned comparison to artifact paths and preserve the contract's evidence assessment and unresolved links. For clarification, obtain the missing boundary and resubmit. For blocking, report errors and descriptive findings. A malformed response or unsupported version requires a valid dependency response before a causal ruling. If no candidate is sufficiently supported, report root cause undetermined; several proposed explanations do not establish a cause.
 
-### 4. Build rival causal models
+### 4. Ground the returned attribution
 
-Create at least three materially distinct hypotheses when the search space permits. Include plausible alternatives across model behavior, harness/tooling, task/evaluation, environment, and interaction effects. Include measurement artifact or evaluator misalignment when plausible.
+Render the returned comparison with L1, artifact instance, and SYS version/transition references. For each leading mechanism, identify the producer/action, affected artifact or SYS version, downstream consumer/action, supported deviation, outcome path, and intervention target.
 
-For every hypothesis, specify:
+Check whether the response supports production failure, handoff failure, consumption failure, or an interaction. Preserve unresolved alternatives and missing links. Actor attribution requires evidence about the responsible action and inputs available then.
 
-`condition -> functional breakdown -> intermediate trace -> observed outcome`
+If the comparison lacks a material artifact link, proposes a new mechanism, or new evidence changes the case, send an updated Request to the dependency. The host adds graph references and presentation; causal revisions return to the dependency.
 
-Also state its ontology anchor and type, discriminating predictions, possible refuters, boundary conditions, and corrective implication. A factor list is not a model set.
+Done when every reported attribution is traceable to a returned causal claim and a concrete artifact path, with the dependency's evidence assessment preserved.
 
-Keep `H_other` visible when coverage is uncertain, but do not use it as an untestable catch-all.
+### 5. Assess representation sufficiency
 
-### 5. Run iterative competing-explanation analysis
+Ask whether the L1 plus artifact graph can express the returned mechanism and distinguish the intended intervention. First refine artifact identity, version, content, actor, or handoff where that resolves the ambiguity.
 
-Test all material hypotheses symmetrically against support, contradiction, missing mechanism links, anomalies, and counterfactual evidence. Prefer discriminating process evidence over source count or narrative plausibility.
+If a residual remains, propose the smallest case-local factor, relation, or configuration extension. Send it back as a seed for renewed causal comparison before recommending it. Show the residual, overlap with existing concepts, discriminating prediction, and intervention difference. Core ontology promotion requires human review.
 
-When evidence cannot distinguish candidates:
+Done when coverage and resolution are assessed and any adaptation is grounded in the dependency's comparison.
 
-1. identify the observation or safe test most likely to change their relative ranking;
-2. estimate its diagnostic value, cost, delay, and risk;
-3. obtain it when authorized and worthwhile;
-4. update and rerank all affected candidates, not only the favored one.
+### 6. Report
 
-Use qualitative causal statuses from [diagnostic-protocol.md](references/diagnostic-protocol.md). Do not manufacture precise probabilities from sparse evidence.
+Use the report template. Preserve the dependency's ruling, status, limitations, errors, next discriminating evidence, and stop reason. Include the artifact graph and specific attribution path even in a concise report. If further evidence is needed and authorized, collect it and re-invoke the dependency.
 
-### 6. Invoke open-world causal research conditionally
-
-Invoke `$competing-explanations-causal-research` when a material candidate depends on external evidence not contained in the case artifacts—for example, version-specific tool behavior, known harness limitations, benchmark/evaluator properties, model API behavior, or comparative failure cases. Do not invoke it merely to restate local logs.
-
-Use its version 1 Request/Response contract exactly:
-
-```json
-{
-  "contract_version": 1,
-  "outcome": "<the frozen outcome to explain>",
-  "scope": "<analysis unit, environment, versions, period, intended decision>",
-  "evidence_seeds": ["<relevant artifacts, links, records, or claims>"],
-  "constraints": "<research cutoff, source/access limits, required comparisons>",
-  "detail": "brief|standard|full",
-  "output_language": "<requester language>",
-  "caller_tag": "agentic-coding-diagnosis"
-}
-```
-
-Do not add caller phases or redefine fields. Treat the returned report as an external-evidence subanalysis, preserve its limitations, and integrate it by updating the relevant hypotheses. If it returns `needs_clarification`, ask only for the missing material boundary. If it returns `evidence_limited` or `blocked`, do not silently replace it with unsupported causal claims.
-
-### 7. Evaluate ontology sufficiency
-
-Call the ontology sufficient only when it can represent the leading mechanism at the resolution needed for the intended intervention. Mere ability to attach a broad label is not sufficient.
-
-If it is insufficient, propose exactly the smallest justified adaptation:
-
-- **vertical refinement** — decompose a coarse existing factor;
-- **horizontal expansion** — add a missing factor;
-- **relation revision** — add or revise a causal handoff;
-- **configuration revision** — add or revise an interaction pattern.
-
-Rerun the live hypothesis comparison with the proposed extension before recommending it. Show motivating residuals, overlap with existing concepts, predicted observations, and improvement in explanatory discrimination.
-
-Never update the core ontology automatically. Present the proposal for human choice: reject, revise, retain case-locally, or promote to the core ontology.
-
-### 8. Stop and report
-
-Stop when one of these holds:
-
-- the leading explanation set is stable enough to choose the next consequential action and more evidence is unlikely to change that action;
-- the expected diagnostic value of the next evidence is no greater than its cost, delay, or risk;
-- the ontology is demonstrably insufficient and a bounded adaptation proposal is ready for human review;
-- access limits prevent further discrimination.
-
-Do not use “root cause” as a certainty label. Report a relatively leading, jointly leading, unexcluded, weakened, or evidence-limited explanation and state what could change the ruling.
-
-## Non-negotiable safeguards
-
-- Preserve the distinction among observation, inference, and causal conclusion.
-- Compare hypotheses before combining them into a multi-cause account.
-- Do not infer model failure from an agent failure; test harness, tool, evaluator, and interaction explanations.
-- Do not infer causation from chronology, correlation, salience, or ontology membership.
-- Do not claim exhaustive coverage from an open-world diagnosis.
-- Keep active evidence collection and rediagnosis inside the competing-explanation loop.
-- Keep temporary traversal of existing hierarchy separate from genuine ontology learning.
-- Keep diagnosis separate from remediation unless remediation is explicitly requested.
+Persist the request, response, graph, and source references alongside the report when a saved diagnosis is requested; otherwise retain them in working notes. Keep observations, inferences, and unknowns explicit.

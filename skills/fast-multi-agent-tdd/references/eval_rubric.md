@@ -40,13 +40,15 @@ Each positive eval should check these dimensions where relevant:
 - the full available suite is required after code changes
 - the monitor agent stays non-editing, has a stable identity from an authorized delegation mechanism, and performs phase-boundary checks
 - delegation is backend-neutral: an absent candidate interface triggers discovery of another available mechanism before the run is declared blocked
-- Red hands off to `$review-with-multi-debate`
+- Red runs the bounded single readiness gate before handing off to `review-with-multi-debate`; single-review repair findings stay within the fixed objective criteria and never replace the final three-reviewer debate
+- the single Red audit uses the fixed `scope`, `baseline`, `execution`, `seam`, and `assertion` criteria, binds a delegation receipt, and requires a concrete mutant plus test or command evidence for assertion findings
 - each Red reviewer writes its own correctly named JSON with stable identity and delegation-source fields; the controller binds all three files and their hashes to the role receipt before `record_round`, deterministic aggregation, blocking evidence/counterevidence inspection, and the strict phase gate before Green
 - reviewer execution respects available capacity; serial execution still uses three distinct identities, roles, isolated prompts, and reviewer-owned files, and a capacity retry preserves already valid files while retrying only the missing reviewer
 - a reviewer-required Red correction is monitor-approved from its precise plan, scope, retained provenance, and current pre-edit test hashes/status; the append-only numbered snapshot precedes the planned test-only edit, and genuine Red plus the next three-reviewer iteration verify the corrected content
 - Green uses a deterministic gate instead of a debate by default
-- Refactor hands off to `$review-with-multi-debate` with the cumulative production diff from pre-Green to post-Refactor
-- Test Refactor follows the converged production Refactor audit, edits only test-like paths, and hands off to `$review-with-multi-debate`
+- Refactor hands off to `review-with-multi-debate` with the cumulative production diff from pre-Green to post-Refactor
+- a verified no-op production Refactor skips the entire Test Refactor phase and records the skip in its production no-op artifact; the full route retains its cumulative production audit
+- when production Refactor makes an actual delta, Test Refactor follows its converged audit, edits only test-like paths, and hands off to `review-with-multi-debate` for test changes
 - implementation ownership for the active TDD slice stays with one main agent rather than parallel workers
 
 ## Output Quality Dimensions
@@ -74,7 +76,7 @@ Each positive eval should also check:
 - using a prerequisite label to make a permanent regression-test or production edit before TDD activation
 - green or refactor mutating tests
 - skipping the full-suite regression check
-- vague Red or Refactor audit language with no explicit `$review-with-multi-debate` handoff
+- vague Red or Refactor audit language with no explicit `review-with-multi-debate` handoff
 - reviewer verdicts preserved only in chat or transcribed into JSON by the main agent/monitor instead of reviewer-owned files
 - requiring one provider-specific delegation operation, identity prefix, source label, or Git-ref namespace
 - stopping on one missing delegation interface without checking another available authorized mechanism

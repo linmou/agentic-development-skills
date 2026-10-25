@@ -8,6 +8,8 @@ import argparse
 import json
 from pathlib import Path
 
+from review_bundle import load_criteria_manifest, verify_bundle_file
+
 REVIEWER_IDS = ("audit1", "audit2", "audit3")
 ALLOWED_VERDICTS = {"pass", "fail", "insufficient_evidence"}
 
@@ -46,6 +48,70 @@ def _load_json(path: Path) -> tuple[dict[str, object] | None, str | None]:
     if not isinstance(value, dict):
         return None, f"invalid_object:{path}"
     return value, None
+
+
+def _validate_shared_contract(
+    audits: list[dict[str, object]],
+    criteria_manifest: Path | None = None,
+    review_bundle_id: str | None = None,
+    criteria_manifest_digest: str | None = None,
+) -> list[str]:
+    if not audits:
+        return ["no_reviewer_results"]
+
+    expected: dict[str, tuple[object, object]] = {}
+    errors: list[str] = []
+    for audit in audits:
+        reviewer_id = str(audit.get("reviewer_id", "unknown"))
+        criteria = audit.get("criteria")
+        if not isinstance(criteria, list):
+            continue
+        current: dict[str, tuple[object, object]] = {}
+        for criterion in criteria:
+            if not isinstance(criterion, dict) or not isinstance(criterion.get("id"), str):
+                continue
+            criterion_id = criterion["id"]
+            if criterion_id in current:
+                errors.append(f"duplicate_criterion_id:{reviewer_id}:{criterion_id}")
+            current[criterion_id] = (criterion.get("text"), criterion.get("blocking"))
+        if not expected:
+            expected = current
+        elif set(current) != set(expected):
+            errors.append(f"criterion_ids_mismatch:{reviewer_id}")
+        else:
+            for criterion_id, definition in expected.items():
+                if current[criterion_id] != definition:
+                    errors.append(f"criterion_definition_mismatch:{reviewer_id}:{criterion_id}")
+
+        if review_bundle_id is not None and audit.get("review_bundle_id") != review_bundle_id:
+            errors.append(f"review_bundle_mismatch:{reviewer_id}")
+        if (
+            criteria_manifest_digest is not None
+            and audit.get("criteria_manifest_digest") != criteria_manifest_digest
+        ):
+            errors.append(f"criteria_manifest_mismatch:{reviewer_id}")
+
+    if criteria_manifest is not None:
+        try:
+            manifest, manifest_digest = load_criteria_manifest(criteria_manifest)
+            if (
+                criteria_manifest_digest is not None
+                and manifest_digest != criteria_manifest_digest
+            ):
+                errors.append("criteria_manifest_digest_invalid")
+            manifest_criteria = {
+                item["id"]: (item.get("text"), item.get("blocking"))
+                for item in manifest.get("criteria", [])
+                if isinstance(item, dict) and isinstance(item.get("id"), str)
+            }
+            if set(expected) != set(manifest_criteria):
+                errors.append("criteria_manifest_ids_mismatch")
+            for criterion_id, definition in manifest_criteria.items():
+                if expected.get(criterion_id) != definition:
+                    errors.append(f"criteria_manifest_definition_mismatch:{criterion_id}")
+        except (OSError, ValueError, json.JSONDecodeError, AttributeError):
+            errors.append("invalid_criteria_manifest")
+    return sorted(set(errors))
 
 
 def _validate_reviewer(
@@ -113,7 +179,24 @@ def validate_advance_phase(
     from_phase: str,
     to_phase: str,
     iteration: int,
+    criteria_manifest: Path | None = None,
+    review_bundle_id: str | None = None,
+    criteria_manifest_digest: str | None = None,
+    review_bundle: Path | None = None,
+    repo_root: Path | None = None,
 ) -> dict[str, object]:
+    if review_bundle is not None:
+        bundle_result = verify_bundle_file(review_bundle, repo_root or Path.cwd())
+        if bundle_result["status"] != "accepted":
+            return {
+                "status": "rejected",
+                "reason": "review_bundle_changed",
+                "errors": bundle_result["errors"],
+            }
+        review_bundle_id = review_bundle_id or str(bundle_result["bundle_id"])
+        criteria_manifest_digest = criteria_manifest_digest or str(
+            bundle_result["criteria_manifest_digest"]
+        )
     round_result = validate_record_round(audit_dir, feature_name, from_phase, iteration)
     if round_result["status"] != "accepted":
         return {"status": "rejected", "reason": "missing_reviewer_results", **round_result}
@@ -130,6 +213,19 @@ def validate_advance_phase(
             reviewer_audits.append(audit)
     if errors:
         return {"status": "rejected", "reason": "invalid_reviewer_results", "errors": errors}
+
+    contract_errors = _validate_shared_contract(
+        reviewer_audits,
+        criteria_manifest,
+        review_bundle_id,
+        criteria_manifest_digest,
+    )
+    if contract_errors:
+        return {
+            "status": "rejected",
+            "reason": "review_contract_mismatch",
+            "errors": contract_errors,
+        }
 
     summary_path = audit_dir / f"{feature_name}_{from_phase}_iteration{iteration}_summary.json"
     summary, summary_error = _load_json(summary_path)
@@ -226,6 +322,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--to-phase")
     parser.add_argument("--iteration", required=True, type=int)
     parser.add_argument("--audit-dir", required=True, type=Path)
+    parser.add_argument("--criteria-manifest", type=Path)
+    parser.add_argument("--review-bundle-id")
+    parser.add_argument("--criteria-manifest-digest")
+    parser.add_argument("--review-bundle", type=Path)
+    parser.add_argument("--repo-root", type=Path)
     args = parser.parse_args()
     if args.transition == "record_round" and not args.phase:
         parser.error("record_round requires --phase")
@@ -248,6 +349,11 @@ def main() -> int:
             args.from_phase,
             args.to_phase,
             args.iteration,
+            args.criteria_manifest,
+            args.review_bundle_id,
+            args.criteria_manifest_digest,
+            args.review_bundle,
+            args.repo_root,
         )
     print(json.dumps(result, sort_keys=True))
     return 0 if result["status"] == "accepted" else 1

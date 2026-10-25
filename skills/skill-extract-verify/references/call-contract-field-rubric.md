@@ -4,7 +4,7 @@ Use when the extracted skill exposes a Request/Response (or equivalent) for host
 
 ## Scope
 - Target: callee call contract (Request fields, Response fields, defaults, modes, examples, version)
-- **In scope for hard gate 4:** every attribute **storage** will reject if missing (validators, templates, persistence hard gates)—even though disk schema is not “API surface”
+- **In scope for hard gate 4:** every mandatory declared output artifact, including status/error outputs, plus required internal implementation artifacts needed to construct or validate those outputs. If the extract persists artifacts, also inspect mandatory stored attributes as a subordinate persistence check; storage fields are not automatically API fields.
 - Not in scope: host lifecycle UX
 - Not in scope: **opaque labels alone** — that is C4a coupling (see `extraction-split-rubric.md`). This rubric scores **field API quality**.
 
@@ -13,7 +13,7 @@ Use when the extracted skill exposes a Request/Response (or equivalent) for host
 Do **not** one-shot D1–D7 after skimming the contract.  
 Run **`references/single-agent-multi-pass-scoring.md`** (Pass A inventory/crosswalk → B strict → C contradiction → D lock).
 
-**Lesson baked in:** solo extract-verify once marked C4b pass while multi-debate failed D2/gate 4 because storage REQUIRED keys lacked **named** fill paths. Pass A exists to make that failure mode mechanical.
+**Lesson baked in:** solo extract-verify once marked C4b pass while multi-debate found an unconstructible required artifact. Pass A exists to make output dependencies, resolution rules, and conditional persistence checks mechanical.
 
 ## Scale
 - 1 = poor / missing
@@ -43,8 +43,8 @@ Can a third caller complete the capability with required fields + defaults?
 | Score | Anchor |
 |-------|--------|
 | 1 | Required set cannot complete the job; missing control or content; Response is prose-only |
-| 3 | Happy path works; edge modes or mandatory stored attributes lack a fill path when seeds omitted |
-| 5 | Required + defaults complete the capability or fail closed with an explicit rule; every attribute the callee must write has source: required input, optional seed, inference, ask, or fail; Response carries status, writes/errors, and optional log row for thin hosts |
+| 3 | Happy path works; an edge output has missing dependencies, an undocumented resolution rule, or an internal/persistence artifact lacks a valid construction path |
+| 5 | Required + defaults construct every mandatory output from declared inputs, available capabilities, and internal resolution rules. Any failure path has a bounded, reachable, capability-consistent trigger and a constructible failure Response; Response carries status, writes/errors, and optional log row for thin hosts |
 
 ### D3 — Non-overlap (one job per field)
 Are fields orthogonal, with precedence when channels meet?
@@ -98,9 +98,12 @@ Can the API change without silent breakage?
 1. **Minimal call works** — required fields + defaults complete capability, or documented fail-closed  
 2. **No host control enums** — third party need not know host state names as required API  
 3. **No silent dual meaning** — same slot, two fields → documented winner  
-4. **Write fill path** — every **storage-mandatory** attribute has a **named** source in the contract (`required` | `seed` | `inference` | `ask` | `fail`).  
-   - Build the Pass A crosswalk from validators/templates, not from memory.  
-   - “Agent will figure it out from templates” **without** a named source ⇒ **fail this gate** (D2 anchor 3).  
+4. **Output constructibility** — every mandatory declared output artifact has a documented path from declared inputs, available capabilities, and internal resolution rules, or a meaningful explicit failure condition. Normal construction must remain possible; generic catch-all failure cannot substitute for a normal path. The implementation crosswalk must also cover every required internal artifact needed to construct or validate an output, including its producer, dependencies/capabilities, validation, and failure behavior.  
+   - Build the Pass A output crosswalk from the contract, capability declarations, resolvers, and validators.  
+   - Build a separate implementation crosswalk for required internal artifacts. An internal artifact may remain private and need not appear in the public Request, but it must have an identified producer, declared dependencies/capabilities, validation rule, and failure behavior.  
+   - If persistence applies, add a subordinate persistence crosswalk proving mandatory stored attributes can be populated and validated by valid internal rules. Storage fields need not appear in the public Request.  
+   - An explicit failure condition is meaningful only when its trigger is bounded, reachable from documented inputs/capabilities, and consistent with the capability boundary; the failure Response/artifact must itself be constructible and validated.  
+   - Missing dependencies, undocumented assumptions, invalid paths, generic failure-only handling, or a failure condition without a constructible normal path fail this gate.  
    - Happy-path minimal Request is gate 1, **not** gate 4.  
 5. **Precedence** — if ≥2 inputs can fill one attribute, order is stated  
 6. **Necessity floor** — D1 ≥ 3 (catastrophic bloat still fails even if hard gates 1–5 pass)  
@@ -114,11 +117,11 @@ Can the API change without silent breakage?
 | Verdict | When |
 |---------|------|
 | **pass** | All hard gates pass; D1–D6 ≥ 4; D7 ≥ 3 with version/alias plan; multi-pass A–D complete |
-| **fail** | Any hard gate fails, or any of D1–D5 ≤ 2, or third-party use unsafe, or fill-path crosswalk has Gap=y |
-| **insufficient_evidence** | No contract / cannot list storage mandatory set / multi-pass A incomplete |
+| **fail** | Any hard gate fails, or any of D1–D5 ≤ 2, or third-party use unsafe, or an output, implementation, or applicable persistence crosswalk has Gap=y |
+| **insufficient_evidence** | No contract / cannot enumerate mandatory outputs, required internal artifacts, or applicable persistence requirements / multi-pass A incomplete |
 | **smell-only** (still pass if gates ok) | D1 or D3 = 3 only from mild bloat/audit-echo/long aliases with a winner — list under Fix, do not alone fail |
 
-**Anti-pattern:** awarding D2=5 because “minimal call works” while fill-path gaps remain.
+**Anti-pattern:** awarding D2=5 because “minimal call works” while mandatory output or applicable persistence paths remain unresolved.
 
 ---
 
@@ -142,7 +145,10 @@ Use the multi-pass block in `single-agent-multi-pass-scoring.md`, or:
 C4b — Call-contract field API
 Contract path: ...
 Multi-pass: A/B/C/D complete: y/n
-Fill-path crosswalk gaps: none | list...
+Output crosswalk gaps: none | list...
+Implementation crosswalk gaps: none | list...
+Failure-policy evidence: bounded/reachable/capability-consistent trigger; constructible validated failure artifact; normal path present
+Conditional persistence gaps: n/a | none | list...
 Request inventory:
   | Field | Class | Needed? | Overlaps? | Precedence | Keep/merge/drop |
 Scores (after Pass C):
@@ -164,5 +170,5 @@ Fix: ...
 4. Session goals stamped into durable memory fields with no generalization  
 5. Audit echo in standard Response (resolution + tags + field_build)  
 6. Alias soup (`section_id` + `correlation_id` both first-class forever)  
-7. **Happy-path D2** — minimal call works; storage keys not named in fill paths (**multi-debate killer**)  
+7. **Happy-path D2** — minimal call works; mandatory outputs or applicable persistence attributes still lack construction paths (**multi-debate killer**)
 8. **Author–auditor collapse** — scorer just wrote the contract; skips contradiction pass

@@ -49,6 +49,16 @@ Write a short claim decomposition before running reviewers:
 
 If the user did not provide a `feature_name`, derive a short snake_case or kebab-case label from the claim.
 
+For Red audits, persist the decomposition as a criteria manifest. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
+
+Before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the Red scope so its editable and protected paths are included, then add the criteria manifest, role receipt, request map, baseline reference, and relevant test/evidence files. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
+
+Typical Red setup:
+
+```bash
+python <skill_dir>/scripts/review_bundle.py freeze --repo-root <repo> --output <bundle.json> --feature-name <feature_name> --phase red --iteration 1 --criteria-manifest <manifest.json> --scope <scope.json> --include <role_receipt.json> --include <request_map.md>
+```
+
 ### 2. Keep audit artifacts out of Git
 
 Before writing audit files in a Git repository:
@@ -77,6 +87,8 @@ Each reviewer gets:
 - the claim
 - the claim decomposition
 - the reviewer JSON contract below
+
+When tests are relevant to the claim, include existing test output or its path for each relevant component in the reviewer handoff. Reviewers distinguish passes, expected failures, unrelated failures, and tests known not to have run. If a result is missing, mark execution unverified; do not infer from test source that a test ran or did not run.
 
 Each reviewer writes exactly one file:
 
@@ -108,6 +120,8 @@ Reviewer JSON contract:
   "phase": "green",
   "iteration": 1,
   "reviewer_id": "audit1",
+  "review_bundle_id": "replace-me",
+  "criteria_manifest_digest": "replace-me",
   "claim": "Replace with the claim under review.",
   "overall_verdict": "insufficient_evidence",
   "overall_confidence": 0.0,
@@ -128,12 +142,16 @@ Reviewer JSON contract:
 }
 ```
 
+The two bundle fields are required for frozen Red rounds; omit them for ordinary reviews that do not use a review bundle.
+
 Rules:
 
 - allowed verdicts are `pass`, `fail`, and `insufficient_evidence`
 - `id` must stay stable across rounds
 - `evidence` may be empty only when the verdict is `insufficient_evidence`
 - `counterevidence` is required when the reviewer sees a real contradiction
+- `review_bundle_id` and `criteria_manifest_digest` must match the frozen handoff
+- every reviewer must return the complete manifest criterion set; never invent reviewer-specific criteria
 
 ### 4. Aggregate deterministically
 
@@ -142,6 +160,8 @@ After each round, aggregate the reviewer JSON files with the skill's aggregator 
 ```bash
 python <skill_dir>/scripts/aggregate_audits.py audits/<feature_name>_<phase>_audit1_iteration1.json audits/<feature_name>_<phase>_audit2_iteration1.json audits/<feature_name>_<phase>_audit3_iteration1.json --output audits/<feature_name>_<phase>_iteration1_summary.json
 ```
+
+Pass `--criteria-manifest <manifest.json> --review-bundle-id <bundle_id> --criteria-manifest-digest <digest>` when the round uses a frozen Red bundle. The command returns `invalid_contract` instead of measuring convergence when reviewer inputs do not match.
 
 The aggregator mechanically reports:
 
@@ -167,6 +187,8 @@ python <skill_dir>/scripts/validate_audit_transition.py advance_phase \
   --iteration <iteration> \
   --audit-dir <audit_dir>
 ```
+
+For a frozen Red round, also pass `--review-bundle <bundle.json> --repo-root <repo> --criteria-manifest <manifest.json>`. The gate verifies the bundle and the shared criterion contract before checking convergence.
 
 This gate fails closed unless all three reviewer files have valid metadata and
 criterion contracts, the current iteration summary exists, and every blocking

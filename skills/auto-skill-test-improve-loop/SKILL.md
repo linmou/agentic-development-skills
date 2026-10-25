@@ -70,7 +70,7 @@ Detail: `references/failure-labels.md`.
 
 ### 6. Causal diagnosis
 
-Invoke `$competing-explanations-causal-research` through its versioned Request/Response contract. Freeze the exact failed outcome, assign evidence roles and timing, generate rival causal models, test them symmetrically, and make a bounded ruling about what most likely produced the missing gold. Do not constrain the potential explanations, mechanisms, relationships, or correction targets to a predefined list or ontology. Treat prior labels and suspected causes only as evidence seeds.
+Invoke `competing-explanations-causal-research` through its versioned Request/Response contract. Freeze the exact failed outcome, assign evidence roles and timing, generate rival causal models, test them symmetrically, and make a bounded ruling about what most likely produced the missing gold. Do not constrain the potential explanations, mechanisms, relationships, or correction targets to a predefined list or ontology. Treat prior labels and suspected causes only as evidence seeds.
 
 Persist the response and the loop's evidence-grounded interpretation in `ROOT.md`. Do not select a patch target while the diagnosis says that more discriminating evidence is needed or does not support changing the skill. Any selected write target must remain under quarantine.
 
@@ -90,7 +90,7 @@ Run this patch loop only while the current diagnosis supports a skill edit. An e
 1. Apply **only** the current rank under `worktree_skill_path` (or home skills-copy). **Refuse** writes under `original_skill_path` / `original_project_root`.  
 2. Re-run Step 3.5 after each patch, then re-run the **same** ecological cases in fresh threads with quarantine paths and a frozen environment revision.
 3. Write score files + optional tokens under `.eft/<miss_id>/`.  
-4. After every failed rerun, invoke `$competing-explanations-causal-research` again with the new trace, score, dependency observations, environment revision, patch diff, and prior diagnosis as evidence seeds. Save the updated diagnosis before deciding what to do next. Do not automatically escalate the patch rank or force the result through a fixed branching rule; use the new evidence and bounded ruling to choose the next action intelligently.
+4. After every failed rerun, invoke `competing-explanations-causal-research` again with the new trace, score, dependency observations, environment revision, patch diff, and prior diagnosis as evidence seeds. Save the updated diagnosis before deciding what to do next. Do not automatically escalate the patch rank or force the result through a fixed branching rule; use the new evidence and bounded ruling to choose the next action intelligently.
 5. Pass gold on all POS and NEG still pass → stop climbing (no “consistency” files).  
 6. If a fatter patch was applied first → auto-bisect **down** on the worktree (reset from original → M0 → …; keep smallest pass).  
 7. M3 / redesign → stop and ask human.
@@ -104,7 +104,7 @@ When a run reveals an environment dependency or repair, preserve it as a discove
 ```text
 if no skill patch → debate: skipped
 else if single-file patch and ≤5 lines added and POS pass → debate: skipped
-else if fat patch was applied this run → run $review-with-multi-debate on
+else if fat patch was applied this run → run review-with-multi-debate on
   "this patch is minimum sufficient for the gold flip"
   fail → strip / lower rank → step 8
 else → debate: skipped
@@ -132,7 +132,7 @@ else → debate: skipped
 | **Write fence** | All skill/project edits under worktree or `.eft/…/skills-copy/` only |
 | **Dependency closure** | Resolve, identity-pin, and readiness-check the declared executable closure before every measured forward run |
 | **Environment identity** | Preserve discoveries; never silently repair a run or compare unmatched environment revisions |
-| **Causal diagnosis** | Use `$competing-explanations-causal-research`; do not restrict possible explanations to predefined layers |
+| **Causal diagnosis** | Use `competing-explanations-causal-research`; do not restrict possible explanations to predefined layers |
 | **Re-diagnose failures** | Reopen causal diagnosis after every failed Step 8 rerun before choosing the next action |
 | Minimum first | Start with the lowest justified rank; retain only the smallest evidence-supported pass |
 | Run complete | RESULTS.md filled; no “done” on chat summary alone |

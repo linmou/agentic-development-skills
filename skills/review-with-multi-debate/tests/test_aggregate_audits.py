@@ -54,6 +54,43 @@ def write_audit(path: Path, reviewer_id: str, criterion_verdict: str, confidence
     )
 
 
+def test_reviewer_specific_criteria_are_rejected(tmp_path: Path) -> None:
+    write_audit(tmp_path / "audit1.json", "audit1", "pass", 0.92)
+    write_audit(tmp_path / "audit2.json", "audit2", "pass", 0.88)
+    write_audit(tmp_path / "audit3.json", "audit3", "pass", 0.90)
+    payload = json.loads((tmp_path / "audit3.json").read_text())
+    payload["criteria"][0]["id"] = "scope"
+    (tmp_path / "audit3.json").write_text(json.dumps(payload))
+
+    module = load_module()
+    summary = module.aggregate_audits(
+        [tmp_path / "audit1.json", tmp_path / "audit2.json", tmp_path / "audit3.json"]
+    )
+
+    assert summary["status"] == "invalid_contract"
+    assert "criterion_ids_mismatch:audit3" in summary["contract_errors"]
+
+
+def test_manifest_definition_is_authoritative(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path / f"{reviewer_id}.json", reviewer_id, "pass", 0.9)
+    manifest = tmp_path / "criteria.json"
+    manifest.write_text(
+        json.dumps(
+            {"criteria": [{"id": "c1", "text": "Different text", "blocking": False}]}
+        )
+    )
+
+    module = load_module()
+    summary = module.aggregate_audits(
+        [tmp_path / f"{reviewer_id}.json" for reviewer_id in ("audit1", "audit2", "audit3")],
+        criteria_manifest=manifest,
+    )
+
+    assert summary["status"] == "invalid_contract"
+    assert "criteria_manifest_definition_mismatch:audit1:c1" in summary["contract_errors"]
+
+
 def test_identical_reviews_converge(tmp_path: Path) -> None:
     write_audit(tmp_path / "audit1.json", "audit1", "pass", 0.92)
     write_audit(tmp_path / "audit2.json", "audit2", "pass", 0.88)

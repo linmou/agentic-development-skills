@@ -157,3 +157,18 @@ def test_advance_phase_accepts_converged_blocking_pass(tmp_path: Path) -> None:
 
     assert result.returncode == 0
     assert '"state": "phase_advanced"' in result.stdout
+
+
+def test_advance_phase_rejects_reviewer_specific_criteria(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path, reviewer_id, phase="red")
+    audit3 = tmp_path / "login_flow_red_audit3_iteration1.json"
+    payload = json.loads(audit3.read_text())
+    payload["criteria"][0]["id"] = "scope"
+    audit3.write_text(json.dumps(payload))
+    write_summary(tmp_path)
+
+    result = run_transition(tmp_path)
+
+    assert result.returncode == 1
+    assert "review_contract_mismatch" in result.stdout
