@@ -99,7 +99,7 @@ Can the API change without silent breakage?
 2. **No host control enums** — third party need not know host state names as required API  
 3. **No silent dual meaning** — same slot, two fields → documented winner  
 4. **Output constructibility** — every mandatory declared output artifact has a documented path from declared inputs, available capabilities, and internal resolution rules, or a meaningful explicit failure condition. Normal construction must remain possible; generic catch-all failure cannot substitute for a normal path. The implementation crosswalk must also cover every required internal artifact needed to construct or validate an output, including its producer, dependencies/capabilities, validation, and failure behavior.  
-   - Build the Pass A output crosswalk from the contract, capability declarations, resolvers, and validators.  
+   - Build the Pass A output-construction crosswalk from the contract, capability declarations, resolvers, and validators.  
    - Build a separate implementation crosswalk for required internal artifacts. An internal artifact may remain private and need not appear in the public Request, but it must have an identified producer, declared dependencies/capabilities, validation rule, and failure behavior.  
    - If persistence applies, add a subordinate persistence crosswalk proving mandatory stored attributes can be populated and validated by valid internal rules. Storage fields need not appear in the public Request.  
    - An explicit failure condition is meaningful only when its trigger is bounded, reachable from documented inputs/capabilities, and consistent with the capability boundary; the failure Response/artifact must itself be constructible and validated.  
@@ -108,7 +108,7 @@ Can the API change without silent breakage?
 5. **Precedence** — if ≥2 inputs can fill one attribute, order is stated  
 6. **Necessity floor** — D1 ≥ 3 (catastrophic bloat still fails even if hard gates 1–5 pass)  
 7. **Sufficiency floor** — D2 ≥ 4  
-8. **Consistency floor** — D5 ≥ 3; if D5 = 1, fail regardless of other scores  
+8. **Consistency floor** — D5 ≥ 3  
 
 ---
 
@@ -116,8 +116,8 @@ Can the API change without silent breakage?
 
 | Verdict | When |
 |---------|------|
-| **pass** | All hard gates pass; D1–D6 ≥ 4; D7 ≥ 3 with version/alias plan; multi-pass A–D complete |
-| **fail** | Any hard gate fails, or any of D1–D5 ≤ 2, or third-party use unsafe, or an output, implementation, or applicable persistence crosswalk has Gap=y |
+| **pass** | All hard gates pass; D1–D6 ≥ 4 (D1/D3 = 3 allowed only as smell-only below); D7 ≥ 3 with version/alias plan; multi-pass A–D complete |
+| **fail** | Any hard gate fails, or any of D1–D6 ≤ 2, or third-party use unsafe, or an output, implementation, or applicable persistence crosswalk has Gap=y, or any other score falls short of the pass row (e.g. D4 = 3) — list each as Fix |
 | **insufficient_evidence** | No contract / cannot enumerate mandatory outputs, required internal artifacts, or applicable persistence requirements / multi-pass A incomplete |
 | **smell-only** (still pass if gates ok) | D1 or D3 = 3 only from mild bloat/audit-echo/long aliases with a winner — list under Fix, do not alone fail |
 
@@ -145,7 +145,7 @@ Use the multi-pass block in `single-agent-multi-pass-scoring.md`, or:
 C4b — Call-contract field API
 Contract path: ...
 Multi-pass: A/B/C/D complete: y/n
-Output crosswalk gaps: none | list...
+Output-construction crosswalk gaps: none | list...
 Implementation crosswalk gaps: none | list...
 Failure-policy evidence: bounded/reachable/capability-consistent trigger; constructible validated failure artifact; normal path present
 Conditional persistence gaps: n/a | none | list...

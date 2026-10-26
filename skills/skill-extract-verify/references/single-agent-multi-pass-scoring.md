@@ -61,12 +61,12 @@ Goal: facts only, no scores yet.
 | Case | Persistence | Expected result |
 |------|-------------|-----------------|
 | Declared input and capability construct a non-persistent output | n/a | Gate 4 passes; no storage crosswalk required |
-| Internal storage field is populated by a documented resolver and validated | applicable | Interface passes; subordinate persistence check passes; storage field need not be public |
+| Internal storage field absent from the public Request is populated by a documented resolver and validated | applicable | C4b passes, D2 ≥ 4, persistence check passes; field stays out of the public Request |
 | Required output depends on an unavailable or undeclared capability | either | Gate 4 fails |
 | Resolver path or assumption is undocumented/invalid | either | Gate 4 fails |
 | Meaningful bounded failure condition exists and normal path remains constructible | either | Gate 4 may pass |
 | Generic catch-all failure is the only path | either | Gate 4 fails |
-| Persistent validator requires an attribute with no valid internal population rule | applicable | Persistence check fails; Gate 4 fails |
+| Same field and public contract, but no valid internal population rule | applicable | Persistence check fails; C4b and D2 fail; do not repair by adding the field to the Request |
 
 ### Pass B — Strict floors (reject unsupported excellence)
 

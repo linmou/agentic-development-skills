@@ -35,7 +35,7 @@ Optional: `capability` (one line); `out_dir` (default `./.skill-extract-verify/`
    *Done when:* those criteria have scores, hard gates, evidence, verdicts.
 
 4. **Score C4b with multi-pass (if contract)** — Follow `single-agent-multi-pass-scoring.md` **in order**:
-   - **Pass A** — Request inventory + **mandatory-output construction crosswalk** + **implementation crosswalk** for required internal artifacts (any Gap=y ⇒ gate 4 fail); add a conditional persistence crosswalk when applicable
+   - **Pass A** — Request inventory + **output-construction crosswalk** + **implementation crosswalk** for required internal artifacts (any Gap=y ⇒ gate 4 fail); add a conditional persistence crosswalk when applicable
    - **Pass B** — Strict D1–D7 + hard gates; each Di needs evidence **and** a counterevidence attempt
    - **Pass C** — Contradiction hunt (mandatory if you authored the contract this session or any Di=5)
    - **Pass D** — Lock scores; do not re-raise after C without new artifact text  
