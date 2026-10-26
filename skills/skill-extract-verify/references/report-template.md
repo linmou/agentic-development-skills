@@ -3,7 +3,8 @@
 - **Host**:
 - **Extracted**:
 - **Capability**:
-- **Overall**: pass | fail | insufficient_evidence
+- **Import path**: yes | no (no ⇒ C4a/C4b `n/a`)
+- **Overall**: pass | fail | insufficient_evidence (rule: `criteria.md`)
 - **Blocking fails**:
 
 ## Criteria
@@ -32,23 +33,50 @@
 ### C4a — Contract exists + opaque labels (blocking if imported)
 - Scores (existence / schema ownership / opaque labels / third-party):
 - Hard gates:
-- Verdict:
+- Verdict: pass | fail | insufficient_evidence | n/a
 - Evidence:
 - Fix:
 
-### C4b — Field API design (blocking hard gates if imported)
-- Multi-pass A–D complete: y/n (see `single-agent-multi-pass-scoring.md`)
-- Pass A output-construction crosswalk (gaps):
-- Agent-interface output evidence (declared outputs -> inputs/capabilities/resolution):
-- Agent-implementation evidence (internal artifacts -> producer/dependencies/validation):
-- Failure-policy evidence (bounded/reachable/capability-consistent trigger -> constructible validated failure artifact):
-- Conditional persistence crosswalk (n/a when non-persistent):
-- Storage regression pair (hidden field + valid resolver: C4b/D2/persistence; no resolver: C4b/D2/persistence):
-- Pass B strict D1–D7 + gates:
-- Pass C attacks (held / lowered):
-- Lock D1–D7:
-- Hard gates 1–8 (including Output Constructibility):
-- Verdict:
+### C4b — Field API design (blocking if imported)
+Contract path:
+
+**Pass A — Inventory**
+
+Request inventory:
+
+| Field | Class | Required/default | Overlaps? | Precedence | Keep/merge/drop |
+|-------|-------|------------------|-----------|------------|-----------------|
+
+Standard Response keys:
+
+Output-construction crosswalk:
+
+| Output artifact | Mandatory condition/profile | Inputs/capabilities | Resolver/path | Validation | Failure condition | Gap? |
+|-----------------|-----------------------------|---------------------|---------------|------------|-------------------|------|
+
+Implementation crosswalk:
+
+| Internal artifact | Producer | Dependencies/capabilities | Construction path | Validation | Failure behavior | Gap? |
+|-------------------|----------|---------------------------|-------------------|------------|------------------|------|
+
+Conditional persistence crosswalk: n/a | complete | gaps listed
+
+| Stored attribute | Population rule | Validation | In public Request? | Gap? |
+|------------------|-----------------|------------|--------------------|------|
+
+Failure-policy evidence (bounded / reachable / capability-consistent trigger; constructible validated failure artifact; normal path present):
+
+**Pass B — Strict scores**
+- D1–D7 (evidence + counterevidence per Di):
+- Hard gates 1–8:
+
+**Pass C — Attacks**
+1. … → held | lowered Di to N
+
+**Pass D — Lock**
+- Scores: D1= D2= D3= D4= D5= D6= D7=
+- Hard gates 1–8:
+- Verdict: pass | fail | insufficient_evidence | n/a
 - Smells:
 - Fix:
 
@@ -61,7 +89,7 @@
 
 ### C6 — Completeness (non-blocking)
 - Checklist / scores:
-- Verdict:
+- Verdict: pass | warn
 - Evidence:
 - Fix:
 

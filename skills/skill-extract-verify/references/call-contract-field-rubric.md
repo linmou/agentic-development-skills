@@ -13,7 +13,7 @@ Use when the extracted skill exposes a Request/Response (or equivalent) for host
 Do **not** one-shot D1–D7 after skimming the contract.  
 Run **`references/single-agent-multi-pass-scoring.md`** (Pass A inventory/crosswalk → B strict → C contradiction → D lock).
 
-**Lesson baked in:** solo extract-verify once marked C4b pass while multi-debate found an unconstructible required artifact. Pass A exists to make output dependencies, resolution rules, and conditional persistence checks mechanical.
+Pass A makes output dependencies, resolution rules, and conditional persistence checks mechanical, so an unconstructible required artifact cannot hide behind a working happy path.
 
 ## Scale
 - 1 = poor / missing
@@ -99,7 +99,7 @@ Can the API change without silent breakage?
 2. **No host control enums** — third party need not know host state names as required API  
 3. **No silent dual meaning** — same slot, two fields → documented winner  
 4. **Output constructibility** — every mandatory declared output artifact has a documented path from declared inputs, available capabilities, and internal resolution rules, or a meaningful explicit failure condition. Normal construction must remain possible; generic catch-all failure cannot substitute for a normal path. The implementation crosswalk must also cover every required internal artifact needed to construct or validate an output, including its producer, dependencies/capabilities, validation, and failure behavior.  
-   - Build the Pass A output crosswalk from the contract, capability declarations, resolvers, and validators.  
+   - Build the Pass A output-construction crosswalk from the contract, capability declarations, resolvers, and validators.  
    - Build a separate implementation crosswalk for required internal artifacts. An internal artifact may remain private and need not appear in the public Request, but it must have an identified producer, declared dependencies/capabilities, validation rule, and failure behavior.  
    - If persistence applies, add a subordinate persistence crosswalk proving mandatory stored attributes can be populated and validated by valid internal rules. Storage fields need not appear in the public Request.  
    - An explicit failure condition is meaningful only when its trigger is bounded, reachable from documented inputs/capabilities, and consistent with the capability boundary; the failure Response/artifact must itself be constructible and validated.  
@@ -108,7 +108,7 @@ Can the API change without silent breakage?
 5. **Precedence** — if ≥2 inputs can fill one attribute, order is stated  
 6. **Necessity floor** — D1 ≥ 3 (catastrophic bloat still fails even if hard gates 1–5 pass)  
 7. **Sufficiency floor** — D2 ≥ 4  
-8. **Consistency floor** — D5 ≥ 3; if D5 = 1, fail regardless of other scores  
+8. **Consistency floor** — D5 ≥ 3  
 
 ---
 
@@ -116,8 +116,8 @@ Can the API change without silent breakage?
 
 | Verdict | When |
 |---------|------|
-| **pass** | All hard gates pass; D1–D6 ≥ 4; D7 ≥ 3 with version/alias plan; multi-pass A–D complete |
-| **fail** | Any hard gate fails, or any of D1–D5 ≤ 2, or third-party use unsafe, or an output, implementation, or applicable persistence crosswalk has Gap=y |
+| **pass** | All hard gates pass; D1–D6 ≥ 4 (D1/D3 = 3 allowed only as smell-only below); D7 ≥ 3 with version/alias plan; multi-pass A–D complete |
+| **fail** | Any hard gate fails, or any of D1–D6 ≤ 2, or third-party use unsafe, or an output, implementation, or applicable persistence crosswalk has Gap=y, or any other score falls short of the pass row (e.g. D4 = 3) — list each as Fix |
 | **insufficient_evidence** | No contract / cannot enumerate mandatory outputs, required internal artifacts, or applicable persistence requirements / multi-pass A incomplete |
 | **smell-only** (still pass if gates ok) | D1 or D3 = 3 only from mild bloat/audit-echo/long aliases with a winner — list under Fix, do not alone fail |
 
@@ -129,36 +129,15 @@ Can the API change without silent breakage?
 
 | Class | Role | Example |
 |-------|------|---------|
-| content | Primary material to process | `human_feedback` |
-| seed | Optional help to fill callee-derived fields | `intents` |
-| control | Decision / write behavior | `decision_mode` |
+| content | Primary material to process | `document` |
+| seed | Optional help to fill callee-derived fields | `hints` |
+| control | Decision / write behavior | `write_mode` |
 | output | What to return or side-log | `output_profile`, `include` |
 | opaque | Caller bookkeeping only (never domain control) | `caller_tag`, `correlation_id` |
 
 ---
 
-## Decision output template
-
-Use the multi-pass block in `single-agent-multi-pass-scoring.md`, or:
-
-```text
-C4b — Call-contract field API
-Contract path: ...
-Multi-pass: A/B/C/D complete: y/n
-Output crosswalk gaps: none | list...
-Implementation crosswalk gaps: none | list...
-Failure-policy evidence: bounded/reachable/capability-consistent trigger; constructible validated failure artifact; normal path present
-Conditional persistence gaps: n/a | none | list...
-Request inventory:
-  | Field | Class | Needed? | Overlaps? | Precedence | Keep/merge/drop |
-Scores (after Pass C):
-  D1–D7: ...
-Hard gates 1-8: ...
-Pass C attacks held: ...
-Verdict: pass | fail | insufficient_evidence
-Smells: ...
-Fix: ...
-```
+Output format: C4b section of `report-template.md`.
 
 ---
 
@@ -167,8 +146,8 @@ Fix: ...
 1. Host-shaped leftovers as required API  
 2. Fat seed surface (multiple “situation” or “goal” channels, no precedence)  
 3. Policy enum inflation (three modes = one default rule)  
-4. Session goals stamped into durable memory fields with no generalization  
+4. Session goals stamped into durable stored fields with no generalization  
 5. Audit echo in standard Response (resolution + tags + field_build)  
 6. Alias soup (`section_id` + `correlation_id` both first-class forever)  
-7. **Happy-path D2** — minimal call works; mandatory outputs or applicable persistence attributes still lack construction paths (**multi-debate killer**)
+7. **Happy-path D2** — minimal call works; mandatory outputs or applicable persistence attributes still lack construction paths (most common false pass)
 8. **Author–auditor collapse** — scorer just wrote the contract; skips contradiction pass

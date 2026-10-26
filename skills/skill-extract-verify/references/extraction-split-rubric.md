@@ -15,7 +15,7 @@ For **C4b field API design**, use `call-contract-field-rubric.md` (different con
 - 5 = excellent
 
 Score every dimension under the criterion you are judging.  
-**Blocking criteria** fail overall extract if hard gates fail (see each section).
+Overall verdict rule: `criteria.md`. Evidence checklist: `criteria.md`. Report format: `report-template.md`.
 
 ---
 
@@ -52,7 +52,7 @@ Score every dimension under the criterion you are judging.
 
 | Score | Host→extract | No reverse import | No host tokens on callee |
 |-------|--------------|-------------------|---------------------------|
-| 1 | No invoke path | Extract requires host by name/states | Callee issues PERSIST_OK / REVIEW_OK / … |
+| 1 | No invoke path | Extract requires host by name/states | Callee issues host checkpoint tokens |
 | 3 | Invoke present but informal | Historical host name in comments only | Tokens mentioned only as “do not issue” |
 | 5 | Clear subagent / skill-name path | Grep clean of host skill name as dependency | Callee never owns host tokens |
 
@@ -77,12 +77,12 @@ Score every dimension under the criterion you are judging.
 
 | Score | Side effects | Thin client | Audit | No second engine |
 |-------|--------------|-------------|-------|------------------|
-| 1 | Both write same memory | Host reimplements capability | “Fallback” writes inline | Duplicate protocol/scripts both primary |
+| 1 | Both write the same domain store | Host reimplements capability | “Fallback” writes inline | Duplicate protocol/scripts both primary |
 | 3 | Mostly extract; host edge writes | Adapter mostly thin | Audit sometimes inlines | Stale copies remain unused |
 | 5 | Extract owns domain side effects | Clean Request/Response adapter | Audit only re-invokes | Single write engine on extract |
 
 ### Hard gates
-1. No dual writers for the same domain memory  
+1. No dual writers for the same domain store  
 2. Host invoke path exists (subagent or the extracted skill)  
 3. Audit/fallback does not implement domain writes without calling extract  
 4. Extract does not advance host sections  
@@ -119,7 +119,7 @@ This is **coupling hygiene**, not field API design (C4b).
 ### Decision
 - **pass:** all hard gates; dimensions ≥ 4  
 - **fail:** any hard gate fail  
-- **N/A:** no import/subagent path (document and skip C4a/C4b blocking)
+- **n/a:** no import/subagent path; C4a and C4b are both `n/a` and count as satisfied for overall
 
 Then score **C4b** with `call-contract-field-rubric.md`.
 
@@ -163,44 +163,9 @@ Then score **C4b** with `call-contract-field-rubric.md`.
 | 5 | Checklist complete for the claimed extract |
 
 ### Hard gates
-None for overall `pass` (non-blocking).  
-If user claimed “complete extract” and score ≤ 2 on assets/adapter/copies → report as **fail** under C6 still non-blocking for overall unless user policy says otherwise; default: **warning**.
+None (non-blocking; never changes overall).
 
 ### Decision
 - **pass:** most checklist items true (note misses)  
-- **fail (warning):** claimed complete but major gaps  
+- **warn:** extraction claimed complete but any of assets / adapter / copies ≤ 2  
 - Always list misses in report  
-
----
-
-## Combined decision output template
-
-```text
-Extraction split scores
-C1 Capability vs lifecycle: dims [...] hard gates [...] → pass|fail
-C2 One-way dependency: ...
-C3 Single writer / thin client: ...
-C4a Contract + opaque labels: ...
-C4b Field API: (see call-contract-field-rubric output)
-C5 Standalone trigger: ...
-C6 Completeness: ... (non-blocking)
-
-Overall: pass | fail | insufficient_evidence
-Blocking fails: ...
-Top fixes:
-1. ...
-```
-
----
-
-## Evidence map
-
-| Criterion | Primary evidence |
-|-----------|------------------|
-| C1 | Both SKILL.md purpose/procedure; host state machine |
-| C2 | Grep host name in extract; token language; host invoke lines |
-| C3 | Write paths; adapters; duplicate scripts/protocols; audit gates |
-| C4a | call-contract; host adapter; Request examples |
-| C4b | `call-contract-field-rubric.md` on contract fields |
-| C5 | Extract frontmatter description; standalone procedure |
-| C6 | File trees; grep; adapter vs inlined protocol |
