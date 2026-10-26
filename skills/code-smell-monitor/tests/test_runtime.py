@@ -22,7 +22,7 @@ class MonitorRuntimeTests(unittest.TestCase):
         self.assertIn("No such file", result["stderr"])
 
     def test_timeout_bytes_are_decoded(self):
-        error = subprocess.TimeoutExpired(["fake"], 1, output=b"partial ÿ", stderr=b"failed ÿ")
+        error = subprocess.TimeoutExpired(["fake"], 1, output=b"partial \\xff", stderr=b"failed \\xff")
         with mock.patch.object(monitor.subprocess, "run", side_effect=error):
             result = monitor.run_command(["fake"], Path.cwd(), timeout=1)
         self.assertEqual(result["exit_code"], 124)
