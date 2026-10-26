@@ -76,6 +76,7 @@ def run_command(cmd: list[str], cwd: Path, timeout: int = 300) -> dict[str, Any]
             cmd,
             cwd=str(cwd),
             text=True,
+            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
@@ -93,11 +94,24 @@ def run_command(cmd: list[str], cwd: Path, timeout: int = 300) -> dict[str, Any]
         return {
             "cmd": cmd,
             "exit_code": 124,
-            "stdout": exc.stdout or "",
-            "stderr": exc.stderr or f"Timed out after {timeout} seconds",
+            "stdout": decode_output(exc.stdout),
+            "stderr": decode_output(exc.stderr) or f"Timed out after {timeout} seconds",
             "duration_seconds": round(time.time() - started, 3),
             "timed_out": True,
         }
+
+    except OSError as exc:
+        return {
+            "cmd": cmd, "exit_code": 127 if isinstance(exc, FileNotFoundError) else 126,
+            "stdout": "", "stderr": str(exc),
+            "duration_seconds": round(time.time() - started, 3), "timed_out": False,
+        }
+
+
+def decode_output(value: Any) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value if isinstance(value, str) else ""
 
 
 def load_json(path: Path) -> Any:
@@ -410,6 +424,61 @@ def top_counts(values: Any) -> list[dict[str, Any]]:
     return [{"name": key, "count": value} for key, value in sorted(counts.items(), key=lambda item: item[1], reverse=True)[:10]]
 
 
+FINDINGS_CODES = {
+    "ruff": {1}, "vulture": {3}, "bandit": {1}, "mypy": {1},
+    "package_lint": {1}, "eslint": {1}, "knip_dead_code": {1},
+    "depcheck": {1}, "package_audit": {1}, "package_typecheck": {1},
+    "tsc_no_emit": {1}, "gitleaks": {1},
+}
+JSON_RESULTS = {
+    "ruff", "radon_cc", "radon_mi", "bandit", "eslint",
+    "madge_circular", "depcheck", "knip_dead_code",
+}
+CATEGORIES = {
+    "ruff": ("complexity", "dead_code", "static_safety"),
+    "radon_cc": ("complexity",), "radon_mi": ("complexity",),
+    "vulture": ("dead_code",), "bandit": ("security",), "mypy": ("static_safety",),
+    "package_lint": ("static_safety",),
+    "eslint": ("complexity", "dead_code", "static_safety"),
+    "jscpd": ("duplication",), "knip_dead_code": ("dead_code",),
+    "madge_circular": ("coupling",), "depcheck": ("dependency_health",),
+    "package_audit": ("dependency_health",), "package_typecheck": ("static_safety",),
+    "tsc_no_emit": ("static_safety",), "gitleaks": ("security",),
+}
+
+
+def detector_status(item: dict[str, Any], raw: Path) -> str:
+    name, code = item["name"], item["exit_code"]
+    if item["timed_out"] or code == 124:
+        return "timed_out"
+    if code in (126, 127):
+        return "unavailable"
+    if code != 0 and code not in FINDINGS_CODES.get(name, set()):
+        return "failed"
+    if name in JSON_RESULTS and load_json(raw / (name + ".json")) is None:
+        return "failed"
+    if name == "gitleaks" and code == 1 and load_json(raw / "gitleaks.json") is None:
+        return "failed"
+    return "findings" if code else "clean"
+
+
+def coverage_status(results: list[dict[str, Any]]) -> dict[str, Any]:
+    categories: dict[str, list[str]] = {}
+    for result in results:
+        for cat in CATEGORIES.get(result["name"], ()):
+            categories.setdefault(cat, []).append(result["status"])
+    out = {}
+    for cat, statuses in categories.items():
+        covered = sum(status in ("clean", "findings") for status in statuses)
+        out[cat] = (
+            "covered" if covered == len(statuses) else
+            "partial" if covered else
+            "unavailable" if all(v == "unavailable" for v in statuses) else "failed"
+        )
+    return {"complete": bool(out) and all(v == "covered" for v in out.values()),
+            "categories": out}
+
+
 def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str, Any]], install_results: list[dict[str, Any]]) -> None:
     lines: list[str] = []
     lines.append("# Code Smell Monitor Report")
@@ -418,6 +487,11 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
     lines.append(f"- scope: `{', '.join(summary['scope'])}`")
     lines.append(f"- detected stacks: `{', '.join(name for name, enabled in summary['stack'].items() if enabled) or 'none'}`")
     lines.append(f"- output: `{summary['out_dir']}`")
+    lines.append("")
+    lines.append("## Coverage")
+    lines.append("Complete: " + str(summary["coverage"]["complete"]))
+    for category, status in summary["coverage"]["categories"].items():
+        lines.append("- " + category + ": " + status)
     lines.append("")
     lines.append("## Headline Signals")
     if summary["headlines"]:
@@ -458,6 +532,12 @@ def main() -> int:
     else:
         scoped_paths = [(repo / item).resolve() for item in args.scope]
 
+    if any(not path.is_relative_to(repo) for path in scoped_paths):
+        print("scope must stay inside the repository", file=sys.stderr)
+        return 2
+    if not args.changed_only and any(not path.exists() for path in scoped_paths):
+        print("scope path does not exist", file=sys.stderr)
+        return 2
     files = repo_files(repo, scoped_paths)
     if not files:
         print("no files found for scope", file=sys.stderr)
@@ -485,7 +565,17 @@ def main() -> int:
     if stack["javascript"] or stack["python"]:
         results.append(run_secret_check(repo, raw_dir))
 
+    package_detectors = {"knip_dead_code", "depcheck", "package_audit",
+                         "package_typecheck", "tsc_no_emit", "package_lint"}
+    for item in results:
+        item["status"] = detector_status(item, raw_dir)
+        item["analysis_scope"] = (
+            "repository" if item["name"] == "gitleaks" else
+            "package" if item["name"] in package_detectors else "requested"
+        )
+    coverage = coverage_status(results)
     summary = {
+        "coverage": coverage,
         "repo": str(repo),
         "scope": scope_args,
         "out_dir": str(out_dir),
@@ -499,7 +589,11 @@ def main() -> int:
     write_report(out_dir, summary, results, install_results)
 
     print(str(out_dir))
-    if args.fail_on_tool_error and any(item["exit_code"] not in (0,) for item in results + install_results):
+    if not coverage["complete"]:
+        print("WARNING: incomplete detector coverage", file=sys.stderr)
+    if args.fail_on_tool_error and (
+        not coverage["complete"] or any(item["exit_code"] != 0 for item in install_results)
+    ):
         return 1
     return 0
 
