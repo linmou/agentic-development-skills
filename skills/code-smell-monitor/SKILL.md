@@ -23,7 +23,7 @@ For a full repository pass:
 python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo . --scope .
 ```
 
-Use `--install missing` by default. It installs missing common tools for detected stacks. Use `--install never` when the environment must not be changed.
+Use `--install never` in locked-down environments and in offline regression tests. The current CLI default `--install missing` may download tools; make sure network and environment changes are allowed before running.
 
 ## Dependencies and Installation
 
@@ -51,7 +51,7 @@ Use the command appropriate for the repository and do not run all three. For a l
 3. Check coverage before interpreting results. A JavaScript/TypeScript pass must include lint, type safety, duplication, dead or unused code, dependency coupling, and dependency health when the relevant tools can run.
 4. Read `code_smell_report.md` first, then inspect `raw/*.json` or `raw/*.txt` for exact tool output.
 5. Treat type/static safety, dead-code, security, and dependency findings as higher priority than style-only findings.
-6. Mark the pass incomplete when a required detector is missing, fails to start, runs from the wrong package root, or scans generated/dependency/history files.
+6. Check `summary.json` coverage (`complete` and per-category statuses) before trusting any clean results. Mark the pass incomplete when a required detector is missing, fails to start, runs from the wrong package root, or scans generated/dependency/history files.
 7. Escalate to a wider scope only when the change affects shared abstractions, imports, package boundaries, build config, or dependency versions.
 8. Re-run the same scoped command after changes and compare summaries.
 
@@ -68,12 +68,12 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 
 ## Outputs
 
-The script writes reports under `--out` or `code_smell_monitor/<timestamp>/`:
+The script writes reports under `--out` or `.code-smell-monitor/<timestamp>/`:
 
-- `code_smell_report.md`: human-readable summary, commands, exit codes, and ranked signals.
-- `summary.json`: stack detection, tool availability, command metadata, and extracted headline metrics.
+- `code_smell_report.md`: human-readable summary, category coverage, commands, exit codes, and ranked signals.
+- `summary.json`: stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
 - `raw/`: exact tool outputs for auditability.
-- add output folder to .git/info/exclude
+- Exclude `.code-smell-monitor/` from local Git tracking as needed.
 
 ## Tool Policy
 
