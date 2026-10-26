@@ -76,6 +76,7 @@ def run_command(cmd: list[str], cwd: Path, timeout: int = 300) -> dict[str, Any]
             cmd,
             cwd=str(cwd),
             text=True,
+            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
@@ -93,11 +94,24 @@ def run_command(cmd: list[str], cwd: Path, timeout: int = 300) -> dict[str, Any]
         return {
             "cmd": cmd,
             "exit_code": 124,
-            "stdout": exc.stdout or "",
-            "stderr": exc.stderr or f"Timed out after {timeout} seconds",
+            "stdout": decode_output(exc.stdout),
+            "stderr": decode_output(exc.stderr) or f"Timed out after {timeout} seconds",
             "duration_seconds": round(time.time() - started, 3),
             "timed_out": True,
         }
+
+    except OSError as exc:
+        return {
+            "cmd": cmd, "exit_code": 127 if isinstance(exc, FileNotFoundError) else 126,
+            "stdout": "", "stderr": str(exc),
+            "duration_seconds": round(time.time() - started, 3), "timed_out": False,
+        }
+
+
+def decode_output(value: Any) -> str:
+    if isinstance(value, bytes):
+        return value.decode("utf-8", errors="replace")
+    return value if isinstance(value, str) else ""
 
 
 def load_json(path: Path) -> Any:
@@ -458,6 +472,12 @@ def main() -> int:
     else:
         scoped_paths = [(repo / item).resolve() for item in args.scope]
 
+    if any(not path.is_relative_to(repo) for path in scoped_paths):
+        print("scope must stay inside the repository", file=sys.stderr)
+        return 2
+    if not args.changed_only and any(not path.exists() for path in scoped_paths):
+        print("scope path does not exist", file=sys.stderr)
+        return 2
     files = repo_files(repo, scoped_paths)
     if not files:
         print("no files found for scope", file=sys.stderr)
