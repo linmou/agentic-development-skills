@@ -13,7 +13,7 @@ Use when the extracted skill exposes a Request/Response (or equivalent) for host
 Do **not** one-shot D1–D7 after skimming the contract.  
 Run **`references/single-agent-multi-pass-scoring.md`** (Pass A inventory/crosswalk → B strict → C contradiction → D lock).
 
-**Lesson baked in:** solo extract-verify once marked C4b pass while multi-debate found an unconstructible required artifact. Pass A exists to make output dependencies, resolution rules, and conditional persistence checks mechanical.
+Pass A makes output dependencies, resolution rules, and conditional persistence checks mechanical, so an unconstructible required artifact cannot hide behind a working happy path.
 
 ## Scale
 - 1 = poor / missing
@@ -129,36 +129,15 @@ Can the API change without silent breakage?
 
 | Class | Role | Example |
 |-------|------|---------|
-| content | Primary material to process | `human_feedback` |
-| seed | Optional help to fill callee-derived fields | `intents` |
-| control | Decision / write behavior | `decision_mode` |
+| content | Primary material to process | `document` |
+| seed | Optional help to fill callee-derived fields | `hints` |
+| control | Decision / write behavior | `write_mode` |
 | output | What to return or side-log | `output_profile`, `include` |
 | opaque | Caller bookkeeping only (never domain control) | `caller_tag`, `correlation_id` |
 
 ---
 
-## Decision output template
-
-Use the multi-pass block in `single-agent-multi-pass-scoring.md`, or:
-
-```text
-C4b — Call-contract field API
-Contract path: ...
-Multi-pass: A/B/C/D complete: y/n
-Output-construction crosswalk gaps: none | list...
-Implementation crosswalk gaps: none | list...
-Failure-policy evidence: bounded/reachable/capability-consistent trigger; constructible validated failure artifact; normal path present
-Conditional persistence gaps: n/a | none | list...
-Request inventory:
-  | Field | Class | Needed? | Overlaps? | Precedence | Keep/merge/drop |
-Scores (after Pass C):
-  D1–D7: ...
-Hard gates 1-8: ...
-Pass C attacks held: ...
-Verdict: pass | fail | insufficient_evidence
-Smells: ...
-Fix: ...
-```
+Output format: C4b section of `report-template.md`.
 
 ---
 
@@ -167,8 +146,8 @@ Fix: ...
 1. Host-shaped leftovers as required API  
 2. Fat seed surface (multiple “situation” or “goal” channels, no precedence)  
 3. Policy enum inflation (three modes = one default rule)  
-4. Session goals stamped into durable memory fields with no generalization  
+4. Session goals stamped into durable stored fields with no generalization  
 5. Audit echo in standard Response (resolution + tags + field_build)  
 6. Alias soup (`section_id` + `correlation_id` both first-class forever)  
-7. **Happy-path D2** — minimal call works; mandatory outputs or applicable persistence attributes still lack construction paths (**multi-debate killer**)
+7. **Happy-path D2** — minimal call works; mandatory outputs or applicable persistence attributes still lack construction paths (most common false pass)
 8. **Author–auditor collapse** — scorer just wrote the contract; skips contradiction pass

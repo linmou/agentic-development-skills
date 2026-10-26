@@ -1,8 +1,13 @@
 # Extraction criteria (index)
 
-**Overall:** `pass` only if every **blocking** criterion is `pass`.  
-Non-blocking fails are listed but do not force overall `fail`.  
-`insufficient_evidence` on a blocking criterion blocks overall `pass`.
+## Verdicts
+
+Per criterion: `pass` | `fail` | `insufficient_evidence`; C4a/C4b may be `n/a` (no import path); C6 is `pass` | `warn`.
+
+**Overall** (first match wins):
+1. Any blocking criterion `fail` → `fail`
+2. Any blocking criterion `insufficient_evidence` → `insufficient_evidence`
+3. Otherwise → `pass` (`n/a` counts as satisfied; C6 never changes overall)
 
 ## Detailed rubrics (score here)
 
@@ -12,7 +17,7 @@ Non-blocking fails are listed but do not force overall `fail`.
 | C4b | `call-contract-field-rubric.md` | **Field API design** D1–D7 (necessary, sufficient, non-overlap, clear, consistent, layered, evolvable) |
 
 `criteria.md` is the **index + short definitions**.  
-Score anchors, hard gates, and output templates live only in the rubric files (single source of truth).
+Score anchors and hard gates live only in the rubric files; the report format lives only in `report-template.md`.
 
 ---
 
@@ -27,7 +32,7 @@ Host → extract only. No reverse host import. No host tokens issued by extract.
 ### C3 — Single writer, thin client (blocking)
 Extract owns domain writes. Host: Request → invoke → Response → resume. Audit may re-invoke; must not dual-write.
 
-### C4 — Call contract (blocking if imported)
+### C4 — Call contract (blocking if imported; `n/a` otherwise)
 - **C4a** — Contract exists + defaults + schema ownership + **opaque labels** (log-only tags; not control) + third-party callability → `extraction-split-rubric.md`  
 - **C4b** — Field API quality (D1–D7) → `call-contract-field-rubric.md`  
   - **How to score:** `single-agent-multi-pass-scoring.md` (inventory/crosswalk → strict → contradiction → lock).  
@@ -37,7 +42,7 @@ Extract owns domain writes. Host: Request → invoke → Response → resume. Au
 ### C5 — Standalone trigger (blocking)
 Extract description and procedure work without the host.
 
-### C6 — Completeness (non-blocking)
+### C6 — Completeness (non-blocking; `pass` | `warn`)
 Assets moved, host is adapter, no second write engine, grep clean, contract on callee if imported.
 
 ---
