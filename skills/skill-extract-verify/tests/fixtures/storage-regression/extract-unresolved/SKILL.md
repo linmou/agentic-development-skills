@@ -32,7 +32,7 @@ Minimal Request: `{ "text": "Ship the beta on Friday." }`
 
 ## Procedure
 
-1. Validate Request. Empty `text` after trim → `status=error`, `errors=["text is empty"]`, nothing written.
+1. Validate Request. `version` ≠ 1 → `status=error`, `errors=["unsupported version"]`; empty `text` after trim → `status=error`, `errors=["text is empty"]`. Nothing written.
 2. Build the record.
 3. Validate the record; any validation failure → `status=error` with the failing attribute in `errors`, nothing written.
-4. Write the file; return `status=ok` and `note_id`.
+4. Write the file; append `{note_id, caller_tag}` to `notes/log.jsonl`; return `status=ok` and `note_id`.
