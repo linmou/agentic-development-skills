@@ -1,0 +1,23 @@
+name: Code Smell Monitor Runtime Tests
+on:
+  pull_request:
+    paths:
+      - 'skills/code-smell-monitor/**'
+      - '.github/workflows/code-smell-monitor-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'skills/code-smell-monitor/**'
+      - '.github/workflows/code-smell-monitor-tests.yml'
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline runtime regression tests
+        run: python -m unittest discover -s skills/code-smell-monitor/tests -v
+      - name: Compile script
+        run: python -m py_compile skills/code-smell-monitor/scripts/code_smell_monitor.py
