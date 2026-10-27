@@ -643,14 +643,14 @@ def main() -> int:
     write_report(out_dir, summary, results, install_results)
     if architecture_result:
         with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
-            report.write("\\n## Architecture\\n")
+            report.write("\n## Architecture\n")
             report.write("Detector: dependency-cruiser; actual scope: package\\n")
-            report.write("Status: " + architecture["status"] + "\\n")
-            report.write("Findings: " + str(len(architecture["findings"])) + "\\n")
-            report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\\n")
+            report.write("Status: " + architecture["status"] + "\n")
+            report.write("Findings: " + str(len(architecture["findings"])) + "\n")
+            report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\n")
     elif args.architecture:
         with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
-            report.write("\\n## Architecture\\nStatus: unavailable (no configured adapter)\\n")
+            report.write("\n## Architecture\nStatus: unavailable (no configured adapter)\n")
 
     print(str(out_dir))
     if not coverage["complete"]:
