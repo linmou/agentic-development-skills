@@ -96,7 +96,10 @@ def analyze(data: Any, max_degree: int = 12) -> dict[str, Any]:
     return {
         "graph": {"nodes": len(nodes), "edges": len(edges)},
         "findings": sorted(findings, key=lambda item: (item["category"], item["source"], item["target"] or "")),
-        "enforced_violations": sum(f["classification"] == "confirmed_contract_violation" for f in findings),
+        "enforced_violations": sum(
+            f["classification"] == "confirmed_contract_violation"
+            and f["evidence"].get("severity") == "error" for f in findings
+        ),
     }
 
 
