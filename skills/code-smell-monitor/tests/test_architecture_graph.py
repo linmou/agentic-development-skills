@@ -39,6 +39,14 @@ class ArchitectureTests(unittest.TestCase):
         self.assertEqual(result["enforced_violations"], 1)
         self.assertEqual(result["findings"][0]["evidence"]["rule"], "no-domain-to-db")
 
+    def test_warning_contract_is_nonblocking(self):
+        data = {"modules": [], "summary": {"violations": [
+            {"from": "a", "to": "b", "rule": {"name": "advisory", "severity": "warn"}}
+        ]}}
+        result = graph.analyze(data)
+        self.assertEqual(result["enforced_violations"], 0)
+        self.assertEqual(result["findings"][0]["classification"], "confirmed_contract_violation")
+
     def test_invalid_graph_is_not_clean(self):
         with self.assertRaises(ValueError):
             graph.analyze({})
