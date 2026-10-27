@@ -17,6 +17,14 @@ Run the bundled monitor from the target repository:
 python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo . --scope path/to/module path/to/file.py
 ```
 
+For optional universal architecture analysis (JavaScript/TypeScript package root):
+
+```bash
+python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo . --scope . --architecture --install never
+```
+
+When dependency-cruiser is installed, this mode generates package-wide dependency graph findings. Cycles are structural facts; high fan-in/out are review candidates, not confirmed design violations. Only explicitly configured rule violations are CI-blocking. Missing tools produce unavailable coverage, not zero findings. Python architecture support is explicitly unavailable until an adapter exists. See `references/architecture-analysis.md`.
+
 For a full repository pass:
 
 ```bash
@@ -71,7 +79,7 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 The script writes reports under `--out` or `.code-smell-monitor/<timestamp>/`:
 
 - `code_smell_report.md`: human-readable summary, category coverage, commands, exit codes, and ranked signals.
-- `summary.json`: stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
+- `summary.json`: optional `architecture` results when `--architecture` is requested; stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
 - `raw/`: exact tool outputs for auditability.
 - Exclude `.code-smell-monitor/` from local Git tracking as needed.
 
