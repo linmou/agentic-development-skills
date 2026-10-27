@@ -648,6 +648,11 @@ def main() -> int:
             report.write("Status: " + architecture["status"] + "\n")
             report.write("Findings: " + str(len(architecture["findings"])) + "\n")
             report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\n")
+            for finding in architecture["findings"][:15]:
+                report.write("- " + finding["classification"] + ": " + finding["category"]
+                             + " at \`" + finding["source"] + "\`\n")
+            if len(architecture["findings"]) > 15:
+                report.write("- Additional findings available in raw/architecture_summary.json\n")
     elif args.architecture:
         with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
             report.write("\n## Architecture\nStatus: unavailable (no configured adapter)\n")
@@ -661,6 +666,7 @@ def main() -> int:
         return 1
     if args.fail_on_tool_error and (
         not coverage["complete"] or any(item["exit_code"] != 0 for item in install_results)
+        or (args.architecture and architecture and architecture["status"] != "covered")
     ):
         return 1
     return 0
