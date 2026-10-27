@@ -644,13 +644,13 @@ def main() -> int:
     if architecture_result:
         with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
             report.write("\n## Architecture\n")
-            report.write("Detector: dependency-cruiser; actual scope: package\\n")
+            report.write("Detector: dependency-cruiser; actual scope: package\n")
             report.write("Status: " + architecture["status"] + "\n")
             report.write("Findings: " + str(len(architecture["findings"])) + "\n")
             report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\n")
             for finding in architecture["findings"][:15]:
                 report.write("- " + finding["classification"] + ": " + finding["category"]
-                             + " at \`" + finding["source"] + "\`\n")
+                             + " at " + finding["source"] + "\n")
             if len(architecture["findings"]) > 15:
                 report.write("- Additional findings available in raw/architecture_summary.json\n")
     elif args.architecture:
