@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import os
 import shutil
@@ -65,6 +66,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out", default="", help="Output directory. Defaults to .code-smell-monitor/<timestamp>.")
     parser.add_argument("--install", choices=["missing", "never"], default="missing", help="Install missing common tools for detected stacks.")
     parser.add_argument("--changed-only", action="store_true", help="Replace scope with git changed files under the repo.")
+    parser.add_argument("--architecture", action="store_true", help="Run optional universal architecture graph checks.")
+    parser.add_argument("--architecture-max-degree", type=int, default=12, help="Fan-in/out review threshold.")
     parser.add_argument("--fail-on-tool-error", action="store_true", help="Exit non-zero when any tool cannot run cleanly.")
     return parser.parse_args()
 
@@ -520,6 +523,44 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
     (out_dir / "code_smell_report.md").write_text("\n".join(lines), encoding="utf-8")
 
 
+def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: int) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Run dependency-cruiser for JS/TS, preserving every result and coverage state."""
+    command = node_runner(repo, "depcruise", ["--output-type", "json", "."], install_mode)
+    if command is None:
+        result = {"cmd": ["depcruise"], "exit_code": 127, "stdout": "",
+                  "stderr": "dependency-cruiser is unavailable", "duration_seconds": 0, "timed_out": False}
+    else:
+        result = run_command(command, repo, timeout=600)
+    write_raw(raw_dir, "architecture_depcruise", result)
+    status = ("timed_out" if result["timed_out"] else "unavailable" if result["exit_code"] in (126, 127)
+              else "failed")
+    outcome: dict[str, Any] = {
+        "status": status, "analysis_scope": "package", "detector": "dependency-cruiser",
+        "findings": [], "enforced_violations": 0, "graph": None,
+    }
+    if result["exit_code"] not in (126, 127, 124):
+        try:
+            payload = json.loads(result["stdout"])
+            spec = importlib.util.spec_from_file_location(
+                "architecture_graph", Path(__file__).with_name("architecture_graph.py"))
+            if spec is None or spec.loader is None:
+                raise ValueError("architecture analyzer not found")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            analyzed = module.analyze(payload, max_degree=max_degree)
+            if result["exit_code"] in (0, 1):
+                outcome.update(analyzed)
+                outcome["status"] = "covered"
+            else:
+                outcome["status"] = "failed"
+        except (ValueError, TypeError, OSError, json.JSONDecodeError) as exc:
+            outcome["status"] = "failed"
+            outcome["error"] = str(exc)
+    (raw_dir / "architecture_summary.json").write_text(json.dumps(outcome, indent=2))
+    return outcome, {"name": "architecture_depcruise", **result, "status": outcome["status"],
+                     "analysis_scope": "package"}
+
+
 def main() -> int:
     args = parse_args()
     repo = Path(args.repo).resolve()
@@ -564,6 +605,17 @@ def main() -> int:
         results.extend(run_js_checks(repo, js_paths, raw_dir, stack["typescript"], args.install))
     if stack["javascript"] or stack["python"]:
         results.append(run_secret_check(repo, raw_dir))
+    architecture = None
+    architecture_result = None
+    if args.architecture:
+        if args.architecture_max_degree < 1:
+            print("--architecture-max-degree must be positive", file=sys.stderr)
+            return 2
+        if stack["javascript"]:
+            architecture, architecture_result = run_architecture(repo, raw_dir, args.install, args.architecture_max_degree)
+        else:
+            architecture = {"status": "unavailable", "reason": "Python architecture adapter not configured", "findings": [], "enforced_violations": 0}
+
 
     package_detectors = {"knip_dead_code", "depcheck", "package_audit",
                          "package_typecheck", "tsc_no_emit", "package_lint"}
@@ -576,6 +628,7 @@ def main() -> int:
     coverage = coverage_status(results)
     summary = {
         "coverage": coverage,
+        "architecture": architecture,
         "repo": str(repo),
         "scope": scope_args,
         "out_dir": str(out_dir),
@@ -587,10 +640,24 @@ def main() -> int:
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     write_report(out_dir, summary, results, install_results)
+    if architecture_result:
+        with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
+            report.write("\\n## Architecture\\n")
+            report.write("Detector: dependency-cruiser; actual scope: package\\n")
+            report.write("Status: " + architecture["status"] + "\\n")
+            report.write("Findings: " + str(len(architecture["findings"])) + "\\n")
+            report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\\n")
+    elif args.architecture:
+        with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
+            report.write("\\n## Architecture\\nStatus: unavailable (no configured adapter)\\n")
 
     print(str(out_dir))
     if not coverage["complete"]:
         print("WARNING: incomplete detector coverage", file=sys.stderr)
+    if args.architecture and architecture and architecture["status"] not in ("covered",):
+        print("WARNING: architecture coverage incomplete", file=sys.stderr)
+    if args.architecture and architecture and architecture["enforced_violations"] > 0:
+        return 1
     if args.fail_on_tool_error and (
         not coverage["complete"] or any(item["exit_code"] != 0 for item in install_results)
     ):
