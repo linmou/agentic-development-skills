@@ -38,6 +38,7 @@ NODE_NPX_PACKAGES = {
     "madge": "madge",
     "depcheck": "depcheck",
     "tsc": "typescript",
+    "depcruise": "dependency-cruiser",
 }
 
 PY_EXTENSIONS = {".py"}
