@@ -60,6 +60,20 @@ class ArchitectureTests(unittest.TestCase):
                             {"source": "b", "dependencies": [{"resolved": "a"}]}]}
         self.assertEqual(graph.analyze(data)["findings"], graph.analyze(data)["findings"])
 
+    def test_large_cycle_does_not_depend_on_python_recursion_limit(self):
+        data = {'modules': [{'source': str(i), 'dependencies': [{'resolved': str((i + 1) % 2000)}]}
+                            for i in range(2000)]}
+        result = graph.analyze(data)
+        self.assertEqual(len(result['findings']), 1)
+        self.assertEqual(len(result['findings'][0]['evidence']['members']), 2000)
+
+    def test_distinct_configured_rules_keep_distinct_ids(self):
+        result = graph.analyze({'modules': [], 'summary': {'violations': [
+            {'from': 'a', 'to': 'b', 'rule': {'name': 'rule-' + str(i), 'severity': 'error'}}
+            for i in range(2)]}})
+        self.assertEqual(len({f['id'] for f in result['findings']}), 2)
+        self.assertEqual(result['enforced_violations'], 2)
+
 
 if __name__ == "__main__":
     unittest.main()
