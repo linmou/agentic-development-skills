@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "requirements": [
+    {
+      "id": "PTP-RESULT-IDENTITY",
+      "kind": "functional",
+      "source": {
+        "path": "docs/assessment-result-messages.md",
+        "line_start": 15,
+        "line_end": 15,
+        "quote": "Each result carries server-owned `assessment_event` metadata: stable event key and kind, assessment/question/learner/source-answer identities, attempt number, outcome/counts, terminal/lifecycle and progress-deferred state. Closure events also record their known cause. Result identity is separate from answer identity. Unique event keys prevent duplicate messages on repeated processing, reconnects and concurrent submissions. The same saved result is returned as `ProcessedMessageDTO.result_message`; cancellation without an answer can link directly to the question."
+      },
+      "modules": [
+        "src/services/supabase.ts",
+        "src/services/transferAssessmentService.ts"
+      ],
+      "rationale": "The typed assessment API facade and shared Supabase transport participate in assessment reads/writes and form a measured dependency cycle; review their result handling against this contract.",
+      "uncertainty": "Static imports do not prove duplicate events or private-data disclosure. Verify trusted backend transactions, public DTO projections and reload/concurrency behavior. The source document itself does not prove deployment completion."
+    },
+    {
+      "id": "PTP-RESULT-PRIVACY",
+      "kind": "quality",
+      "source": {
+        "path": "docs/assessment-result-messages.md",
+        "line_start": 9,
+        "line_end": 9,
+        "quote": "Result messages belong to ordinary room history and its exports, visible to the room's authorized tutor, learners and observers. This is the approved extension of the earlier learner-response-only terminal-failure disclosure rule. Private question keys and explanations remain private before authorized terminal failure; transfer basis, private rationale and raw provider content remain private throughout. Passing does not publish the stored key or explanation. Existing recoverable results receive the same publication treatment during backfill."
+      },
+      "modules": [
+        "src/services/supabase.ts",
+        "src/services/transferAssessmentService.ts"
+      ],
+      "rationale": "The typed assessment API facade and shared Supabase transport participate in assessment reads/writes and form a measured dependency cycle; review their result handling against this contract.",
+      "uncertainty": "Static imports do not prove duplicate events or private-data disclosure. Verify trusted backend transactions, public DTO projections and reload/concurrency behavior. The source document itself does not prove deployment completion."
+    }
+  ]
+}

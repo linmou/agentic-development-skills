@@ -57,6 +57,7 @@ IGNORED_DIRS = {
     ".next",
     ".nuxt",
     "coverage",
+    ".code-smell-monitor",
 }
 
 
@@ -68,6 +69,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--install", choices=["missing", "never"], default="missing", help="Install missing common tools for detected stacks.")
     parser.add_argument("--changed-only", action="store_true", help="Replace scope with git changed files under the repo.")
     parser.add_argument("--architecture", action="store_true", help="Run optional universal architecture graph checks.")
+    parser.add_argument("--architecture-only", action="store_true", help="Run architecture adapters without unrelated detectors.")
+    parser.add_argument("--requirements", type=Path, help="Versioned JSON requirement-to-module mappings with exact source quotes; requires architecture analysis.")
     parser.add_argument("--architecture-max-degree", type=int, default=12, help="Fan-in/out review threshold.")
     parser.add_argument("--fail-on-tool-error", action="store_true", help="Exit non-zero when any tool cannot run cleanly.")
     return parser.parse_args()
@@ -257,6 +260,9 @@ def node_runner(repo: Path, tool: str, args: list[str], install_mode: str) -> li
         return [tool, *args]
     if install_mode == "never":
         return None
+    if tool == 'depcruise':
+        return ['npx', '--yes', '--package', NODE_NPX_PACKAGES[tool],
+                '--package', 'typescript', tool, *args]
     return [*npx_cmd(NODE_NPX_PACKAGES[tool], tool), *args]
 
 
@@ -526,7 +532,16 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
 
 def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: int) -> tuple[dict[str, Any], dict[str, Any]]:
     """Run dependency-cruiser for JS/TS, preserving every result and coverage state."""
-    command = node_runner(repo, "depcruise", ["--output-type", "json", "."], install_mode)
+    options = ["--output-type", "json", "--exclude",
+               r"(^|/)(node_modules|\.git|dist|build|coverage|\.code-smell-monitor)(/|$)",
+               "--do-not-follow", r"(^|/)node_modules/"]
+    if not any((repo / name).is_file() for name in (
+        '.dependency-cruiser.js', '.dependency-cruiser.cjs', '.dependency-cruiser.mjs',
+        '.dependency-cruiser.json')):
+        options.append('--no-config')
+    if (repo / 'tsconfig.json').is_file():
+        options.extend(['--ts-config', 'tsconfig.json'])
+    command = node_runner(repo, "depcruise", [*options, "."], install_mode)
     if command is None:
         result = {"cmd": ["depcruise"], "exit_code": 127, "stdout": "",
                   "stderr": "dependency-cruiser is unavailable", "duration_seconds": 0, "timed_out": False}
@@ -539,7 +554,7 @@ def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: i
         "status": status, "analysis_scope": "package", "detector": "dependency-cruiser",
         "findings": [], "enforced_violations": 0, "graph": None,
     }
-    if result["exit_code"] not in (126, 127, 124):
+    if not result["timed_out"] and result["exit_code"] not in (126, 127, 124):
         try:
             payload = json.loads(result["stdout"])
             spec = importlib.util.spec_from_file_location(
@@ -551,10 +566,25 @@ def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: i
             analyzed = module.analyze(payload, max_degree=max_degree)
             if result["exit_code"] in (0, 1):
                 outcome.update(analyzed)
-                outcome["status"] = "covered"
+                unresolved = [{'source': m['source'], 'module': d.get('module')}
+                              for m in payload['modules'] for d in m.get('dependencies', [])
+                              if d.get('couldNotResolve')]
+                outcome['unresolved_imports'] = unresolved
+                expected = {p.relative_to(repo).as_posix() for p in repo_files(repo, [repo])
+                            if p.suffix in JS_EXTENSIONS}
+                represented = {m['source'] for m in payload['modules']}
+                missing = sorted(expected - represented)
+                outcome['files_discovered'] = len(expected)
+                outcome['unrepresented_files'] = missing
+                outcome["status"] = "partial" if unresolved or missing else "covered"
+                outcome['limitations'] = ['Static dependency-cruiser graph; generated/dependency '
+                                          'directories excluded, node_modules not followed. '
+                                          'Project configuration may further restrict coverage; '
+                                          'unrepresented source files are reported. Transpilation '
+                                          'can omit type-only imports.']
             else:
                 outcome["status"] = "failed"
-        except (ValueError, TypeError, OSError, json.JSONDecodeError) as exc:
+        except (ValueError, TypeError, OSError, RecursionError) as exc:
             outcome["status"] = "failed"
             outcome["error"] = str(exc)
     (raw_dir / "architecture_summary.json").write_text(json.dumps(outcome, indent=2))
@@ -562,8 +592,81 @@ def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: i
                      "analysis_scope": "package"}
 
 
+def bundled_module(name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(name + '.py'))
+    if spec is None or spec.loader is None:
+        raise ValueError(f'{name} is unavailable')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def analyze_architecture(repo: Path, raw: Path, stack: dict[str, bool],
+                         install_mode: str, max_degree: int) -> dict[str, Any]:
+    adapters = []
+    if stack['javascript']:
+        js, _ = run_architecture(repo, raw, install_mode, max_degree)
+        adapters.append(js)
+    if stack['python']:
+        python = {'detector': 'python-ast', 'analysis_scope': 'repository',
+                  'status': 'failed', 'findings': [], 'graph': None, 'enforced_violations': 0}
+        try:
+            payload, evidence = bundled_module('python_architecture').collect(repo)
+            (raw / 'architecture_python.json').write_text(json.dumps(payload, indent=2), encoding='utf-8')
+            python.update(bundled_module('architecture_graph').analyze(payload, max_degree))
+            python.update(evidence)
+        except (ValueError, TypeError, OSError, RecursionError) as exc:
+            python['error'] = str(exc)
+        (raw / 'architecture_python_summary.json').write_text(json.dumps(python, indent=2), encoding='utf-8')
+        adapters.append(python)
+    statuses = [a['status'] for a in adapters]
+    status = ('covered' if statuses and all(s == 'covered' for s in statuses) else
+              'partial' if any(s in ('covered', 'partial') for s in statuses) else
+              'failed' if 'failed' in statuses else 'unavailable')
+    # Same paths may occur in different language adapters; merge evidence by stable ID.
+    findings = {f['id']: f for a in adapters for f in a['findings']}
+    outcome = {'status': status, 'analysis_scope': 'repository/package (see adapters)',
+               'adapters': adapters, 'findings': sorted(findings.values(), key=lambda f: f['id']),
+               'enforced_violations': sum(a['enforced_violations'] for a in adapters)}
+    (raw / 'architecture_summary.json').write_text(json.dumps(outcome, indent=2), encoding='utf-8')
+    return outcome
+
+
+def write_architecture_report(out: Path, architecture: dict[str, Any], interpretation: dict[str, Any]) -> None:
+    with (out / 'code_smell_report.md').open('a', encoding='utf-8') as report:
+        report.write('\n## Architecture\nStatus: ' + architecture['status'] + '\n')
+        for adapter in architecture['adapters']:
+            report.write(f"- {adapter['detector']}: {adapter['status']}; scope: {adapter['analysis_scope']}; "
+                         f"graph: {json.dumps(adapter['graph'])}\n")
+            report.write(f"  Unresolved imports: {len(adapter.get('unresolved_imports', []))}; "
+                         f"unrepresented files: {len(adapter.get('unrepresented_files', []))}; "
+                         'details: raw/architecture_summary.json\n')
+            for limitation in adapter.get('limitations', []):
+                report.write('- Limitation: ' + limitation + '\n')
+            if adapter.get('error'):
+                report.write('- Error: ' + adapter['error'] + '\n')
+        report.write('Confirmed error-rule violations: ' + str(architecture['enforced_violations']) + '\n')
+        for finding in architecture['findings']:
+            report.write(f"- {finding['id']}: {finding['classification']}, {finding['category']} "
+                         f"at {finding['source']}; evidence: {json.dumps(finding['evidence'], ensure_ascii=False)}\n")
+        report.write('\n## Requirement-aware interpretation\nStatus: ' + interpretation['status'] + '\n')
+        for limitation in interpretation.get('limitations', []):
+            report.write('- ' + limitation + '\n')
+        if interpretation.get('error'):
+            report.write('- Error: ' + interpretation['error'] + '\n')
+        for requirement in interpretation['requirements']:
+            report.write('- Verified source record: ' + json.dumps(requirement, ensure_ascii=False) + '\n')
+        for association in interpretation['associations']:
+            report.write('- Impact hypothesis: ' + json.dumps(association, ensure_ascii=False) + '\n')
+        report.write('Unmapped findings: ' + json.dumps(interpretation['unmapped_findings']) + '\n')
+
+
 def main() -> int:
     args = parse_args()
+    args.architecture = args.architecture or args.architecture_only
+    if args.architecture_max_degree < 1 or (args.requirements and not args.architecture):
+        print('positive architecture threshold and --architecture for --requirements are required', file=sys.stderr)
+        return 2
     repo = Path(args.repo).resolve()
     if not repo.exists():
         print(f"repo does not exist: {repo}", file=sys.stderr)
@@ -598,24 +701,24 @@ def main() -> int:
     install_results: list[dict[str, Any]] = []
     results: list[dict[str, Any]] = []
 
-    if stack["python"] and py_paths:
+    if not args.architecture_only and stack["python"] and py_paths:
         py_install_results, py_results = run_python_checks(repo, py_paths, raw_dir, args.install)
         install_results.extend(py_install_results)
         results.extend(py_results)
-    if stack["javascript"]:
+    if not args.architecture_only and stack["javascript"]:
         results.extend(run_js_checks(repo, js_paths, raw_dir, stack["typescript"], args.install))
-    if stack["javascript"] or stack["python"]:
+    if not args.architecture_only and (stack["javascript"] or stack["python"]):
         results.append(run_secret_check(repo, raw_dir))
     architecture = None
-    architecture_result = None
+    interpretation = None
     if args.architecture:
-        if args.architecture_max_degree < 1:
-            print("--architecture-max-degree must be positive", file=sys.stderr)
-            return 2
-        if stack["javascript"]:
-            architecture, architecture_result = run_architecture(repo, raw_dir, args.install, args.architecture_max_degree)
-        else:
-            architecture = {"status": "unavailable", "reason": "Python architecture adapter not configured", "findings": [], "enforced_violations": 0}
+        architecture = analyze_architecture(repo, raw_dir, stack, args.install, args.architecture_max_degree)
+        try:
+            interpretation = bundled_module('requirement_interpretation').interpret(repo, architecture, args.requirements)
+        except (ValueError, TypeError, OSError) as exc:
+            interpretation = {'status': 'failed', 'error': str(exc), 'requirements': [],
+                              'associations': [], 'unmapped_findings': [f['id'] for f in architecture['findings']]}
+        (raw_dir / 'requirement_interpretation.json').write_text(json.dumps(interpretation, indent=2), encoding='utf-8')
 
 
     package_detectors = {"knip_dead_code", "depcheck", "package_audit",
@@ -627,9 +730,13 @@ def main() -> int:
             "package" if item["name"] in package_detectors else "requested"
         )
     coverage = coverage_status(results)
+    if architecture is not None:
+        coverage['categories']['architecture'] = architecture['status']
+        coverage['complete'] = all(v == 'covered' for v in coverage['categories'].values())
     summary = {
         "coverage": coverage,
         "architecture": architecture,
+        "requirement_interpretation": interpretation,
         "repo": str(repo),
         "scope": scope_args,
         "out_dir": str(out_dir),
@@ -641,27 +748,17 @@ def main() -> int:
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     write_report(out_dir, summary, results, install_results)
-    if architecture_result:
-        with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
-            report.write("\n## Architecture\n")
-            report.write("Detector: dependency-cruiser; actual scope: package\n")
-            report.write("Status: " + architecture["status"] + "\n")
-            report.write("Findings: " + str(len(architecture["findings"])) + "\n")
-            report.write("Confirmed configured-rule violations: " + str(architecture["enforced_violations"]) + "\n")
-            for finding in architecture["findings"][:15]:
-                report.write("- " + finding["classification"] + ": " + finding["category"]
-                             + " at " + finding["source"] + "\n")
-            if len(architecture["findings"]) > 15:
-                report.write("- Additional findings available in raw/architecture_summary.json\n")
-    elif args.architecture:
-        with (out_dir / "code_smell_report.md").open("a", encoding="utf-8") as report:
-            report.write("\n## Architecture\nStatus: unavailable (no configured adapter)\n")
+    if architecture is not None:
+        write_architecture_report(out_dir, architecture, interpretation)
 
     print(str(out_dir))
     if not coverage["complete"]:
         print("WARNING: incomplete detector coverage", file=sys.stderr)
     if args.architecture and architecture and architecture["status"] not in ("covered",):
         print("WARNING: architecture coverage incomplete", file=sys.stderr)
+    if interpretation and interpretation['status'] == 'failed':
+        print('ERROR: requirement interpretation failed: ' + interpretation['error'], file=sys.stderr)
+        return 2
     if args.architecture and architecture and architecture["enforced_violations"] > 0:
         return 1
     if args.fail_on_tool_error and (

@@ -17,13 +17,15 @@ Run the bundled monitor from the target repository:
 python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo . --scope path/to/module path/to/file.py
 ```
 
-For optional universal architecture analysis (JavaScript/TypeScript package root):
+For optional architecture analysis (JavaScript/TypeScript package root or Python repository):
 
 ```bash
 python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo . --scope . --architecture --install never
 ```
 
-When dependency-cruiser is installed, this mode generates package-wide dependency graph findings. Cycles are structural facts; high fan-in/out are review candidates, not confirmed design violations. Only explicitly configured rule violations are CI-blocking. Missing tools produce unavailable coverage, not zero findings. Python architecture support is explicitly unavailable until an adapter exists. See `references/architecture-analysis.md`.
+When dependency-cruiser is installed, this mode generates package-wide JS/TS dependency graph findings. Python uses a bundled static AST import adapter without executing target code. Mixed projects report both adapters. Cycles are structural facts; high fan-in/out are review candidates, not confirmed design violations. Only explicitly configured `error` rule violations are CI-blocking. Missing tools or unresolved imports produce unavailable or partial coverage, not a clean scan. See `references/architecture-analysis.md`.
+
+Use `--architecture-only` to run architecture adapters without unrelated detectors. Add `--requirements path/to/requirements.json` for functional/quality requirement associations grounded in exact source quotations and explicit module mappings. The monitor validates quotations, line ranges and source hashes; it preserves rationale and uncertainty. Associations are impact hypotheses, never proof of a requirement violation and never CI-blocking. No requirements are invented when the mapping is absent.
 
 For a full repository pass:
 
