@@ -137,7 +137,7 @@ Can the API change without silent breakage?
 
 ---
 
-Output format: C4b section of `report-template.md`.
+Output format: C4b section of `report-template.md` (build mode, and extract mode after C1–C6).
 
 ---
 

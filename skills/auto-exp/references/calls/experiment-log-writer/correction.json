@@ -1,0 +1,23 @@
+{
+  "case": "cite an iteration commit after it exists",
+  "request": {
+    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "entry": {
+      "kind": "correction",
+      "timestamp": "2026-05-22T15:10:00-04:00",
+      "target": "Iteration 1",
+      "correction": "Iteration 1 is recorded in commit 9b1e4d2",
+      "reason": "A commit cannot contain its own hash",
+      "iteration_commit": "9b1e4d2"
+    }
+  },
+  "provenance": {
+    "log_path": "Workspace Setup step 5: experiment folder",
+    "entry.kind": "Commit Discipline: a correction entry for a later commit citation",
+    "entry.timestamp": "time the correction is made",
+    "entry.target": "Commit Discipline: the iteration whose commit is being cited",
+    "entry.correction": "Commit Discipline: the commit hash recorded after committing",
+    "entry.reason": "Commit Discipline: a commit cannot contain its own hash",
+    "entry.iteration_commit": "Commit Discipline step 5: hash of the completed iteration commit"
+  }
+}

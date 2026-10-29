@@ -1,43 +1,22 @@
-# Skill Extract Verify Report
+# Skill Contract Report
 
-- **Host**:
-- **Extracted**:
-- **Capability**:
-- **Import path**: yes | no (no ⇒ C4a/C4b `n/a`)
-- **Overall**: pass | fail | insufficient_evidence (rule: `criteria.md`)
-- **Blocking fails**:
+- **Mode**: build | verify | impact | extract
+- **Callee(s)**:
+- **Skill roots scanned**:
+- **Contract version** (current → proposed):
+- **Verdict**: pass | fail | insufficient_evidence (rule: `SKILL.md` § Verdict)
+- **Blocking findings**:
+- **Extraction report**: path | n/a
 
-## Criteria
+## Contract (build)
 
-### C1 — Capability, not lifecycle (blocking)
-- Scores (identity / orchestration / residue):
-- Hard gates:
-- Verdict:
-- Evidence:
-- Fix:
+- `contract.json` path:
+- Prose contract path:
+- Agreement with prose (fields, statuses, writes, conditional rules left to prose):
+- `high_stakes`: true | false — reason:
 
-### C2 — One-way dependency (blocking)
-- Scores:
-- Hard gates:
-- Verdict:
-- Evidence:
-- Fix:
+### C4b — Field API design
 
-### C3 — Single writer, thin client (blocking)
-- Scores:
-- Hard gates:
-- Verdict:
-- Evidence:
-- Fix:
-
-### C4a — Contract exists + opaque labels (blocking if imported)
-- Scores (existence / schema ownership / opaque labels / third-party):
-- Hard gates:
-- Verdict: pass | fail | insufficient_evidence | n/a
-- Evidence:
-- Fix:
-
-### C4b — Field API design (blocking if imported)
 Contract path:
 
 **Pass A — Inventory**
@@ -80,28 +59,42 @@ Failure-policy evidence (bounded / reachable / capability-consistent trigger; co
 - Smells:
 - Fix:
 
-### C5 — Standalone trigger (blocking)
-- Scores:
-- Hard gates:
+## Mechanical check
+
+- Command:
+- Output file:
 - Verdict:
-- Evidence:
+
+| Severity | Skill | Code | Message | Disposition |
+|----------|-------|------|---------|-------------|
+
+## Callers
+
+| Caller | Declared range | Examples | V1 | V2 | V3 | V4 | V5 | V6 | V7 | Verdict |
+|--------|----------------|----------|----|----|----|----|----|----|----|---------|
+
+For each caller:
+
+### <caller>
+- V1–V6 evidence (path + quote) and the counterexample looked for:
+- V7 notes:
 - Fix:
 
-### C6 — Completeness (non-blocking)
-- Checklist / scores:
-- Verdict: pass | warn
-- Evidence:
-- Fix:
+## Impact (impact mode)
 
-## Call map
+| Caller | Breaks? | Reason | Smallest fix |
+|--------|---------|--------|--------------|
 
-| From | To | Mechanism | Notes |
-|------|-----|-----------|-------|
-| host | extracted | subagent / skill name / none | |
+- Version bump required: none | MINOR | MAJOR — reason:
 
-## Dual-path risks
+## Trace check (optional)
 
--
+- Status: run | suggested, not run | n/a (not high_stakes)
+- Sessions read (folders, count):
+- Calls: matched / stale / reconstructed:
+- Unsourced fields:
+- Mishandled statuses:
+- New fixtures or examples added:
 
 ## Top fixes
 

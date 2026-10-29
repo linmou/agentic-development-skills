@@ -6,6 +6,8 @@ Version: 1.0
 
 Let any caller supply experiment facts while the writer alone maintains the log. This contract describes calls to `$experiment-log-writer`; it does not require a particular experiment orchestrator.
 
+The checkable projection of this contract is `../contract.json` (`skill-contract/1`). This file stays the authority for meaning; conditional rules the schema cannot express live only here.
+
 ## Request
 
 Required fields:

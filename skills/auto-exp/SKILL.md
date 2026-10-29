@@ -1,6 +1,8 @@
 ---
 name: auto-exp
 description: Run automatic research experiment loops from a user prompt. Use when the user asks for automatic experiments, autonomous experiment iteration, hypothesis testing, or work based on ~/.codex/prompts/auto_exp.md; enforce a dedicated auto_experiments folder, experiment log, branch isolation, per-iteration commits, and reproducible commands.
+metadata:
+  requires: experiment-log-writer@^1.0.0
 ---
 
 # Auto Experiment

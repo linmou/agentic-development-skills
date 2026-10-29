@@ -1,0 +1,23 @@
+name: Skill Contract Checks
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - '.github/workflows/skill-contract-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - '.github/workflows/skill-contract-tests.yml'
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Checker regression tests
+        run: python -m unittest discover -s skills/skill-contract/tests -v
+      - name: Repository contracts and callers
+        run: python skills/skill-contract/scripts/check_contracts.py skills
