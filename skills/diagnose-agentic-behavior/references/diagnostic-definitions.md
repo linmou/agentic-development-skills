@@ -1,44 +1,20 @@
 # Canonical Diagnostic Definitions
 
-**Intent:** Define where a failure mechanism operates, how its cause is attributed, and how any generalization is bounded. Adapted from `diagnose-agentic-coding` and made domain-independent: functions and artifact types come from the case's task ontology, not from a fixed list.
+**Intent:** Define how a failure is framed, how its cause is attributed, and how any generalization is bounded. Adapted from `diagnose-agentic-coding` and made domain-independent: functions and artifact types come from the case's task ontology, not from a fixed list.
 
 ## Failure framing
 
 Every diagnosis explains an observed deviation from an intended outcome. A deviation is a point where the run departs from what the success conditions require.
 
-## Node, Edge, and Interaction
+## Deviations on the ontology graph
 
-These describe **where and how a mechanism operates**, not necessarily its causal origin.
+Node, Edge, and Interaction ([meta-ontology.md](meta-ontology.md)) locate where a mechanism operates, not its causal origin.
 
-### Node: action transformation
-
-A Node is a concrete `(actor, action)` event classified by a task-ontology function. It consumes available inputs and may produce artifacts, change World, or both.
-
-**Node deviation:** an action produces a result that departs from a supported case-specific expectation.
-
-**Is:** incorrect interpretation or use of an available artifact; incorrect reasoning, decision, execution, or verification; incorrect artifact production or world-state change.
-
-**Is not:** a function type without a concrete action instance; automatically responsible when its input was already defective; automatically a model failure, since actors include humans, harnesses, tools, and evaluators.
-
-### Edge: artifact handoff
-
-An Edge is the provision of an identifiable artifact version to a consuming action. The task ontology defines **potential** dependencies; the case graph records actual or missing handoffs.
-
-**Edge deviation:** a causally relevant handoff is missing or defective.
-
-**Is:** missing delivery; incorrect routing, truncation, or version; failure to make an artifact available to its consumer.
-
-**Is not:** a mandatory workflow transition; a failure merely because a potential dependency was not exercised; misinterpretation of a correctly delivered artifact, which belongs to the consuming Node.
-
-### Interaction: joint mechanism
-
-An Interaction is a mechanism in which the effect of one factor depends on another. Factors may be artifacts, Nodes, Edges, world state, capabilities, or operating conditions.
-
-**Is:** incompatible instructions and tool constraints; a model tendency that matters only under a particular harness policy; a mechanism whose outcome changes when the combination changes.
-
-**Is not:** a third physical location in the graph; mere coexistence of several errors; a sequential chain without evidence of joint dependence.
-
-Node and Edge are locations; Interaction is a causal relationship over locations and conditions. They may coexist. Configuration is represented as defined in [meta-ontology.md](meta-ontology.md).
+- **Node deviation:** the action's output departs from a supported case-specific expectation, given the inputs in its context. A Node is not responsible by default when its input was already defective, and not a model failure by default, since actors include humans, harnesses, tools, and evaluators.
+- **Edge deviation:** a causally relevant Edge is missing, misrouted, truncated, or delivers the wrong version. A potential Edge the run did not exercise is a deviation only with evidence of causal relevance. Misuse of an artifact that was in context is a deviation of the consuming Node, not of the Edge.
+- **Interaction deviation:** the members jointly produce a departure that none produces alone. It is located by its members.
+- **Error of omission:** an expected type with status `absent`, never `unobserved`.
+- **Claim–environment disagreement:** a claim contradicted by grounded environment state is a finding.
 
 ## Three attribution levels
 
@@ -46,7 +22,7 @@ Node and Edge are locations; Interaction is a causal relationship over locations
 
 *Where and how did the run depart from what the intended outcome required?*
 
-Locate Node, Edge, and Interaction instances, affected artifact and world-state versions, and absences, with evidence and uncertainty. Location is not causation and not responsibility.
+Locate Node, Edge, and Interaction instances, affected artifact versions, and errors of omission, with evidence and uncertainty. Location is not causation and not responsibility.
 
 ### Level 2: Root causal mechanism
 
@@ -62,11 +38,11 @@ State recurrence conditions, scope limits, testable predictions, and candidate i
 
 | Level | Object | Result |
 | --- | --- | --- |
-| 1. Location | Node / Edge / Interaction / absence | Localized departure |
+| 1. Location | Node / Edge / Interaction / error of omission | Localized departure |
 | 2. Root mechanism | Causal provenance | Why it occurred |
 | 3. Generalization | Mechanism and its conditions | Where it may recur and how to prevent it |
 
-**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node), and no verification of the claim–source binding occurred (absence). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous; the agent task model treated "a figure from a cited page" as completion. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
+**Example (research agent reports the wrong figure).** Level 1: an extraction action bound a claim to an adjacent table row (Node, error of commission), and no verification of the claim–source binding occurred (error of omission). Level 2: the page's table layout plus text-only page rendering (Interaction) made row boundaries ambiguous, and the harness's completion check required only that a figure be cited. Level 3: may recur when numeric claims are extracted from tabular pages without structural rendering and completion requires only citation presence. Intervention: verify claim–source bindings; this is an intervention target, not the cause.
 
 ## Cross-cutting principles
 

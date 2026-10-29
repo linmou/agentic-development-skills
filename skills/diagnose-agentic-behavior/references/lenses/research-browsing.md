@@ -12,4 +12,4 @@
 | Claim–source binding | Can the link between a claim and its exact supporting span be checked and fail independently? |
 | Synthesis | Can combination, aggregation, or arithmetic over claims be expressed separately from extraction? |
 | Coverage of the need | Is there completion evidence that the need was answered, not merely that sources were cited? |
-| World drift | Can a source that changed between retrieval and evaluation be expressed? |
+| Environment-state drift | Can a source that changed between retrieval and evaluation be expressed? |
