@@ -96,4 +96,4 @@ Use `review-with-multi-debate` (true parallel reviewers) when:
 - User demands independent audits on disk
 - You both authored and must certify “all dimensions = 5”
 
-Otherwise this single-agent multi-pass is the default inside extract-verify.
+Otherwise this single-agent multi-pass is the default inside skill-contract.

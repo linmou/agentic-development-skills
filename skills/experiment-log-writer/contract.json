@@ -1,0 +1,487 @@
+{
+  "contract_format": "skill-contract/1",
+  "skill": "experiment-log-writer",
+  "version": "1.0.0",
+  "capability": "Create or update a Markdown experiment log from one event entry, as the log's single writer.",
+  "prose_contract": "references/call-contract.md",
+  "request": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "log_path",
+      "entry"
+    ],
+    "description": "Requests the writer can record. A supplied record missing a required key is still accepted by the writer and answered with needs_input; examples should be complete.",
+    "properties": {
+      "log_path": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Log to create or update; an absent file is created from the template."
+      },
+      "entry": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "question"
+            ],
+            "properties": {
+              "kind": {
+                "const": "plan"
+              },
+              "question": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {},
+              "prior_log": {},
+              "prior_result": {},
+              "answer_criterion": {},
+              "hypotheses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "prediction",
+                    "expected_observation",
+                    "rejection_observation",
+                    "status"
+                  ],
+                  "properties": {
+                    "prediction": {},
+                    "expected_observation": {},
+                    "rejection_observation": {},
+                    "status": {
+                      "enum": [
+                        "preregistered",
+                        "post-hoc"
+                      ]
+                    },
+                    "rq_id": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "design": {
+                "type": "object",
+                "required": [
+                  "independent_factor",
+                  "controls",
+                  "inputs",
+                  "evaluation_method",
+                  "stopping_rule",
+                  "known_confounders"
+                ],
+                "properties": {
+                  "independent_factor": {},
+                  "controls": {},
+                  "inputs": {},
+                  "evaluation_method": {},
+                  "stopping_rule": {},
+                  "known_confounders": {}
+                },
+                "additionalProperties": false
+              },
+              "commands": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "purpose",
+                    "status",
+                    "command"
+                  ],
+                  "properties": {
+                    "purpose": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "enum": [
+                        "Planned",
+                        "Executed",
+                        "Modified during execution"
+                      ]
+                    },
+                    "command": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "timestamp": {},
+                    "working_directory": {},
+                    "environment": {},
+                    "exit_status": {},
+                    "output_path": {},
+                    "planned_command": {},
+                    "reason": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "directions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "question",
+                    "motivating_evidence",
+                    "factor_to_change",
+                    "factors_to_hold_constant",
+                    "evaluation",
+                    "priority"
+                  ],
+                  "properties": {
+                    "question": {},
+                    "motivating_evidence": {},
+                    "factor_to_change": {},
+                    "factors_to_hold_constant": {},
+                    "evaluation": {},
+                    "priority": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "author": {},
+              "repository": {},
+              "source_commit": {},
+              "working_directory": {}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "number",
+              "timestamp",
+              "hypothesis_id",
+              "changed_files",
+              "decision",
+              "decision_reason"
+            ],
+            "properties": {
+              "kind": {
+                "const": "iteration"
+              },
+              "number": {
+                "type": "integer"
+              },
+              "timestamp": {},
+              "hypothesis_id": {},
+              "changed_files": {
+                "type": "array"
+              },
+              "decision": {
+                "enum": [
+                  "support",
+                  "reject",
+                  "inconclusive",
+                  "revise"
+                ]
+              },
+              "decision_reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "commands": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "purpose",
+                    "status",
+                    "command"
+                  ],
+                  "properties": {
+                    "purpose": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "status": {
+                      "enum": [
+                        "Planned",
+                        "Executed",
+                        "Modified during execution"
+                      ]
+                    },
+                    "command": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "timestamp": {},
+                    "working_directory": {},
+                    "environment": {},
+                    "exit_status": {},
+                    "output_path": {},
+                    "planned_command": {},
+                    "reason": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "no_command_reason": {},
+              "results": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "informs",
+                    "run_status",
+                    "input",
+                    "configuration",
+                    "output",
+                    "metric_definition",
+                    "metric_value",
+                    "observation",
+                    "interpretation",
+                    "evidence_path"
+                  ],
+                  "properties": {
+                    "informs": {},
+                    "run_status": {},
+                    "input": {},
+                    "configuration": {},
+                    "output": {},
+                    "metric_definition": {},
+                    "metric_value": {},
+                    "observation": {},
+                    "interpretation": {},
+                    "evidence_path": {},
+                    "representative_pair": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "no_result_reason": {},
+              "revision_note": {},
+              "artifacts": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "results_address": {},
+                  "location": {},
+                  "content_hash": {},
+                  "generation_command": {},
+                  "run_id": {},
+                  "file_count": {},
+                  "size_bytes": {}
+                },
+                "additionalProperties": false
+              },
+              "source_commit": {},
+              "working_directory": {}
+            },
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "commands"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "no_command_reason"
+                    ]
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "required": [
+                      "results"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "no_result_reason"
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "timestamp",
+              "observation"
+            ],
+            "properties": {
+              "kind": {
+                "const": "analysis"
+              },
+              "timestamp": {},
+              "observation": {},
+              "interpretation": {},
+              "directions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "question",
+                    "motivating_evidence",
+                    "factor_to_change",
+                    "factors_to_hold_constant",
+                    "evaluation",
+                    "priority"
+                  ],
+                  "properties": {
+                    "question": {},
+                    "motivating_evidence": {},
+                    "factor_to_change": {},
+                    "factors_to_hold_constant": {},
+                    "evaluation": {},
+                    "priority": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "informs",
+                    "run_status",
+                    "input",
+                    "configuration",
+                    "output",
+                    "metric_definition",
+                    "metric_value",
+                    "observation",
+                    "interpretation",
+                    "evidence_path"
+                  ],
+                  "properties": {
+                    "informs": {},
+                    "run_status": {},
+                    "input": {},
+                    "configuration": {},
+                    "output": {},
+                    "metric_definition": {},
+                    "metric_value": {},
+                    "observation": {},
+                    "interpretation": {},
+                    "evidence_path": {},
+                    "representative_pair": {}
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "artifacts": {
+                "type": "object",
+                "required": [],
+                "properties": {
+                  "results_address": {},
+                  "location": {},
+                  "content_hash": {},
+                  "generation_command": {},
+                  "run_id": {},
+                  "file_count": {},
+                  "size_bytes": {}
+                },
+                "additionalProperties": false
+              },
+              "iteration_commit": {}
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "timestamp",
+              "target",
+              "correction",
+              "reason"
+            ],
+            "properties": {
+              "kind": {
+                "const": "correction"
+              },
+              "timestamp": {},
+              "target": {},
+              "correction": {},
+              "reason": {},
+              "replacement_results_address": {},
+              "source_commit": {},
+              "iteration_commit": {}
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "caller_tag": {
+        "type": "string",
+        "description": "Opaque correlation label; never control, never written as a research fact."
+      }
+    }
+  },
+  "response": {
+    "type": "object",
+    "required": [
+      "status",
+      "log_path",
+      "entry_id",
+      "missing",
+      "errors"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "written",
+          "needs_input",
+          "error"
+        ]
+      },
+      "log_path": {
+        "type": "string"
+      },
+      "entry_id": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "missing": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "status_field": "status",
+  "statuses": [
+    "written",
+    "needs_input",
+    "error"
+  ],
+  "writes": [
+    {
+      "store": "experiment-log",
+      "location": "request.log_path"
+    }
+  ],
+  "high_stakes": true,
+  "changes": [
+    {
+      "version": "1.0.0",
+      "note": "Projection of call-contract.md Version 1.0. Conditional rules (prior_log/prior_result pairing, command fields by status, RQ/hypothesis references) stay in the prose contract."
+    }
+  ]
+}

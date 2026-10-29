@@ -12,7 +12,7 @@ All eleven skills now live under `skills/` and share this repository's Git histo
 | `review-with-multi-debate` | https://github.com/linmou/review-with-multi-debate | `b3dd4ae7e893ee3f7252b08507b129dd7df8176c` |
 | `auto-skill-test-improve-loop` | https://github.com/linmou/auto-skill-test-improve-loop | `e3dad9f71236c95d8baa85f8ad9ccb8211113d1f` |
 | `formalize-workflow-state-machine` | https://github.com/linmou/formalize-workflow-state-machine | `483ac1b326ea3434c450f95960ee438413991263` |
-| `skill-extract-verify` | https://github.com/linmou/skill-extract-verify | `6e81838364e5c30e2d64d3ea5d12c2de41f7123e` |
+| `skill-extract-verify` (renamed `skill-contract` on 2026-10-29) | https://github.com/linmou/skill-extract-verify | `6e81838364e5c30e2d64d3ea5d12c2de41f7123e` |
 | `diagnose-agentic-coding` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
 | `parallelize-workflow` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |
 | `writing-great-skills` | local `~/.codex/skills` snapshot; no standalone Git origin recorded | local snapshot |

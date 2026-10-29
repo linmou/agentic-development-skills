@@ -1,6 +1,6 @@
 # Storage regression fixture
 
-Intent: known-answer pair for hard gate 4's persistence check. Run skill-extract-verify on both pairs after editing any rubric; if a verdict below changes, the rubric regressed.
+Intent: known-answer pair for hard gate 4's persistence check. Run skill-contract in `extract` mode on both pairs after editing any rubric, stopping after the C4b audit (do not write `contract.json` into the fixture); if a verdict below changes, the rubric regressed.
 
 Both extracts expose the same public contract and persist a `slug` attribute that is **not** in the public Request. They differ only in whether `slug` has a valid internal population rule.
 

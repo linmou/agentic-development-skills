@@ -15,7 +15,7 @@ For **C4b field API design**, use `call-contract-field-rubric.md` (different con
 - 5 = excellent
 
 Score every dimension under the criterion you are judging.  
-Overall verdict rule: `criteria.md`. Evidence checklist: `criteria.md`. Report format: `report-template.md`.
+Overall verdict rule: `criteria.md`. Evidence checklist: `criteria.md`. Report format: `extraction-report-template.md` (C4b goes in `report-template.md`).
 
 ---
 

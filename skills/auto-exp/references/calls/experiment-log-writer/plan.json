@@ -1,0 +1,32 @@
+{
+  "case": "plan entry before the first run",
+  "request": {
+    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "entry": {
+      "kind": "plan",
+      "question": "Does an emotion-framed system prompt increase defection rates in the iterated prisoner's dilemma?",
+      "answer_criterion": "Defection rate over 200 fixed games differs from the neutral prompt by at least 5 points",
+      "hypotheses": [
+        {
+          "prediction": "Anger framing raises defection",
+          "expected_observation": "Defection rate up by 5 points or more",
+          "rejection_observation": "Change below 5 points",
+          "status": "preregistered"
+        }
+      ],
+      "repository": "git@github.com:example/agents.git",
+      "working_directory": "auto_experiments/2026-05-22-emotion-defection",
+      "source_commit": "3f2a9c1"
+    }
+  },
+  "provenance": {
+    "log_path": "Workspace Setup step 5: the experiment folder created under auto_experiments/",
+    "entry.kind": "Experiment Log: a plan entry before the first run",
+    "entry.question": "Start Gate: research question supplied by the user or asked for",
+    "entry.answer_criterion": "Start Gate: success metric or evaluation signal",
+    "entry.hypotheses": "Iteration Loop step 1: the hypothesis proposed before the first run, preregistered",
+    "entry.repository": "Workspace Setup step 1-2: the inspected repository",
+    "entry.working_directory": "Workspace Setup step 4-5: the chosen worktree and experiment folder",
+    "entry.source_commit": "Workspace Setup step 2-4: HEAD of the chosen worktree before changes"
+  }
+}

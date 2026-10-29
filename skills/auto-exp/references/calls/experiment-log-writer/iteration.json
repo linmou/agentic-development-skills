@@ -1,0 +1,62 @@
+{
+  "case": "iteration entry after each run, including failed runs",
+  "request": {
+    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "entry": {
+      "kind": "iteration",
+      "number": 1,
+      "timestamp": "2026-05-22T14:03:00-04:00",
+      "hypothesis_id": "H1",
+      "changed_files": [
+        {
+          "path": "auto_experiments/2026-05-22-emotion-defection/prompts/anger.txt",
+          "factor": "system prompt framing"
+        }
+      ],
+      "commands": [
+        {
+          "purpose": "Run 200 games with the anger prompt",
+          "status": "Executed",
+          "command": "python run_games.py --prompt prompts/anger.txt --games 200",
+          "timestamp": "2026-05-22T13:40:00-04:00",
+          "working_directory": "auto_experiments/2026-05-22-emotion-defection",
+          "environment": ".env.experiment",
+          "exit_status": 0,
+          "output_path": "auto_experiments/2026-05-22-emotion-defection/outputs/run1.log"
+        }
+      ],
+      "results": [
+        {
+          "informs": "H1",
+          "run_status": "completed",
+          "input": "games seed 7, 200 games",
+          "configuration": "prompts/anger.txt, temperature 0.7",
+          "output": "outputs/run1.jsonl",
+          "metric_definition": "share of rounds where the agent defects",
+          "metric_value": "0.41 vs 0.33 neutral",
+          "observation": "Defection rose by 8 points",
+          "interpretation": "Supports H1 on this seed",
+          "evidence_path": "outputs/run1_summary.json"
+        }
+      ],
+      "decision": "support",
+      "decision_reason": "Observed 8-point increase exceeds the 5-point criterion",
+      "artifacts": {
+        "results_address": "auto_experiments/2026-05-22-emotion-defection/outputs/"
+      }
+    }
+  },
+  "provenance": {
+    "log_path": "Workspace Setup step 5: experiment folder",
+    "entry.kind": "Experiment Log: an iteration entry after each run",
+    "entry.number": "Iteration Loop: count of iterations in this experiment",
+    "entry.timestamp": "Iteration Loop step 3: time the run finished",
+    "entry.hypothesis_id": "Writer-assigned hypothesis ID, read from the log after the plan call; the plan Response returns only the RQ ID",
+    "entry.changed_files": "Iteration Loop step 2: files and factors changed for this run",
+    "entry.commands": "Iteration Loop step 3: the command actually run, with its directory, environment reference, exit status and output path",
+    "entry.results": "Iteration Loop steps 3-4: observed metrics, evidence path and interpretation",
+    "entry.decision": "Iteration Loop step 4: whether the result supports the hypothesis",
+    "entry.decision_reason": "Iteration Loop step 4: the evidence behind the decision",
+    "entry.artifacts": "Git Artifact Policy: durable location of raw outputs"
+  }
+}

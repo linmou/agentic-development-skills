@@ -1,5 +1,7 @@
 # Extraction criteria (index)
 
+Intent: `extract` mode only. Decide whether a host → extracted split is a real independent skill before its contract is built; per-caller checks after that live in `caller-verify-rubric.md`.
+
 ## Verdicts
 
 Per criterion: `pass` | `fail` | `insufficient_evidence`; C4a/C4b may be `n/a` (no import path); C6 is `pass` | `warn`.
@@ -17,7 +19,7 @@ Per criterion: `pass` | `fail` | `insufficient_evidence`; C4a/C4b may be `n/a` (
 | C4b | `call-contract-field-rubric.md` | **Field API design** D1–D7 (necessary, sufficient, non-overlap, clear, consistent, layered, evolvable) |
 
 `criteria.md` is the **index + short definitions**.  
-Score anchors and hard gates live only in the rubric files; the report format lives only in `report-template.md`.
+Score anchors and hard gates live only in the rubric files; report formats live in `extraction-report-template.md` (C1–C6) and `report-template.md` (C4b and caller checks).
 
 ---
 
