@@ -45,9 +45,9 @@ jobs:
               pkg = root / 'archfixture'
               pkg.mkdir()
               (pkg/'__init__.py').write_text('')
-              (pkg/'domain.py').write_text('from archfixture import infrastructure\\n')
-              (pkg/'infrastructure.py').write_text('VALUE = 1\\n')
-              (root/'.importlinter').write_text('[importlinter]\\nroot_package = archfixture\\n\\n[importlinter:contract:domain]\\nname = Domain boundary\\ntype = forbidden\\nsource_modules = archfixture.domain\\nforbidden_modules = archfixture.infrastructure\\n')
+              (pkg/'domain.py').write_text('from archfixture import infrastructure\n')
+              (pkg/'infrastructure.py').write_text('VALUE = 1\n')
+              (root/'.importlinter').write_text('[importlinter]\nroot_package = archfixture\n\n[importlinter:contract:domain]\nname = Domain boundary\ntype = forbidden\nsource_modules = archfixture.domain\nforbidden_modules = archfixture.infrastructure\n')
               result = subprocess.run(['lint-imports', '--config', '.importlinter', '--no-cache'], cwd=root, text=True, capture_output=True)
               classified = mod.classify({'cmd':['lint-imports'],'exit_code':result.returncode,'stdout':result.stdout,'stderr':result.stderr,'timed_out':False}, mod.discover(root))
               print(json.dumps(classified, indent=2))
