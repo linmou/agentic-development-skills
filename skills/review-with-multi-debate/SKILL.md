@@ -199,7 +199,10 @@ blocking criterion by the latest round that reviewed it, so a blocking failure
 settled in an earlier round is never forgotten by a targeted follow-up round.
 A follow-up round must keep each criterion's round-1 text and blocking flag
 and may not add criterion IDs; the gate rejects any change as
-`criterion_definition_drift`. A missing, malformed, or
+`criterion_definition_drift`. Each follow-up round may re-review only the
+criteria the previous round left disputed (`follow_up_scope_violation`), and
+every earlier round is re-validated like the current one (reviewer fields,
+shared criteria, manifest, and requested provenance) before it is merged. A missing, malformed, or
 `not_converged` blocking result must trigger a targeted follow-up round before
 the next phase. Non-blocking disputes may remain only when the blocking gate
 passes and must be reported explicitly.

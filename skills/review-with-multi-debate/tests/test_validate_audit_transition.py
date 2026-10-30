@@ -464,3 +464,68 @@ def test_frozen_first_round_still_requires_full_manifest(tmp_path: Path) -> None
 
     assert result.returncode == 1
     assert "criteria_manifest_ids_mismatch" in result.stdout
+
+
+def test_follow_up_round_cannot_rereview_settled_criterion(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["fail"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c1": ["pass"] * 3, "c2": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "follow_up_scope_violation" in result.stdout
+    assert "criterion_not_disputed:c1" in result.stdout
+
+
+def test_follow_up_gate_revalidates_earlier_reviewer_files(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+    path = tmp_path / "login_flow_red_audit1_iteration1.json"
+    payload = json.loads(path.read_text())
+    payload["criteria"][0]["evidence"] = []
+    path.write_text(json.dumps(payload))
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "invalid_prior_round" in result.stdout
+    assert "missing_evidence" in result.stdout
+
+
+def test_follow_up_gate_checks_earlier_round_provenance(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+    for iteration in (1, 2):
+        for index, reviewer_id in enumerate(("audit1", "audit2", "audit3")):
+            path = tmp_path / f"login_flow_red_{reviewer_id}_iteration{iteration}.json"
+            payload = json.loads(path.read_text())
+            if iteration == 2 or reviewer_id != "audit3":
+                payload["reviewer_agent_id"] = f"agent:r{index}"
+                payload["reviewer_source"] = "subagent"
+            path.write_text(json.dumps(payload))
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(VALIDATOR),
+            "advance_phase",
+            "--feature-name",
+            "login_flow",
+            "--from-phase",
+            "red",
+            "--to-phase",
+            "green",
+            "--iteration",
+            "2",
+            "--audit-dir",
+            str(tmp_path),
+            "--require-reviewer-provenance",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert "invalid_prior_round" in result.stdout
+    assert "missing_reviewer_provenance" in result.stdout

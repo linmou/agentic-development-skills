@@ -228,29 +228,69 @@ def _definition_drift(
 
 
 def _load_prior_round(
-    audit_dir: Path, feature_name: str, phase: str, iteration: int
-) -> tuple[list[dict[str, object]], dict[str, object]] | str:
-    """Reviewer files and summary of an earlier round, or a rejection reason."""
+    audit_dir: Path,
+    feature_name: str,
+    phase: str,
+    iteration: int,
+    criteria_manifest: Path | None,
+    criteria_manifest_digest: str | None,
+    require_reviewer_provenance: bool,
+) -> tuple[list[dict[str, object]], dict[str, object]] | dict[str, object]:
+    """Reviewer files and summary of an earlier round, validated like the current round."""
     audits: list[dict[str, object]] = []
+    errors: list[str] = []
     for reviewer_id in REVIEWER_IDS:
-        audit, error = _load_json(audit_path(audit_dir, feature_name, phase, reviewer_id, iteration))
-        if error or audit is None:
-            return "missing_prior_round"
-        audits.append(audit)
+        path = audit_path(audit_dir, feature_name, phase, reviewer_id, iteration)
+        if not path.is_file():
+            return {"status": "rejected", "reason": "missing_prior_round", "iteration": iteration}
+        audit, reviewer_errors = _validate_reviewer(path, feature_name, phase, iteration, reviewer_id)
+        errors.extend(reviewer_errors)
+        if audit is not None:
+            audits.append(audit)
+            if require_reviewer_provenance:
+                errors.extend(_provenance_errors(path, audit))
+    if require_reviewer_provenance and not errors:
+        identities = [audit.get("reviewer_agent_id") for audit in audits]
+        if len(set(identities)) != len(identities):
+            errors.append(f"duplicate_reviewer_agent_id:iteration{iteration}")
+    if errors:
+        return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": errors}
+    # Each round may use its own frozen bundle, so only the shared manifest binds rounds.
+    contract_errors = _validate_shared_contract(
+        audits, criteria_manifest, None, criteria_manifest_digest, follow_up=iteration > 1
+    )
+    if contract_errors:
+        return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": contract_errors}
     summary, error = _load_json(
         audit_dir / f"{feature_name}_{phase}_iteration{iteration}_summary.json"
     )
     if error or summary is None:
-        return "missing_prior_summary"
+        return {"status": "rejected", "reason": "missing_prior_summary", "iteration": iteration}
     if (
         summary.get("feature_name") != feature_name
         or summary.get("phase") != phase
         or summary.get("iteration") != iteration
+        or summary.get("reviewer_count") != len(REVIEWER_IDS)
         or summary.get("status") not in {"converged", "not_converged"}
         or not isinstance(summary.get("criteria"), dict)
+        or not isinstance(summary.get("disputed_criteria"), list)
     ):
-        return "prior_summary_invalid"
+        return {"status": "rejected", "reason": "prior_summary_invalid", "iteration": iteration}
     return audits, summary
+
+
+def _out_of_scope(audits: list[dict[str, object]], previous_disputed: set[str]) -> list[str]:
+    """A follow-up round may only re-review criteria the previous round left disputed."""
+    return sorted(
+        {
+            f"criterion_not_disputed:{criterion['id']}"
+            for audit in audits
+            for criterion in audit.get("criteria") or []
+            if isinstance(criterion, dict)
+            and isinstance(criterion.get("id"), str)
+            and criterion["id"] not in previous_disputed
+        }
+    )
 
 
 def validate_advance_phase(
@@ -362,22 +402,40 @@ def validate_advance_phase(
             "summary": str(summary_path),
         }
     definitions: dict[str, tuple[object, object]] = {}
+    previous_disputed: set[str] = set()
     for prior in range(1, iteration):
-        prior_round = _load_prior_round(audit_dir, feature_name, from_phase, prior)
-        if isinstance(prior_round, str):
-            return {"status": "rejected", "reason": prior_round, "iteration": prior}
+        prior_round = _load_prior_round(
+            audit_dir,
+            feature_name,
+            from_phase,
+            prior,
+            criteria_manifest,
+            criteria_manifest_digest,
+            require_reviewer_provenance,
+        )
+        if isinstance(prior_round, dict):
+            return prior_round
         prior_audits, prior_summary = prior_round
         drift = _definition_drift(definitions, prior_audits, first_round=prior == 1)
         if drift:
             return {"status": "rejected", "reason": "criterion_definition_drift", "errors": drift}
+        if prior > 1:
+            scope = _out_of_scope(prior_audits, previous_disputed)
+            if scope:
+                return {"status": "rejected", "reason": "follow_up_scope_violation", "iteration": prior, "errors": scope}
         blocking_ids |= _blocking_ids(prior_audits)
-        prior_disputed = prior_summary.get("disputed_criteria", [])
+        prior_disputed = list(prior_summary.get("disputed_criteria") or [])
+        previous_disputed = {str(item) for item in prior_disputed}
         for criterion_id, entry in dict(prior_summary.get("criteria") or {}).items():
             if isinstance(entry, dict):
-                latest[criterion_id] = (entry, list(prior_disputed or []))
+                latest[criterion_id] = (entry, prior_disputed)
     drift = _definition_drift(definitions, reviewer_audits, first_round=iteration == 1)
     if drift:
         return {"status": "rejected", "reason": "criterion_definition_drift", "errors": drift}
+    if iteration > 1:
+        scope = _out_of_scope(reviewer_audits, previous_disputed)
+        if scope:
+            return {"status": "rejected", "reason": "follow_up_scope_violation", "iteration": iteration, "errors": scope}
     for criterion_id, entry in summary_criteria.items():
         if isinstance(entry, dict):
             latest[criterion_id] = (entry, disputed)
