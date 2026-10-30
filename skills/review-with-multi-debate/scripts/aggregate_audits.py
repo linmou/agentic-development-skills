@@ -71,11 +71,15 @@ def validate_criteria_manifest(audits: list[dict], manifest_path: Path) -> list[
             for criterion in audit.get("criteria", [])
         }
         reviewer_id = audit.get("reviewer_id", "unknown")
-        if set(current) != set(expected):
+        # Round 1 reviews the whole manifest; follow-up rounds review a
+        # definition-preserving subset (the disputed criteria).
+        iteration = audit.get("iteration")
+        follow_up = isinstance(iteration, int) and iteration > 1
+        if (not set(current) <= set(expected)) if follow_up else set(current) != set(expected):
             errors.append(f"criteria_manifest_ids_mismatch:{reviewer_id}")
             continue
-        for criterion_id, definition in expected.items():
-            if current[criterion_id] != definition:
+        for criterion_id, definition in current.items():
+            if expected[criterion_id] != definition:
                 errors.append(
                     f"criteria_manifest_definition_mismatch:{reviewer_id}:{criterion_id}"
                 )

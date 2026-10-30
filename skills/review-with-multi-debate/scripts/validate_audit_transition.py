@@ -55,6 +55,7 @@ def _validate_shared_contract(
     criteria_manifest: Path | None = None,
     review_bundle_id: str | None = None,
     criteria_manifest_digest: str | None = None,
+    follow_up: bool = False,
 ) -> list[str]:
     if not audits:
         return ["no_reviewer_results"]
@@ -104,10 +105,15 @@ def _validate_shared_contract(
                 for item in manifest.get("criteria", [])
                 if isinstance(item, dict) and isinstance(item.get("id"), str)
             }
-            if set(expected) != set(manifest_criteria):
+            # Round 1 reviews the whole manifest; follow-up rounds review a
+            # definition-preserving subset (the disputed criteria).
+            if follow_up:
+                if not set(expected) <= set(manifest_criteria):
+                    errors.append("criteria_manifest_ids_mismatch")
+            elif set(expected) != set(manifest_criteria):
                 errors.append("criteria_manifest_ids_mismatch")
-            for criterion_id, definition in manifest_criteria.items():
-                if expected.get(criterion_id) != definition:
+            for criterion_id, definition in expected.items():
+                if criterion_id in manifest_criteria and manifest_criteria[criterion_id] != definition:
                     errors.append(f"criteria_manifest_definition_mismatch:{criterion_id}")
         except (OSError, ValueError, json.JSONDecodeError, AttributeError):
             errors.append("invalid_criteria_manifest")
@@ -300,6 +306,7 @@ def validate_advance_phase(
         criteria_manifest,
         review_bundle_id,
         criteria_manifest_digest,
+        follow_up=iteration > 1,
     )
     if contract_errors:
         return {

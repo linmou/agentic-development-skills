@@ -221,7 +221,7 @@ Prepare a disagreement packet containing:
 
 Then run a second round of reviewers. Each reviewer must:
 
-- address only disputed criteria
+- address only disputed criteria, keeping each one's original ID, text, and blocking flag (in a frozen round, the manifest's definitions)
 - say which earlier reviewer points they accept or reject
 - keep unchanged criteria out of scope
 

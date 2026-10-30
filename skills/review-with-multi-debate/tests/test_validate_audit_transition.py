@@ -404,3 +404,63 @@ def test_follow_up_round_rejects_new_criterion(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert "criterion_added_in_follow_up:c3" in result.stdout
+
+
+def write_manifest(audit_dir: Path, criterion_ids: list[str]) -> Path:
+    path = audit_dir / "criteria.json"
+    path.write_text(
+        json.dumps(
+            {
+                "criteria": [
+                    {"id": criterion_id, "text": f"Criterion {criterion_id}.", "blocking": True}
+                    for criterion_id in criterion_ids
+                ]
+            }
+        )
+    )
+    return path
+
+
+def run_frozen(audit_dir: Path, iteration: int, manifest: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(VALIDATOR),
+            "advance_phase",
+            "--feature-name",
+            "login_flow",
+            "--from-phase",
+            "red",
+            "--to-phase",
+            "green",
+            "--iteration",
+            str(iteration),
+            "--audit-dir",
+            str(audit_dir),
+            "--criteria-manifest",
+            str(manifest),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_frozen_follow_up_with_disputed_subset_converges(tmp_path: Path) -> None:
+    manifest = write_manifest(tmp_path, ["c1", "c2"])
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+
+    result = run_frozen(tmp_path, 2, manifest)
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_frozen_first_round_still_requires_full_manifest(tmp_path: Path) -> None:
+    manifest = write_manifest(tmp_path, ["c1", "c2"])
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3})
+
+    result = run_frozen(tmp_path, 1, manifest)
+
+    assert result.returncode == 1
+    assert "criteria_manifest_ids_mismatch" in result.stdout
