@@ -9,11 +9,9 @@ Each reviewer must write one JSON object with these top-level fields:
 ```json
 {
   "feature_name": "login-flow",
-  "phase": "green",
+  "phase": "review",
   "iteration": 1,
   "reviewer_id": "audit1",
-  "review_bundle_id": "bundle-sha256",
-  "criteria_manifest_digest": "manifest-sha256",
   "claim": "The artifact satisfies the login-flow claim.",
   "overall_verdict": "pass",
   "overall_confidence": 0.82,
@@ -23,7 +21,16 @@ Each reviewer must write one JSON object with these top-level fields:
 }
 ```
 
-The bundle fields are required for frozen Red rounds; ordinary reviews may omit them.
+Optional reviewer provenance, required when the caller sets `require_reviewer_provenance`:
+
+```json
+{
+  "reviewer_agent_id": "<stable identity returned by the delegation backend>",
+  "reviewer_source": "<delegation mechanism>"
+}
+```
+
+The reviewer writes these about itself; nobody else may fill them. They are owned by this schema: a caller may require them but must not add other required reviewer fields.
 
 Allowed verdicts:
 
@@ -120,7 +127,6 @@ The aggregator must stay dumb and deterministic. It should:
 
 - load reviewer JSON files
 - reject reviewer-specific criterion sets or definitions
-- preserve the review bundle and criteria-manifest digests
 - compare verdicts per criterion id
 - compare confidence spread
 - report disputed criteria

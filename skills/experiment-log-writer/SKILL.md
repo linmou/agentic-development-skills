@@ -22,7 +22,7 @@ when to invoke it; this skill does not run experiments or commit changes.
 5. Record the canonical experiment-results address. Use `Not produced` only before execution; otherwise record the stable path, URL, object-store URI, or experiment-tracker run URL where the results can be retrieved.
 6. Verify that commands are exact, multiline shell blocks include their working directory and environment, and executed commands include status and outcome evidence.
 7. End with evidence-grounded Next Research Directions. Separate direct follow-ups from speculative ideas.
-8. Return the contract response after writing. If required execution facts are missing, return `needs_input` without adding a misleading execution or result entry.
+8. Return the contract response after writing, including the hypothesis IDs assigned by a `plan` entry. If required execution facts are missing, return `needs_input` without adding a misleading execution or result entry.
 
 ## Required Sections
 

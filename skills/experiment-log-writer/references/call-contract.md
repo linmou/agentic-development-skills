@@ -1,6 +1,6 @@
 # Experiment Log Writer Call Contract
 
-Version: 1.0
+Version: 1.1
 
 ## Intent
 
@@ -65,6 +65,7 @@ This creates a planned log. The writer marks unavailable required metadata and d
 | `status` | `written`, `needs_input`, or `error`. |
 | `log_path` | The target path, including when no write occurred. |
 | `entry_id` | New RQ ID for `plan`, new Iteration ID for `iteration`, or `null` for `analysis` and `correction`. |
+| `hypothesis_ids` | For `plan`, the IDs assigned to `plan.hypotheses`, in request order (for example `["H1", "H2"]`); `[]` when none were supplied, for other kinds, and when nothing was written. Callers pass these as `iteration.hypothesis_id`. |
 | `missing` | List of required facts needed for a faithful entry; empty on `written`. |
 | `errors` | File or contract errors; empty unless `error`. |
 
@@ -99,4 +100,5 @@ When multiple sources can supply the same attribute, a new explicit `entry` fact
 
 ## Changes
 
+- 1.1: Add `hypothesis_ids` to the Response so callers need not read the log to learn assigned hypothesis IDs. Additive.
 - 1.0: Initial independent Request/Response contract. Additive optional facts are allowed; changing required fields or their meaning requires a new version.

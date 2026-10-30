@@ -1,0 +1,18 @@
+{
+  "case": "before and after production Refactor",
+  "request": {
+    "repo": ".",
+    "scope": [
+      "src/auth/session.py",
+      "src/auth/timeout.py"
+    ],
+    "install": "never",
+    "out": ".code-smell-monitor/login_timeout_refactor_before"
+  },
+  "provenance": {
+    "repo": "the repository under TDD",
+    "scope": "changed production scope from the Green diff",
+    "install": "caller's choice, recorded and repeated for the rerun",
+    "out": "report path recorded for the before/after comparison"
+  }
+}

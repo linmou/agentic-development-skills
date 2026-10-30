@@ -4,7 +4,7 @@
 
 ## Version
 
-`2`. Add optional fields for compatible changes. Do not silently repurpose a field; make a breaking change a new major version and document any temporary alias with a clear winner and retirement date.
+`2` (`2.0.0` in [`../contract.json`](../contract.json), the checkable projection of this file; callers declare `competing-explanations-causal-research@^2.0.0`). Add optional fields for compatible changes. Do not silently repurpose a field; make a breaking change a new major version and document any temporary alias with a clear winner and retirement date.
 
 ## Request
 

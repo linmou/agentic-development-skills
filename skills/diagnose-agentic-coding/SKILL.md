@@ -1,6 +1,8 @@
 ---
 name: diagnose-agentic-coding
 description: Diagnose agentic coding failures, degraded trajectories, and false completion using L1 functional and artifact produce-consumption graphs, with competing-explanations-causal-research for causal comparison. Use for agent trace analysis, coding-agent postmortems, model-versus-harness attribution, coordination failures, and ontology sufficiency review.
+metadata:
+  requires: competing-explanations-causal-research@^2.0.0
 ---
 
 # Diagnose Agentic Coding

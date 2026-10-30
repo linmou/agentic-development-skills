@@ -1,0 +1,25 @@
+{
+  "case": "mandatory Red audit",
+  "request": {
+    "artifact": "audits/login_timeout_red_artifact.md",
+    "claim": "<exact Red claim text from phase_audits.md>",
+    "feature_name": "login_timeout",
+    "phase": "red",
+    "audit_dir": "audits",
+    "require_reviewer_provenance": true,
+    "evidence": [
+      "audits/login_timeout_request_map.md",
+      "audits/login_timeout_role_receipt.json",
+      "audits/login_timeout_red_test_output.txt"
+    ]
+  },
+  "provenance": {
+    "artifact": "Red phase artifact (workflow.md 2. Red)",
+    "claim": "phase_audits.md Red claim, copied exactly",
+    "feature_name": "feature name fixed at activation (request map)",
+    "phase": "this workflow's phase label",
+    "audit_dir": "Audit Integration: audits",
+    "require_reviewer_provenance": "Audit Integration: reviewer provenance is required",
+    "evidence": "request map, role receipt, and targeted test output saved during Red"
+  }
+}

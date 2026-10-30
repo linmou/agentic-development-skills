@@ -1,0 +1,20 @@
+{
+  "case": "Step 8.4 re-diagnosis after a failed rerun",
+  "request": {
+    "contract_version": 2,
+    "outcome": "After patch rank M0, rerun r-0415 (env-7) still did not write learnt/notes.md.",
+    "evidence_seeds": [
+      "trace .eft/m-12/runs/r-0415.jsonl",
+      "score .eft/m-12/scores/r-0415.json",
+      "dependency observations from r-0415",
+      "environment revision env-7",
+      "patch diff .eft/m-12/PATCH.diff",
+      "prior diagnosis .eft/m-12/ROOT.md"
+    ]
+  },
+  "provenance": {
+    "contract_version": "root-reason.md: versioned contract, version 2",
+    "outcome": "Step 8.4: new frozen outcome from the failed rerun's score file",
+    "evidence_seeds": "Step 8.4: new trace, score, dependency observations, environment revision, patch diff, prior diagnosis"
+  }
+}

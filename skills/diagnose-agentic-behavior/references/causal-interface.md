@@ -8,7 +8,7 @@ The `competing-explanations-causal-research` skill owns evidence assessment, riv
 
 ## Request
 
-Submit the Request version supported by the dependency's current call contract with:
+Submit a Request under call contract version 2 (`competing-explanations-causal-research@^2.0.0`) with:
 
 - `outcome`: the frozen observed deviation from the intended outcome.
 - `scope`: analysis unit, attempt/time boundary, environment, success conditions, and intended decision.
@@ -16,13 +16,16 @@ Submit the Request version supported by the dependency's current call contract w
 - `constraints`: evidence cutoff, permitted sources and tests, access limits, and the requirement to mark unknown links.
 - `detail`: `full` for an auditable ledger.
 - `output_language`: the requester's language.
-- `contract_version`: the version declared by the current call contract.
+- `contract_version`: `2`.
 
 Include `caller_tag` only when correlation is useful. Local-only access is a source constraint, not a reason to bypass the dependency.
 
 ## Response handling
 
-- **Completed:** run the expressibility check in [ontology-induction.md](ontology-induction.md) on every returned model. A gap leads to an ontology extension, a remap, and a new Request, as the contract requires for further research. Then map the statuses to concrete actions, artifact paths, world-state transitions, and absences in the case graph.
-- **Clarification or blocking:** obtain the missing boundary, or report errors and descriptive findings.
+Act on `execution_status`:
+
+- **`completed`:** run the expressibility check in [ontology-induction.md](ontology-induction.md) on every returned model. A gap leads to an ontology extension, a remap, and a new Request, as the contract requires for further research. Then map the returned models and `evidence_status` (`supported`, `provisional`, or `insufficient`) to concrete actions, artifact paths, world-state transitions, and absences in the case graph; never upgrade a `provisional` or `insufficient` ruling.
+- **`needs_clarification`:** obtain the missing boundary, then submit a new Request; no causal ruling meanwhile.
+- **`blocked`:** report `errors` and the descriptive findings; no causal ruling.
 - **Malformed response or unsupported version:** no causal ruling.
 - **Missing material link or new evidence:** submit an updated Request. The host adds graph references and presentation; causal revisions return to the dependency.

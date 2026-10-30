@@ -1,0 +1,130 @@
+{
+  "contract_format": "skill-contract/1",
+  "skill": "competing-explanations-causal-research",
+  "version": "2.0.0",
+  "capability": "Compare rival causal explanations for a specified outcome and return a bounded ruling.",
+  "prose_contract": "references/call-contract.md",
+  "request": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "outcome"
+    ],
+    "properties": {
+      "contract_version": {
+        "type": [
+          "integer",
+          "string"
+        ],
+        "description": "Major version to apply; default 2. Unsupported major fails closed."
+      },
+      "outcome": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The event, state, change, difference, or decision to explain."
+      },
+      "scope": {
+        "type": [
+          "string",
+          "object"
+        ],
+        "description": "Analysis unit, period, geography, population, intended decision. Narrows inferred context."
+      },
+      "evidence_seeds": {
+        "type": "array",
+        "description": "Leads to assess, not accepted proof. Default []."
+      },
+      "constraints": {
+        "type": [
+          "string",
+          "object",
+          "array"
+        ],
+        "description": "Cutoff, permitted sources, access limits, required comparisons. Cannot change outcome."
+      },
+      "detail": {
+        "enum": [
+          "brief",
+          "standard",
+          "full"
+        ],
+        "description": "Default standard; full adds evidence_ledger."
+      },
+      "output_language": {
+        "type": "string"
+      },
+      "caller_tag": {
+        "type": "string",
+        "description": "Opaque; echoed, never control."
+      }
+    }
+  },
+  "response": {
+    "type": "object",
+    "required": [
+      "execution_status",
+      "limitations",
+      "errors",
+      "artifacts"
+    ],
+    "properties": {
+      "execution_status": {
+        "enum": [
+          "completed",
+          "needs_clarification",
+          "blocked"
+        ]
+      },
+      "evidence_status": {
+        "enum": [
+          "supported",
+          "provisional",
+          "insufficient"
+        ],
+        "description": "Required when execution_status is completed."
+      },
+      "report": {
+        "type": "string",
+        "description": "Six-section report; required unless blocked before analysis."
+      },
+      "limitations": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "artifacts": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "evidence_ledger": {
+        "description": "Only for detail: full."
+      },
+      "caller_tag": {
+        "type": "string"
+      }
+    }
+  },
+  "status_field": "execution_status",
+  "statuses": [
+    "completed",
+    "needs_clarification",
+    "blocked"
+  ],
+  "writes": [],
+  "high_stakes": true,
+  "changes": [
+    {
+      "version": "2.0.0",
+      "note": "Projection of call-contract.md Version 2. Conditional rules (evidence_status when completed, report sections, ledger for full) stay in the prose contract."
+    }
+  ]
+}

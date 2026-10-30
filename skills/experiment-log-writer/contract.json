@@ -1,7 +1,7 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "experiment-log-writer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "capability": "Create or update a Markdown experiment log from one event entry, as the log's single writer.",
   "prose_contract": "references/call-contract.md",
   "request": {
@@ -432,7 +432,8 @@
       "log_path",
       "entry_id",
       "missing",
-      "errors"
+      "errors",
+      "hypothesis_ids"
     ],
     "properties": {
       "status": {
@@ -462,6 +463,13 @@
         "items": {
           "type": "string"
         }
+      },
+      "hypothesis_ids": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "IDs assigned to plan.hypotheses in request order; [] otherwise."
       }
     }
   },
@@ -482,6 +490,10 @@
     {
       "version": "1.0.0",
       "note": "Projection of call-contract.md Version 1.0. Conditional rules (prior_log/prior_result pairing, command fields by status, RQ/hypothesis references) stay in the prose contract."
+    },
+    {
+      "version": "1.1.0",
+      "note": "Add hypothesis_ids to the Response (additive)."
     }
   ]
 }

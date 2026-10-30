@@ -1,0 +1,21 @@
+{
+  "case": "cite an iteration commit in a subsequent analysis entry",
+  "request": {
+    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "entry": {
+      "kind": "analysis",
+      "timestamp": "2026-05-22T16:20:00-04:00",
+      "observation": "Iterations 1 and 2 both raised defection by 6-8 points on seeds 7 and 11",
+      "interpretation": "H1 holds across two seeds; seed variance not yet measured",
+      "iteration_commit": "9b1e4d2"
+    }
+  },
+  "provenance": {
+    "log_path": "Workspace Setup step 5: experiment folder",
+    "entry.kind": "Commit Discipline: a subsequent analysis entry may cite a commit",
+    "entry.timestamp": "time the analysis is written",
+    "entry.observation": "recorded results of completed iterations (Iteration Loop step 4)",
+    "entry.interpretation": "Iteration Loop steps 4-5: evidence-grounded reading of the results",
+    "entry.iteration_commit": "Commit Discipline step 5: hash of the completed iteration commit"
+  }
+}

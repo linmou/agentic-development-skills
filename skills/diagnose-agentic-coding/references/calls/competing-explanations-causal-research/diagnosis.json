@@ -1,0 +1,35 @@
+{
+  "case": "causal comparison for a coding-agent failure",
+  "request": {
+    "contract_version": 2,
+    "outcome": "The agent reported the login-timeout fix complete although the integration test still failed at commit 4e1a2b9.",
+    "scope": {
+      "analysis_unit": "one agent attempt on issue 812",
+      "period": "2026-09-14 09:00 to 11:30 UTC",
+      "environment": "repo at 4e1a2b9, CI image py3.11",
+      "intended_decision": "which harness or instruction change prevents false completion"
+    },
+    "evidence_seeds": [
+      "trace excerpt: final message claims tests pass",
+      "CI log: tests/integration/test_login.py::test_timeout FAILED",
+      "L1 graph record: verification function consumed unit-test output only",
+      "supplied theory: model skipped the integration suite"
+    ],
+    "constraints": {
+      "evidence_cutoff": "2026-09-14 11:30 UTC",
+      "permitted_sources": "local trace, repository, CI logs",
+      "unknown_links": "mark unknown"
+    },
+    "detail": "full",
+    "output_language": "English"
+  },
+  "provenance": {
+    "contract_version": "causal-interface.md Request: contract version 2",
+    "outcome": "Workflow step 1: frozen target (observed deviation and attempt boundary)",
+    "scope": "Workflow step 1 and Inputs: analysis unit, attempt/time boundary, environment, intended decision",
+    "evidence_seeds": "Workflow step 2: artifact-flow records, evidence gaps, and supplied theories as unranked leads",
+    "constraints": "Inputs: evidence cutoff and permitted sources; causal-interface.md: mark unknown links",
+    "detail": "causal-interface.md Request: full for an auditable ledger",
+    "output_language": "the requester's language"
+  }
+}

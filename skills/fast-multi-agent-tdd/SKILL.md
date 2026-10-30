@@ -1,6 +1,8 @@
 ---
 name: fast-multi-agent-tdd
 description: Strict Red-Green-Refactor orchestration for executable feature or bug-fix implementation when the user explicitly requests it. May follow prerequisite diagnosis; activate before permanent regression-test or production edits. Do not use for review/diagnosis-only or non-executable work such as Markdown, SKILL.md, AGENTS.md, rubrics, documents, data curation, or research evaluation.
+metadata:
+  requires: review-with-multi-debate@^1.0.0, code-smell-monitor@^1.0.0
 ---
 
 # Fast Multi Agent TDD

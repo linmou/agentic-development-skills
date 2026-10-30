@@ -1,0 +1,36 @@
+{
+  "case": "causal comparison for a research-browsing agent failure",
+  "request": {
+    "contract_version": 2,
+    "outcome": "The agent's answer cited a 2023 figure as current although the task required the latest published figure.",
+    "scope": {
+      "analysis_unit": "one browsing attempt",
+      "period": "single session on 2026-10-02",
+      "success_conditions": "latest figure with source",
+      "intended_decision": "which search or verification step to change"
+    },
+    "evidence_seeds": [
+      "task ontology v2 and revision log",
+      "case-graph records: search results consumed, source dates",
+      "expected-type coverage: no date check recorded",
+      "residual log entries",
+      "supplied theory: stale search index"
+    ],
+    "constraints": {
+      "evidence_cutoff": "end of session",
+      "permitted_sources": "session trace and cited pages",
+      "unknown_links": "mark unknown"
+    },
+    "detail": "full",
+    "output_language": "English"
+  },
+  "provenance": {
+    "contract_version": "causal-interface.md Request: contract version 2",
+    "outcome": "frozen observed deviation from the intended outcome (target framing)",
+    "scope": "target framing: analysis unit, attempt/time boundary, success conditions, intended decision",
+    "evidence_seeds": "task ontology and revision log, case graph, coverage including absences, residual log, supplied theories",
+    "constraints": "evidence cutoff, permitted sources, access limits; causal-interface.md: mark unknown links",
+    "detail": "causal-interface.md Request: full for an auditable ledger",
+    "output_language": "the requester's language"
+  }
+}

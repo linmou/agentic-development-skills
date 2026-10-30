@@ -1,6 +1,8 @@
 ---
 name: diagnose-agentic-behavior
 description: Diagnose why an agent failed in any domain (coding, browsing, research, tool use, multi-agent, conversation) by inducing a task-specific ontology without reading the trace, mapping the trace onto it, and delegating causal comparison to competing-explanations-causal-research. Use for agent failure postmortems, agent trace analysis, model-versus-harness attribution, and ontology sufficiency review.
+metadata:
+  requires: competing-explanations-causal-research@^2.0.0
 ---
 
 # Diagnose Agentic Behavior

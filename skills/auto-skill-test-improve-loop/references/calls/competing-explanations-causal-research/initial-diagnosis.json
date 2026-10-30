@@ -1,0 +1,34 @@
+{
+  "case": "Step 6 diagnosis of one ecological miss",
+  "request": {
+    "contract_version": 2,
+    "outcome": "In run r-0412 (environment rev env-7, target skill variant v3), the agent never wrote learnt/notes.md although the case gold requires it.",
+    "scope": {
+      "analysis_unit": "one ecological case run",
+      "environment_revision": "env-7",
+      "tested_variant": "target skill v3",
+      "intended_decision": "whether and where to patch the skill"
+    },
+    "evidence_seeds": [
+      "case file .eft/m-12/cases/pos-1.md",
+      "runner trace .eft/m-12/runs/r-0412.jsonl",
+      "score file .eft/m-12/scores/r-0412.json",
+      "dependency manifest .eft/m-12/deps.json",
+      "environment record env-7",
+      "failure label: false done via related files"
+    ],
+    "constraints": {
+      "no_predefined_layers": true,
+      "permitted_sources": "quarantined worktree, .eft records"
+    },
+    "detail": "standard"
+  },
+  "provenance": {
+    "contract_version": "root-reason.md: versioned contract, version 2",
+    "outcome": "Step 6: exact failed gold for one identified run, environment revision, and tested variant (score file)",
+    "scope": "Step 4 records: environment revision and tested target-skill identity",
+    "evidence_seeds": "root-reason.md: case, trace, score, dependency manifest, environment record, prior labels as seeds",
+    "constraints": "Step 6: do not constrain explanations to a predefined list; write fence limits sources",
+    "detail": "default level for ROOT.md"
+  }
+}

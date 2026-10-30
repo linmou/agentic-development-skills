@@ -96,4 +96,8 @@ Use `review-with-multi-debate` (true parallel reviewers) when:
 - User demands independent audits on disk
 - You both authored and must certify “all dimensions = 5”
 
+Request (call contract `review-with-multi-debate@^1.0.0`): `artifact` = the contract file and the C4b section of the report; `claim` = the locked C4b verdict; `feature_name` = the callee name; `phase` = `c4b`; `audit_dir` = `out_dir/audits`, so nothing lands in the audited repository.
+
+Read the final `status`: `converged` → record its `overall_verdict` as the C4b verdict; `unresolved` → C4b is `insufficient_evidence` and the disputed criteria go under Fix; `error` → record the errors and keep the Pass D verdict, marked unconfirmed.
+
 Otherwise this single-agent multi-pass is the default inside skill-contract.

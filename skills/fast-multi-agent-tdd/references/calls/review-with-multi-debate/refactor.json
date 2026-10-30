@@ -1,0 +1,27 @@
+{
+  "case": "cumulative production Refactor audit",
+  "request": {
+    "artifact": "audits/login_timeout_refactor_cumulative.diff",
+    "claim": "<exact cumulative Refactor claim text from phase_audits.md>",
+    "feature_name": "login_timeout",
+    "phase": "refactor",
+    "audit_dir": "audits",
+    "require_reviewer_provenance": true,
+    "evidence": [
+      "audits/login_timeout_refactor_only.diff",
+      "audits/login_timeout_request_map.md",
+      "audits/login_timeout_red_iteration1_summary.json",
+      "audits/login_timeout_green_gate.json",
+      "audits/login_timeout_regression.txt"
+    ]
+  },
+  "provenance": {
+    "artifact": "workflow.md 5. Refactor: cumulative production diff pre-Green to post-Refactor",
+    "claim": "phase_audits.md cumulative Refactor claim",
+    "feature_name": "feature name fixed at activation",
+    "phase": "this workflow's phase label",
+    "audit_dir": "Audit Integration: audits",
+    "require_reviewer_provenance": "Audit Integration: reviewer provenance is required",
+    "evidence": "refactor-only diff, request map, Red audit result, Green gate result, regression results (5. Refactor)"
+  }
+}
