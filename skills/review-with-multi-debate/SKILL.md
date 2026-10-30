@@ -52,7 +52,7 @@ If the user did not provide a `feature_name`, derive a short snake_case or kebab
 
 When the caller requests a frozen round (`frozen`), use its criteria manifest as the decomposition. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
 
-In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest and every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files). Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
+In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest, every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files), and every path-valued `evidence` item, each as its own `--include`. Inline evidence excerpts are passed to reviewers as written. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
 
 Typical frozen setup (here a TDD caller passing its own `red` phase label):
 

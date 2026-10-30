@@ -32,7 +32,7 @@ This writes `audits/<derived_feature>_review_audit{1,2,3}_iteration1.json` and a
 
 ## Response
 
-The final answer (and, for gated callers, the last summary file) carries:
+The final answer of the skill carries the fields below. It is not a file: the per-round summary that `aggregate_audits.py` writes has its own schema (see [Round summary](#round-summary)), and gated callers read that summary and the `advance_phase` result instead.
 
 | Field | Condition | Meaning |
 |---|---|---|
@@ -54,6 +54,21 @@ Status rules:
 - `error`: the claim could not be decomposed into checkable criteria, a reviewer file stayed malformed after regeneration by its owning reviewer, a frozen bundle failed verification, or the aggregator returned `invalid_contract`. Nothing is converged.
 
 `not_converged` is a per-round summary status, not a final status: it always triggers another round or ends as `unresolved`.
+
+### Round summary
+
+Each round's `<audit_dir>/<feature_name>_<phase>_iterationM_summary.json` (written by `aggregate_audits.py`) has:
+
+| Field | Meaning |
+|---|---|
+| `feature_name`, `phase`, `iteration`, `reviewer_count` | Round identity. |
+| `review_bundle_id`, `criteria_manifest_digest` | Frozen-round digests, or `null`. Absent when `invalid_contract`. |
+| `status` | `converged` (no disputed criterion), `not_converged`, or `invalid_contract` (reviewer inputs mismatched the frozen handoff). |
+| `disputed_criteria` | Criterion IDs that did not converge mechanically. |
+| `criteria` | Per criterion: verdicts, confidences, `final_verdict`, `converged`. |
+| `contract_errors` | Only when `invalid_contract`. |
+
+The summary measures mechanical agreement only; it does not judge blocking status, evidence quality, or counterevidence. A gated caller advances only when `advance_phase` returns `accepted`, which corresponds to a final `converged` status with every blocking criterion on `pass`.
 
 ## Gate interface
 

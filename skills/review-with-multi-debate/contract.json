@@ -132,7 +132,8 @@
       "caller_tag": {
         "type": "string"
       }
-    }
+    },
+    "description": "The skill's final answer, not a file. The per-round summary file has its own schema (call-contract.md, Round summary)."
   },
   "status_field": "status",
   "statuses": [
