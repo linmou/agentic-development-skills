@@ -232,8 +232,6 @@ def _load_prior_round(
     feature_name: str,
     phase: str,
     iteration: int,
-    criteria_manifest: Path | None,
-    criteria_manifest_digest: str | None,
     require_reviewer_provenance: bool,
 ) -> tuple[list[dict[str, object]], dict[str, object]] | dict[str, object]:
     """Reviewer files and summary of an earlier round, validated like the current round."""
@@ -255,9 +253,11 @@ def _load_prior_round(
             errors.append(f"duplicate_reviewer_agent_id:iteration{iteration}")
     if errors:
         return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": errors}
-    # Each round may use its own frozen bundle, so only the shared manifest binds rounds.
+    # Each frozen round has its own manifest (its iteration is part of the digest), so an
+    # earlier round is checked against its own digest; _definition_drift binds criteria across rounds.
+    own_digest = audits[0].get("criteria_manifest_digest") if audits else None
     contract_errors = _validate_shared_contract(
-        audits, criteria_manifest, None, criteria_manifest_digest, follow_up=iteration > 1
+        audits, None, None, own_digest if isinstance(own_digest, str) else None, follow_up=iteration > 1
     )
     if contract_errors:
         return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": contract_errors}
@@ -276,7 +276,43 @@ def _load_prior_round(
         or not isinstance(summary.get("disputed_criteria"), list)
     ):
         return {"status": "rejected", "reason": "prior_summary_invalid", "iteration": iteration}
+    stale = _summary_mismatch(summary, audits)
+    if stale:
+        return {"status": "rejected", "reason": "stale_summary", "iteration": iteration, "errors": stale}
     return audits, summary
+
+
+def _summary_mismatch(summary: dict[str, object], audits: list[dict[str, object]]) -> list[str]:
+    """A summary is trusted only if it still describes the validated reviewer files."""
+    by_id: dict[str, list[tuple[object, object]]] = {}
+    for audit in sorted(audits, key=lambda item: str(item.get("reviewer_id"))):
+        for criterion in audit.get("criteria") or []:
+            if isinstance(criterion, dict) and isinstance(criterion.get("id"), str):
+                by_id.setdefault(criterion["id"], []).append(
+                    (criterion.get("verdict"), float(criterion.get("confidence") or 0.0))
+                )
+    criteria = summary.get("criteria")
+    if not isinstance(criteria, dict) or set(criteria) != set(by_id):
+        return ["summary_criteria_ids"]
+    errors: list[str] = []
+    expected_disputed: set[str] = set()
+    for criterion_id, observed in by_id.items():
+        entry = criteria[criterion_id]
+        if not isinstance(entry, dict):
+            errors.append(f"summary_entry:{criterion_id}")
+            continue
+        verdicts = [verdict for verdict, _ in observed]
+        confidences = [confidence for _, confidence in observed]
+        if entry.get("verdicts") != verdicts or [float(c) for c in entry.get("confidences") or []] != confidences:
+            errors.append(f"summary_verdicts:{criterion_id}")
+        if entry.get("converged") is True:
+            if len(set(verdicts)) != 1 or entry.get("final_verdict") != verdicts[0]:
+                errors.append(f"summary_convergence:{criterion_id}")
+        else:
+            expected_disputed.add(criterion_id)
+    if set(summary.get("disputed_criteria") or []) != expected_disputed:
+        errors.append("summary_disputed_criteria")
+    return sorted(errors)
 
 
 def _out_of_scope(audits: list[dict[str, object]], previous_disputed: set[str]) -> list[str]:
@@ -390,6 +426,10 @@ def validate_advance_phase(
             "summary": str(summary_path),
         }
 
+    stale = _summary_mismatch(summary, reviewer_audits)
+    if stale:
+        return {"status": "rejected", "reason": "stale_summary", "summary": str(summary_path), "errors": stale}
+
     # Follow-up rounds re-review only disputed criteria, so a blocking criterion
     # settled in an earlier round must still count: merge rounds 1..M, latest wins.
     blocking_ids = _blocking_ids(reviewer_audits)
@@ -409,8 +449,6 @@ def validate_advance_phase(
             feature_name,
             from_phase,
             prior,
-            criteria_manifest,
-            criteria_manifest_digest,
             require_reviewer_provenance,
         )
         if isinstance(prior_round, dict):

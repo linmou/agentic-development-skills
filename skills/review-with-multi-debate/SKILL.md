@@ -202,7 +202,10 @@ and may not add criterion IDs; the gate rejects any change as
 `criterion_definition_drift`. Each follow-up round may re-review only the
 criteria the previous round left disputed (`follow_up_scope_violation`), and
 every earlier round is re-validated like the current one (reviewer fields,
-shared criteria, manifest, and requested provenance) before it is merged. A missing, malformed, or
+shared criteria, its own manifest digest, and requested provenance) before it is
+merged. A summary, earlier or current, is used only if it still matches its
+validated reviewer files (`stale_summary`); re-aggregate after regenerating a
+reviewer file. A missing, malformed, or
 `not_converged` blocking result must trigger a targeted follow-up round before
 the next phase. Non-blocking disputes may remain only when the blocking gate
 passes and must be reported explicitly.

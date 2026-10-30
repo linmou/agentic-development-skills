@@ -529,3 +529,80 @@ def test_follow_up_gate_checks_earlier_round_provenance(tmp_path: Path) -> None:
     assert result.returncode == 1
     assert "invalid_prior_round" in result.stdout
     assert "missing_reviewer_provenance" in result.stdout
+
+
+def _digest_of(manifest: dict) -> str:
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from review_bundle import criteria_manifest_digest
+
+    return criteria_manifest_digest(manifest)
+
+
+def stamp_digest(audit_dir: Path, iteration: int, digest: str) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        path = audit_dir / f"login_flow_red_{reviewer_id}_iteration{iteration}.json"
+        payload = json.loads(path.read_text())
+        payload["criteria_manifest_digest"] = digest
+        path.write_text(json.dumps(payload))
+
+
+def test_frozen_follow_up_uses_each_rounds_own_manifest_digest(tmp_path: Path) -> None:
+    manifests = {}
+    for iteration, ids in ((1, ["c1", "c2"]), (2, ["c2"])):
+        manifests[iteration] = {
+            "feature_name": "login_flow",
+            "phase": "red",
+            "iteration": iteration,
+            "criteria": [{"id": i, "text": f"Criterion {i}.", "blocking": True} for i in ids],
+        }
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+    stamp_digest(tmp_path, 1, _digest_of(manifests[1]))
+    stamp_digest(tmp_path, 2, _digest_of(manifests[2]))
+    assert _digest_of(manifests[1]) != _digest_of(manifests[2])
+    manifest_path = tmp_path / "criteria_iteration2.json"
+    manifest_path.write_text(json.dumps(manifests[2]))
+
+    result = subprocess.run(
+        [
+            sys.executable, str(VALIDATOR), "advance_phase",
+            "--feature-name", "login_flow", "--from-phase", "red", "--to-phase", "green",
+            "--iteration", "2", "--audit-dir", str(tmp_path),
+            "--criteria-manifest", str(manifest_path),
+            "--criteria-manifest-digest", _digest_of(manifests[2]),
+        ],
+        capture_output=True, text=True, check=False,
+    )
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_stale_prior_summary_cannot_hide_a_blocking_failure(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+    # Round-1 reviewer files regenerated after aggregation: c1 now fails unanimously.
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        path = tmp_path / f"login_flow_red_{reviewer_id}_iteration1.json"
+        payload = json.loads(path.read_text())
+        payload["criteria"][0]["verdict"] = "fail"
+        path.write_text(json.dumps(payload))
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "stale_summary" in result.stdout
+    assert "summary_verdicts:c1" in result.stdout
+
+
+def test_stale_current_summary_is_rejected(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3})
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        path = tmp_path / f"login_flow_red_{reviewer_id}_iteration1.json"
+        payload = json.loads(path.read_text())
+        payload["criteria"][0]["verdict"] = "fail"
+        path.write_text(json.dumps(payload))
+
+    result = run_iteration(tmp_path, 1)
+
+    assert result.returncode == 1
+    assert "stale_summary" in result.stdout
