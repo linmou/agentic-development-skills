@@ -36,35 +36,6 @@
         "type": "array",
         "description": "Paths or excerpts for reviewers, including test output. Default []."
       },
-      "frozen": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": [
-          "criteria_manifest",
-          "bundle_path"
-        ],
-        "properties": {
-          "criteria_manifest": {
-            "type": "string",
-            "minLength": 1
-          },
-          "bundle_path": {
-            "type": "string",
-            "minLength": 1
-          },
-          "scope": {
-            "type": "string",
-            "minLength": 1
-          },
-          "include": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        }
-      },
       "require_reviewer_provenance": {
         "type": "boolean",
         "description": "Default false."
@@ -121,9 +92,6 @@
           "type": "string"
         }
       },
-      "review_bundle_id": {
-        "type": "string"
-      },
       "errors": {
         "type": "array",
         "items": {
@@ -145,14 +113,14 @@
   "writes": [
     {
       "store": "review-audits",
-      "location": "request.audit_dir/<feature_name>_<phase>_{auditN_iterationM,iterationM_summary}.json; frozen bundle at request.frozen.bundle_path"
+      "location": "request.audit_dir/<feature_name>_<phase>_{auditN_iterationM,iterationM_summary}.json"
     }
   ],
   "high_stakes": true,
   "changes": [
     {
       "version": "1.0.0",
-      "note": "First contract. Phase default becomes the neutral label review; frozen rounds and reviewer provenance are caller-requested options owned by this skill; gate commands are part of the contract."
+      "note": "First contract. Phase default becomes the neutral label review; reviewer provenance is a caller-requested option owned by this skill; gate commands are part of the contract; frozen review bundles are removed (no caller used them)."
     }
   ]
 }

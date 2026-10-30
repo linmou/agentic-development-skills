@@ -8,8 +8,6 @@ import argparse
 import json
 from pathlib import Path
 
-from review_bundle import load_criteria_manifest, verify_bundle_file
-
 REVIEWER_IDS = ("audit1", "audit2", "audit3")
 DEFAULT_CONFIDENCE_GAP = 0.2  # same default as aggregate_audits.py
 ALLOWED_VERDICTS = {"pass", "fail", "insufficient_evidence"}
@@ -51,13 +49,8 @@ def _load_json(path: Path) -> tuple[dict[str, object] | None, str | None]:
     return value, None
 
 
-def _validate_shared_contract(
-    audits: list[dict[str, object]],
-    criteria_manifest: Path | None = None,
-    review_bundle_id: str | None = None,
-    criteria_manifest_digest: str | None = None,
-    follow_up: bool = False,
-) -> list[str]:
+def _validate_shared_contract(audits: list[dict[str, object]]) -> list[str]:
+    """All reviewers of one round must return the same criterion IDs and definitions."""
     if not audits:
         return ["no_reviewer_results"]
 
@@ -84,40 +77,6 @@ def _validate_shared_contract(
             for criterion_id, definition in expected.items():
                 if current[criterion_id] != definition:
                     errors.append(f"criterion_definition_mismatch:{reviewer_id}:{criterion_id}")
-
-        if review_bundle_id is not None and audit.get("review_bundle_id") != review_bundle_id:
-            errors.append(f"review_bundle_mismatch:{reviewer_id}")
-        if (
-            criteria_manifest_digest is not None
-            and audit.get("criteria_manifest_digest") != criteria_manifest_digest
-        ):
-            errors.append(f"criteria_manifest_mismatch:{reviewer_id}")
-
-    if criteria_manifest is not None:
-        try:
-            manifest, manifest_digest = load_criteria_manifest(criteria_manifest)
-            if (
-                criteria_manifest_digest is not None
-                and manifest_digest != criteria_manifest_digest
-            ):
-                errors.append("criteria_manifest_digest_invalid")
-            manifest_criteria = {
-                item["id"]: (item.get("text"), item.get("blocking"))
-                for item in manifest.get("criteria", [])
-                if isinstance(item, dict) and isinstance(item.get("id"), str)
-            }
-            # Round 1 reviews the whole manifest; follow-up rounds review a
-            # definition-preserving subset (the disputed criteria).
-            if follow_up:
-                if not set(expected) <= set(manifest_criteria):
-                    errors.append("criteria_manifest_ids_mismatch")
-            elif set(expected) != set(manifest_criteria):
-                errors.append("criteria_manifest_ids_mismatch")
-            for criterion_id, definition in expected.items():
-                if criterion_id in manifest_criteria and manifest_criteria[criterion_id] != definition:
-                    errors.append(f"criteria_manifest_definition_mismatch:{criterion_id}")
-        except (OSError, ValueError, json.JSONDecodeError, AttributeError):
-            errors.append("invalid_criteria_manifest")
     return sorted(set(errors))
 
 
@@ -255,12 +214,7 @@ def _load_prior_round(
             errors.append(f"duplicate_reviewer_agent_id:iteration{iteration}")
     if errors:
         return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": errors}
-    # Each frozen round has its own manifest (its iteration is part of the digest), so an
-    # earlier round is checked against its own digest; _definition_drift binds criteria across rounds.
-    own_digest = audits[0].get("criteria_manifest_digest") if audits else None
-    contract_errors = _validate_shared_contract(
-        audits, None, None, own_digest if isinstance(own_digest, str) else None, follow_up=iteration > 1
-    )
+    contract_errors = _validate_shared_contract(audits)
     if contract_errors:
         return {"status": "rejected", "reason": "invalid_prior_round", "iteration": iteration, "errors": contract_errors}
     summary, error = _load_json(
@@ -348,26 +302,9 @@ def validate_advance_phase(
     from_phase: str,
     to_phase: str,
     iteration: int,
-    criteria_manifest: Path | None = None,
-    review_bundle_id: str | None = None,
-    criteria_manifest_digest: str | None = None,
-    review_bundle: Path | None = None,
-    repo_root: Path | None = None,
     require_reviewer_provenance: bool = False,
     confidence_gap: float = DEFAULT_CONFIDENCE_GAP,
 ) -> dict[str, object]:
-    if review_bundle is not None:
-        bundle_result = verify_bundle_file(review_bundle, repo_root or Path.cwd())
-        if bundle_result["status"] != "accepted":
-            return {
-                "status": "rejected",
-                "reason": "review_bundle_changed",
-                "errors": bundle_result["errors"],
-            }
-        review_bundle_id = review_bundle_id or str(bundle_result["bundle_id"])
-        criteria_manifest_digest = criteria_manifest_digest or str(
-            bundle_result["criteria_manifest_digest"]
-        )
     round_result = validate_record_round(audit_dir, feature_name, from_phase, iteration)
     if round_result["status"] != "accepted":
         return {"status": "rejected", "reason": "missing_reviewer_results", **round_result}
@@ -391,13 +328,7 @@ def validate_advance_phase(
     if errors:
         return {"status": "rejected", "reason": "invalid_reviewer_results", "errors": errors}
 
-    contract_errors = _validate_shared_contract(
-        reviewer_audits,
-        criteria_manifest,
-        review_bundle_id,
-        criteria_manifest_digest,
-        follow_up=iteration > 1,
-    )
+    contract_errors = _validate_shared_contract(reviewer_audits)
     if contract_errors:
         return {
             "status": "rejected",
@@ -535,11 +466,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--to-phase")
     parser.add_argument("--iteration", required=True, type=int)
     parser.add_argument("--audit-dir", required=True, type=Path)
-    parser.add_argument("--criteria-manifest", type=Path)
-    parser.add_argument("--review-bundle-id")
-    parser.add_argument("--criteria-manifest-digest")
-    parser.add_argument("--review-bundle", type=Path)
-    parser.add_argument("--repo-root", type=Path)
     parser.add_argument(
         "--require-reviewer-provenance",
         action="store_true",
@@ -573,11 +499,6 @@ def main() -> int:
             args.from_phase,
             args.to_phase,
             args.iteration,
-            args.criteria_manifest,
-            args.review_bundle_id,
-            args.criteria_manifest_digest,
-            args.review_bundle,
-            args.repo_root,
             args.require_reviewer_provenance,
             args.confidence_gap,
         )

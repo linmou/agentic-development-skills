@@ -71,26 +71,6 @@ def test_reviewer_specific_criteria_are_rejected(tmp_path: Path) -> None:
     assert "criterion_ids_mismatch:audit3" in summary["contract_errors"]
 
 
-def test_manifest_definition_is_authoritative(tmp_path: Path) -> None:
-    for reviewer_id in ("audit1", "audit2", "audit3"):
-        write_audit(tmp_path / f"{reviewer_id}.json", reviewer_id, "pass", 0.9)
-    manifest = tmp_path / "criteria.json"
-    manifest.write_text(
-        json.dumps(
-            {"criteria": [{"id": "c1", "text": "Different text", "blocking": False}]}
-        )
-    )
-
-    module = load_module()
-    summary = module.aggregate_audits(
-        [tmp_path / f"{reviewer_id}.json" for reviewer_id in ("audit1", "audit2", "audit3")],
-        criteria_manifest=manifest,
-    )
-
-    assert summary["status"] == "invalid_contract"
-    assert "criteria_manifest_definition_mismatch:audit1:c1" in summary["contract_errors"]
-
-
 def test_identical_reviews_converge(tmp_path: Path) -> None:
     write_audit(tmp_path / "audit1.json", "audit1", "pass", 0.92)
     write_audit(tmp_path / "audit2.json", "audit2", "pass", 0.88)
@@ -127,72 +107,3 @@ def test_mixed_verdicts_are_marked_disputed(tmp_path: Path) -> None:
     assert summary["status"] == "not_converged"
     assert summary["disputed_criteria"] == ["c1"]
     assert summary["criteria"]["c1"]["final_verdict"] == "disputed"
-
-
-def write_manifest_for_follow_up(path: Path) -> None:
-    path.write_text(
-        json.dumps(
-            {
-                "criteria": [
-                    {"id": "c0", "text": "Settled in round 1.", "blocking": True},
-                    {"id": "c1", "text": "Artifact includes login validation.", "blocking": None},
-                ]
-            }
-        )
-    )
-
-
-def set_iteration(path: Path, iteration: int) -> None:
-    payload = json.loads(path.read_text())
-    payload["iteration"] = iteration
-    path.write_text(json.dumps(payload))
-
-
-def test_frozen_follow_up_round_accepts_disputed_subset(tmp_path: Path) -> None:
-    manifest = tmp_path / "criteria.json"
-    write_manifest_for_follow_up(manifest)
-    for reviewer_id in ("audit1", "audit2", "audit3"):
-        write_audit(tmp_path / f"{reviewer_id}.json", reviewer_id, "pass", 0.9)
-        set_iteration(tmp_path / f"{reviewer_id}.json", 2)
-
-    summary = load_module().aggregate_audits(
-        [tmp_path / f"{reviewer_id}.json" for reviewer_id in ("audit1", "audit2", "audit3")],
-        criteria_manifest=manifest,
-    )
-
-    assert summary["status"] == "converged", summary
-
-
-def test_frozen_first_round_rejects_subset(tmp_path: Path) -> None:
-    manifest = tmp_path / "criteria.json"
-    write_manifest_for_follow_up(manifest)
-    for reviewer_id in ("audit1", "audit2", "audit3"):
-        write_audit(tmp_path / f"{reviewer_id}.json", reviewer_id, "pass", 0.9)
-
-    summary = load_module().aggregate_audits(
-        [tmp_path / f"{reviewer_id}.json" for reviewer_id in ("audit1", "audit2", "audit3")],
-        criteria_manifest=manifest,
-    )
-
-    assert summary["status"] == "invalid_contract"
-    assert "criteria_manifest_ids_mismatch:audit1" in summary["contract_errors"]
-
-
-def test_frozen_follow_up_round_rejects_redefined_criterion(tmp_path: Path) -> None:
-    manifest = tmp_path / "criteria.json"
-    write_manifest_for_follow_up(manifest)
-    for reviewer_id in ("audit1", "audit2", "audit3"):
-        path = tmp_path / f"{reviewer_id}.json"
-        write_audit(path, reviewer_id, "pass", 0.9)
-        set_iteration(path, 2)
-        payload = json.loads(path.read_text())
-        payload["criteria"][0]["text"] = "A weaker criterion."
-        path.write_text(json.dumps(payload))
-
-    summary = load_module().aggregate_audits(
-        [tmp_path / f"{reviewer_id}.json" for reviewer_id in ("audit1", "audit2", "audit3")],
-        criteria_manifest=manifest,
-    )
-
-    assert summary["status"] == "invalid_contract"
-    assert "criteria_manifest_definition_mismatch:audit1:c1" in summary["contract_errors"]

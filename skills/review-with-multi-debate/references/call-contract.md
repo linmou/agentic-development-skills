@@ -15,12 +15,11 @@
 | `feature_name` | output | optional; derived from the claim as a short snake_case or kebab-case label | First part of every audit file name. |
 | `phase` | output | optional; `review` | Opaque label in audit file names and metadata. Callers may use their own stage names; this skill never branches on the value. |
 | `evidence` | seed | optional; `[]` | Paths or excerpts reviewers need, including existing test output. Missing test output is reported as unverified execution, never inferred. |
-| `frozen` | control | optional; absent | Frozen-round mode. An object with `criteria_manifest` (required: the persisted criterion set), optional `scope` (editable and protected paths), optional `include` (other input paths), and `bundle_path` (where to write the review bundle). When present, every reviewer receives the manifest, bundle and digest fields become required, and the gates verify the bundle. |
 | `require_reviewer_provenance` | control | optional; `false` | When `true`, every reviewer file must carry `reviewer_agent_id` and `reviewer_source` (see `audit_schema.md`), with distinct identities. `advance_phase --require-reviewer-provenance` enforces it; without that gate the skill checks the fields before reporting `converged`. Fields still missing after regeneration by the owning reviewer make the final status `error`. |
 | `audit_dir` | output | optional; `audits` | Directory for reviewer and summary files. |
 | `caller_tag` | opaque | optional; absent | Caller correlation label. Echoed in the final answer; never control. |
 
-Precedence: `frozen.criteria_manifest`, when present, fixes the criteria and replaces the skill's own decomposition. Otherwise the skill decomposes `claim`. `evidence` adds inputs; it never changes the claim. In frozen mode `artifact` must be a path, and the artifact and every `evidence` path are frozen with the bundle together with `frozen.include`, so reviewers never read an unfrozen input.
+Precedence: the skill decomposes `claim` into the criteria. `evidence` adds inputs; it never changes the claim.
 
 ### Minimal third-party request
 
@@ -43,7 +42,6 @@ The final answer of the skill carries the fields below. It is not a file: the pe
 | `iterations` | always unless `error` before round 1 | Number of rounds run (1–3). |
 | `summary_path` | always unless `error` before aggregation | Last `<feature_name>_<phase>_iterationM_summary.json`. |
 | `audit_paths` | always unless `error` before round 1 | Reviewer files of the last round. |
-| `review_bundle_id` | when `frozen` | Digest of the frozen inputs. |
 | `errors` | always; `[]` when none | Contract or gate failures. |
 | `caller_tag` | if supplied | Exact opaque label. |
 
@@ -51,7 +49,7 @@ Status rules:
 
 - `converged`: every blocking criterion converged (same verdict, confidence spread ≤ 0.2, no unanswered counterevidence). Non-blocking disputes may remain and are listed.
 - `unresolved`: blocking disagreement remains after iteration 3. The skill never forces consensus.
-- `error`: the claim could not be decomposed into checkable criteria, a reviewer file stayed malformed after regeneration by its owning reviewer, a frozen bundle failed verification, or the aggregator returned `invalid_contract`. Nothing is converged.
+- `error`: the claim could not be decomposed into checkable criteria, a reviewer file stayed malformed after regeneration by its owning reviewer, or the aggregator returned `invalid_contract`. Nothing is converged.
 
 `not_converged` is a per-round summary status, not a final status: it always triggers another round or ends as `unresolved`.
 
@@ -62,8 +60,7 @@ Each round's `<audit_dir>/<feature_name>_<phase>_iterationM_summary.json` (writt
 | Field | Meaning |
 |---|---|
 | `feature_name`, `phase`, `iteration`, `reviewer_count` | Round identity. |
-| `review_bundle_id`, `criteria_manifest_digest` | Frozen-round digests, or `null`. Absent when `invalid_contract`. |
-| `status` | `converged` (no disputed criterion), `not_converged`, or `invalid_contract` (reviewer inputs mismatched the frozen handoff). |
+| `status` | `converged` (no disputed criterion), `not_converged`, or `invalid_contract` (reviewers returned different criterion sets or definitions). |
 | `disputed_criteria` | Criterion IDs that did not converge mechanically. |
 | `criteria` | Per criterion: verdicts, confidences, `final_verdict`, `converged`. |
 | `contract_errors` | Only when `invalid_contract`. |
@@ -77,15 +74,14 @@ A caller that advances its own stages on a debate result may run these commands 
 | Command | Checks |
 |---|---|
 | `scripts/validate_audit_transition.py record_round --feature-name F --phase P --iteration M --audit-dir D` | All three reviewer files exist. |
-| `scripts/aggregate_audits.py <three reviewer files> --output <summary>` (plus `--criteria-manifest`, `--review-bundle-id`, `--criteria-manifest-digest` when frozen) | Mechanical convergence per criterion; `invalid_contract` on mismatched inputs. With a manifest, round 1 must return the whole manifest and follow-up rounds a subset with unchanged definitions. |
-| `scripts/validate_audit_transition.py advance_phase --feature-name F --from-phase P --to-phase N --iteration M --audit-dir D` (plus `--review-bundle`, `--repo-root`, `--criteria-manifest` when frozen) | Fails closed unless every blocking criterion converged on `pass`. From iteration 2 it merges all earlier rounds (which must exist) and judges each blocking criterion by the latest round that reviewed it; it rejects any change to a criterion's round-1 text or blocking flag, and any criterion ID added after round 1. A follow-up round may contain only criteria still unresolved from earlier rounds, and every earlier round is re-validated (reviewer fields, shared criteria, its own manifest digest, requested provenance) before merging. Any summary that no longer matches its reviewer files is rejected as `stale_summary`; convergence is recomputed with `--confidence-gap` (default 0.2, pass the aggregator's value). |
-| `scripts/review_bundle.py freeze` / `verify` | Freezes and verifies the declared inputs of a frozen round. |
+| `scripts/aggregate_audits.py <three reviewer files> --output <summary>` | Mechanical convergence per criterion; `invalid_contract` on mismatched inputs. |
+| `scripts/validate_audit_transition.py advance_phase --feature-name F --from-phase P --to-phase N --iteration M --audit-dir D` (plus `--require-reviewer-provenance`, `--confidence-gap`) | Fails closed unless every blocking criterion converged on `pass`. From iteration 2 it merges all earlier rounds (which must exist) and judges each blocking criterion by the latest round that reviewed it; it rejects any change to a criterion's round-1 text or blocking flag, and any criterion ID added after round 1. A follow-up round may contain only criteria still unresolved from earlier rounds, and every earlier round is re-validated (reviewer fields, shared criteria, requested provenance) before merging. Any summary that no longer matches its reviewer files is rejected as `stale_summary`; convergence is recomputed with `--confidence-gap` (default 0.2, pass the aggregator's value). |
 
 `--to-phase` is the caller's own next-stage label; it is recorded, never interpreted.
 
 ## Writes
 
-This skill alone writes reviewer files `<audit_dir>/<feature_name>_<phase>_auditN_iterationM.json`, summaries `<audit_dir>/<feature_name>_<phase>_iterationM_summary.json`, and, in frozen mode, the bundle at `frozen.bundle_path`. Each reviewer writes only its own file. In a Git repository it also adds a repository-local exclude rule for `audit_dir` when the audit paths are not already ignored, and never changes the index.
+This skill alone writes reviewer files `<audit_dir>/<feature_name>_<phase>_auditN_iterationM.json` and summaries `<audit_dir>/<feature_name>_<phase>_iterationM_summary.json`. Each reviewer writes only its own file. In a Git repository it also adds a repository-local exclude rule for `audit_dir` when the audit paths are not already ignored, and never changes the index.
 
 ## Caller obligations
 

@@ -40,7 +40,7 @@ Inputs (full field list in [references/call-contract.md](references/call-contrac
 - `claim`
 - optional `feature_name`, derived from the claim when absent
 - optional `phase`, default `review`: an opaque label for file names; never branch on it
-- optional `evidence`, `frozen`, `require_reviewer_provenance`, `audit_dir`, `caller_tag`
+- optional `evidence`, `require_reviewer_provenance`, `audit_dir`, `caller_tag`
 
 Write a short claim decomposition before running reviewers:
 
@@ -50,15 +50,7 @@ Write a short claim decomposition before running reviewers:
 
 If the user did not provide a `feature_name`, derive a short snake_case or kebab-case label from the claim.
 
-When the caller requests a frozen round (`frozen`), use its criteria manifest as the decomposition. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
-
-In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest, every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files), the artifact, and every path-valued `evidence` item, each as its own `--include`. A frozen round requires `artifact` to be a path; write an inline artifact to a file first. Inline evidence excerpts are passed to reviewers as written. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
-
-Typical frozen setup (here a TDD caller passing its own `red` phase label):
-
-```bash
-python <skill_dir>/scripts/review_bundle.py freeze --repo-root <repo> --output <bundle.json> --feature-name <feature_name> --phase red --iteration 1 --criteria-manifest <manifest.json> --scope <scope.json> --include <role_receipt.json> --include <request_map.md>
-```
+Every reviewer receives the same criterion set and must return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate reject missing, extra, renamed, or redefined criteria.
 
 ### 2. Keep audit artifacts out of Git
 
@@ -121,8 +113,6 @@ Reviewer JSON contract:
   "phase": "review",
   "iteration": 1,
   "reviewer_id": "audit1",
-  "review_bundle_id": "replace-me",
-  "criteria_manifest_digest": "replace-me",
   "claim": "Replace with the claim under review.",
   "overall_verdict": "insufficient_evidence",
   "overall_confidence": 0.0,
@@ -143,7 +133,7 @@ Reviewer JSON contract:
 }
 ```
 
-The two bundle fields are required for frozen rounds; omit them for ordinary reviews that do not use a review bundle. When the caller sets `require_reviewer_provenance`, each reviewer also writes `reviewer_agent_id` and `reviewer_source` (see [references/audit_schema.md](references/audit_schema.md)).
+When the caller sets `require_reviewer_provenance`, each reviewer also writes `reviewer_agent_id` and `reviewer_source` (see [references/audit_schema.md](references/audit_schema.md)).
 
 Rules:
 
@@ -151,8 +141,7 @@ Rules:
 - `id` must stay stable across rounds
 - `evidence` may be empty only when the verdict is `insufficient_evidence`
 - `counterevidence` is required when the reviewer sees a real contradiction
-- `review_bundle_id` and `criteria_manifest_digest` must match the frozen handoff
-- every reviewer must return the complete manifest criterion set; never invent reviewer-specific criteria
+- all reviewers in a round return the same criterion set; never invent reviewer-specific criteria
 
 ### 4. Aggregate deterministically
 
@@ -162,7 +151,7 @@ After each round, aggregate the reviewer JSON files with the skill's aggregator 
 python <skill_dir>/scripts/aggregate_audits.py audits/<feature_name>_<phase>_audit1_iteration1.json audits/<feature_name>_<phase>_audit2_iteration1.json audits/<feature_name>_<phase>_audit3_iteration1.json --output audits/<feature_name>_<phase>_iteration1_summary.json
 ```
 
-Pass `--criteria-manifest <manifest.json> --review-bundle-id <bundle_id> --criteria-manifest-digest <digest>` when the round uses a frozen bundle. The command returns `invalid_contract` instead of measuring convergence when reviewer inputs do not match.
+The command returns `invalid_contract` instead of measuring convergence when reviewers return different criterion sets or definitions.
 
 The aggregator mechanically reports:
 
@@ -189,8 +178,6 @@ python <skill_dir>/scripts/validate_audit_transition.py advance_phase \
   --audit-dir <audit_dir>
 ```
 
-For a frozen round, also pass `--review-bundle <bundle.json> --repo-root <repo> --criteria-manifest <manifest.json>`. The gate verifies the bundle and the shared criterion contract before checking convergence.
-
 This gate fails closed unless all three reviewer files have valid metadata and
 criterion contracts, the current iteration summary exists, and every blocking
 criterion is converged with a final verdict of `pass`. For iteration M > 1 the
@@ -203,7 +190,7 @@ and may not add criterion IDs; the gate rejects any change as
 still unresolved (disputed in some earlier round and not yet settled;
 `follow_up_scope_violation`), and
 every earlier round is re-validated like the current one (reviewer fields,
-shared criteria, its own manifest digest, and requested provenance) before it is
+shared criteria, and requested provenance) before it is
 merged. A summary, earlier or current, is used only if it still matches its
 validated reviewer files (`stale_summary`); the gate recomputes convergence
 from verdicts and confidences, so pass it the same `--confidence-gap` given to
@@ -229,7 +216,7 @@ Prepare a disagreement packet containing:
 
 Then run a second round of reviewers. Each reviewer must:
 
-- address only disputed criteria, keeping each one's original ID, text, and blocking flag (in a frozen round, the manifest's definitions)
+- address only disputed criteria, keeping each one's original ID, text, and blocking flag
 - say which earlier reviewer points they accept or reject
 - keep unchanged criteria out of scope
 
@@ -251,7 +238,7 @@ Stop when any of the following is true:
 
 If iteration 3 still has unresolved blocking disagreement, do not force consensus. Mark the final status `unresolved` and report the exact disputed criteria and evidence conflict.
 
-If the claim cannot be decomposed, a reviewer file stays malformed after regeneration by its owning reviewer, a frozen bundle fails verification, or the aggregator returns `invalid_contract`, mark the final status `error` and report the reason. Nothing is converged.
+If the claim cannot be decomposed, a reviewer file stays malformed after regeneration by its owning reviewer, or the aggregator returns `invalid_contract`, mark the final status `error` and report the reason. Nothing is converged.
 
 ## Output Contract
 

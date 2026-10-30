@@ -12,8 +12,6 @@ Each reviewer must write one JSON object with these top-level fields:
   "phase": "review",
   "iteration": 1,
   "reviewer_id": "audit1",
-  "review_bundle_id": "bundle-sha256",
-  "criteria_manifest_digest": "manifest-sha256",
   "claim": "The artifact satisfies the login-flow claim.",
   "overall_verdict": "pass",
   "overall_confidence": 0.82,
@@ -22,8 +20,6 @@ Each reviewer must write one JSON object with these top-level fields:
   "disputed_points_if_any": []
 }
 ```
-
-The bundle fields are required for frozen rounds; ordinary reviews may omit them.
 
 Optional reviewer provenance, required when the caller sets `require_reviewer_provenance`:
 
@@ -131,7 +127,6 @@ The aggregator must stay dumb and deterministic. It should:
 
 - load reviewer JSON files
 - reject reviewer-specific criterion sets or definitions
-- preserve the review bundle and criteria-manifest digests
 - compare verdicts per criterion id
 - compare confidence spread
 - report disputed criteria
