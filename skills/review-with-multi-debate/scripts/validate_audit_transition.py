@@ -307,7 +307,13 @@ def _summary_mismatch(
             continue
         verdicts = [verdict for verdict, _ in observed]
         confidences = [confidence for _, confidence in observed]
-        if entry.get("verdicts") != verdicts or [float(c) for c in entry.get("confidences") or []] != confidences:
+        stored = entry.get("confidences")
+        if not isinstance(stored, list) or not all(
+            isinstance(value, (int, float)) and not isinstance(value, bool) for value in stored
+        ):
+            errors.append(f"summary_confidences:{criterion_id}")
+            continue
+        if entry.get("verdicts") != verdicts or [float(value) for value in stored] != confidences:
             errors.append(f"summary_verdicts:{criterion_id}")
         # Recompute convergence with the documented rule instead of trusting the flag.
         converged = len(set(verdicts)) == 1 and max(confidences) - min(confidences) <= confidence_gap

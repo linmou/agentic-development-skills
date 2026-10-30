@@ -655,3 +655,17 @@ def test_omitted_dispute_carries_forward_to_later_rounds(tmp_path: Path) -> None
     result = run_iteration(tmp_path, 3)
 
     assert result.returncode == 0, result.stdout
+
+
+def test_malformed_summary_confidences_are_rejected_not_raised(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3})
+    summary_path = tmp_path / "login_flow_red_iteration1_summary.json"
+    summary = json.loads(summary_path.read_text())
+    summary["criteria"]["c1"]["confidences"] = ["bad"]
+    summary_path.write_text(json.dumps(summary))
+
+    result = run_iteration(tmp_path, 1)
+
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+    assert "summary_confidences:c1" in result.stdout

@@ -84,6 +84,7 @@
     "type": "object",
     "required": [
       "status",
+      "disputed_criteria",
       "errors"
     ],
     "properties": {
