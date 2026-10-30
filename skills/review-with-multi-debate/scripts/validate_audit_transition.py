@@ -11,6 +11,7 @@ from pathlib import Path
 from review_bundle import load_criteria_manifest, verify_bundle_file
 
 REVIEWER_IDS = ("audit1", "audit2", "audit3")
+DEFAULT_CONFIDENCE_GAP = 0.2  # same default as aggregate_audits.py
 ALLOWED_VERDICTS = {"pass", "fail", "insufficient_evidence"}
 
 
@@ -233,6 +234,7 @@ def _load_prior_round(
     phase: str,
     iteration: int,
     require_reviewer_provenance: bool,
+    confidence_gap: float,
 ) -> tuple[list[dict[str, object]], dict[str, object]] | dict[str, object]:
     """Reviewer files and summary of an earlier round, validated like the current round."""
     audits: list[dict[str, object]] = []
@@ -276,13 +278,15 @@ def _load_prior_round(
         or not isinstance(summary.get("disputed_criteria"), list)
     ):
         return {"status": "rejected", "reason": "prior_summary_invalid", "iteration": iteration}
-    stale = _summary_mismatch(summary, audits)
+    stale = _summary_mismatch(summary, audits, confidence_gap)
     if stale:
         return {"status": "rejected", "reason": "stale_summary", "iteration": iteration, "errors": stale}
     return audits, summary
 
 
-def _summary_mismatch(summary: dict[str, object], audits: list[dict[str, object]]) -> list[str]:
+def _summary_mismatch(
+    summary: dict[str, object], audits: list[dict[str, object]], confidence_gap: float
+) -> list[str]:
     """A summary is trusted only if it still describes the validated reviewer files."""
     by_id: dict[str, list[tuple[object, object]]] = {}
     for audit in sorted(audits, key=lambda item: str(item.get("reviewer_id"))):
@@ -305,10 +309,13 @@ def _summary_mismatch(summary: dict[str, object], audits: list[dict[str, object]
         confidences = [confidence for _, confidence in observed]
         if entry.get("verdicts") != verdicts or [float(c) for c in entry.get("confidences") or []] != confidences:
             errors.append(f"summary_verdicts:{criterion_id}")
-        if entry.get("converged") is True:
-            if len(set(verdicts)) != 1 or entry.get("final_verdict") != verdicts[0]:
-                errors.append(f"summary_convergence:{criterion_id}")
-        else:
+        # Recompute convergence with the documented rule instead of trusting the flag.
+        converged = len(set(verdicts)) == 1 and max(confidences) - min(confidences) <= confidence_gap
+        if entry.get("converged") is not converged or (
+            converged and entry.get("final_verdict") != verdicts[0]
+        ):
+            errors.append(f"summary_convergence:{criterion_id}")
+        if not converged:
             expected_disputed.add(criterion_id)
     if set(summary.get("disputed_criteria") or []) != expected_disputed:
         errors.append("summary_disputed_criteria")
@@ -341,6 +348,7 @@ def validate_advance_phase(
     review_bundle: Path | None = None,
     repo_root: Path | None = None,
     require_reviewer_provenance: bool = False,
+    confidence_gap: float = DEFAULT_CONFIDENCE_GAP,
 ) -> dict[str, object]:
     if review_bundle is not None:
         bundle_result = verify_bundle_file(review_bundle, repo_root or Path.cwd())
@@ -426,7 +434,7 @@ def validate_advance_phase(
             "summary": str(summary_path),
         }
 
-    stale = _summary_mismatch(summary, reviewer_audits)
+    stale = _summary_mismatch(summary, reviewer_audits, confidence_gap)
     if stale:
         return {"status": "rejected", "reason": "stale_summary", "summary": str(summary_path), "errors": stale}
 
@@ -450,6 +458,7 @@ def validate_advance_phase(
             from_phase,
             prior,
             require_reviewer_provenance,
+            confidence_gap,
         )
         if isinstance(prior_round, dict):
             return prior_round
@@ -463,7 +472,9 @@ def validate_advance_phase(
                 return {"status": "rejected", "reason": "follow_up_scope_violation", "iteration": prior, "errors": scope}
         blocking_ids |= _blocking_ids(prior_audits)
         prior_disputed = list(prior_summary.get("disputed_criteria") or [])
-        previous_disputed = {str(item) for item in prior_disputed}
+        # Unresolved criteria carry forward until some round settles them.
+        reviewed = {str(item) for item in dict(prior_summary.get("criteria") or {})}
+        previous_disputed = (previous_disputed - reviewed) | {str(item) for item in prior_disputed}
         for criterion_id, entry in dict(prior_summary.get("criteria") or {}).items():
             if isinstance(entry, dict):
                 latest[criterion_id] = (entry, prior_disputed)
@@ -528,6 +539,12 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Reject reviewer files without reviewer_agent_id and reviewer_source (advance_phase).",
     )
+    parser.add_argument(
+        "--confidence-gap",
+        type=float,
+        default=DEFAULT_CONFIDENCE_GAP,
+        help="Maximum confidence spread for convergence; pass the value given to aggregate_audits.py.",
+    )
     args = parser.parse_args()
     if args.transition == "record_round" and not args.phase:
         parser.error("record_round requires --phase")
@@ -556,6 +573,7 @@ def main() -> int:
             args.review_bundle,
             args.repo_root,
             args.require_reviewer_provenance,
+            args.confidence_gap,
         )
     print(json.dumps(result, sort_keys=True))
     return 0 if result["status"] == "accepted" else 1

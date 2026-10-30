@@ -199,13 +199,15 @@ blocking criterion by the latest round that reviewed it, so a blocking failure
 settled in an earlier round is never forgotten by a targeted follow-up round.
 A follow-up round must keep each criterion's round-1 text and blocking flag
 and may not add criterion IDs; the gate rejects any change as
-`criterion_definition_drift`. Each follow-up round may re-review only the
-criteria the previous round left disputed (`follow_up_scope_violation`), and
+`criterion_definition_drift`. Each follow-up round may re-review only criteria
+still unresolved (disputed in some earlier round and not yet settled;
+`follow_up_scope_violation`), and
 every earlier round is re-validated like the current one (reviewer fields,
 shared criteria, its own manifest digest, and requested provenance) before it is
 merged. A summary, earlier or current, is used only if it still matches its
-validated reviewer files (`stale_summary`); re-aggregate after regenerating a
-reviewer file. A missing, malformed, or
+validated reviewer files (`stale_summary`); the gate recomputes convergence
+from verdicts and confidences, so pass it the same `--confidence-gap` given to
+the aggregator (default 0.2). Re-aggregate after regenerating a reviewer file. A missing, malformed, or
 `not_converged` blocking result must trigger a targeted follow-up round before
 the next phase. Non-blocking disputes may remain only when the blocking gate
 passes and must be reported explicitly.

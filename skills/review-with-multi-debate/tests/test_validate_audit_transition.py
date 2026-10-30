@@ -127,9 +127,8 @@ def test_advance_phase_rejects_missing_summary(tmp_path: Path) -> None:
 
 
 def test_advance_phase_rejects_non_converged_summary(tmp_path: Path) -> None:
-    for reviewer_id in ("audit1", "audit2", "audit3"):
-        write_audit(tmp_path, reviewer_id, phase="red")
-    write_summary(tmp_path, status="not_converged")
+    # Reviewers genuinely disagree, so the not_converged summary is consistent with them.
+    write_round(tmp_path, 1, {"c1": ["pass", "pass", "fail"]})
 
     result = run_transition(tmp_path)
 
@@ -606,3 +605,53 @@ def test_stale_current_summary_is_rejected(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert "stale_summary" in result.stdout
+
+
+def set_confidences(audit_dir: Path, iteration: int, criterion_id: str, confidences: list[float]) -> None:
+    for reviewer_id, confidence in zip(("audit1", "audit2", "audit3"), confidences):
+        path = audit_dir / f"login_flow_red_{reviewer_id}_iteration{iteration}.json"
+        payload = json.loads(path.read_text())
+        for criterion in payload["criteria"]:
+            if criterion["id"] == criterion_id:
+                criterion["confidence"] = confidence
+        path.write_text(json.dumps(payload))
+    summary_path = audit_dir / f"login_flow_red_iteration{iteration}_summary.json"
+    summary = json.loads(summary_path.read_text())
+    summary["criteria"][criterion_id]["confidences"] = confidences
+    summary_path.write_text(json.dumps(summary))
+
+
+def test_gate_recomputes_confidence_spread(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3})
+    set_confidences(tmp_path, 1, "c1", [0.1, 0.5, 0.9])
+
+    result = run_iteration(tmp_path, 1)
+
+    assert result.returncode == 1
+    assert "summary_convergence:c1" in result.stdout
+
+
+def test_gate_accepts_wide_spread_with_matching_custom_gap(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3})
+    set_confidences(tmp_path, 1, "c1", [0.65, 0.7, 0.9])
+
+    result = subprocess.run(
+        [
+            sys.executable, str(VALIDATOR), "advance_phase",
+            "--feature-name", "login_flow", "--from-phase", "red", "--to-phase", "green",
+            "--iteration", "1", "--audit-dir", str(tmp_path), "--confidence-gap", "0.3",
+        ],
+        capture_output=True, text=True, check=False,
+    )
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_omitted_dispute_carries_forward_to_later_rounds(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass", "fail", "pass"], "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c1": ["pass"] * 3})
+    write_round(tmp_path, 3, {"c2": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 3)
+
+    assert result.returncode == 0, result.stdout
