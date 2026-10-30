@@ -52,7 +52,7 @@ If the user did not provide a `feature_name`, derive a short snake_case or kebab
 
 When the caller requests a frozen round (`frozen`), use its criteria manifest as the decomposition. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
 
-In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest, every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files), and every path-valued `evidence` item, each as its own `--include`. Inline evidence excerpts are passed to reviewers as written. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
+In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest, every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files), the artifact, and every path-valued `evidence` item, each as its own `--include`. A frozen round requires `artifact` to be a path; write an inline artifact to a file first. Inline evidence excerpts are passed to reviewers as written. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
 
 Typical frozen setup (here a TDD caller passing its own `red` phase label):
 
@@ -193,7 +193,10 @@ For a frozen round, also pass `--review-bundle <bundle.json> --repo-root <repo> 
 
 This gate fails closed unless all three reviewer files have valid metadata and
 criterion contracts, the current iteration summary exists, and every blocking
-criterion is converged with a final verdict of `pass`. A missing, malformed, or
+criterion is converged with a final verdict of `pass`. For iteration M > 1 the
+gate also loads rounds 1 to M−1 (all of which must exist) and judges each
+blocking criterion by the latest round that reviewed it, so a blocking failure
+settled in an earlier round is never forgotten by a targeted follow-up round. A missing, malformed, or
 `not_converged` blocking result must trigger a targeted follow-up round before
 the next phase. Non-blocking disputes may remain only when the blocking gate
 passes and must be reported explicitly.

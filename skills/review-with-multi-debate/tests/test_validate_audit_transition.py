@@ -250,3 +250,115 @@ def test_provenance_is_optional_by_default(tmp_path: Path) -> None:
     write_summary(tmp_path)
 
     assert run_transition(tmp_path).returncode == 0
+
+
+def write_round(audit_dir: Path, iteration: int, verdicts: dict[str, list[str]]) -> None:
+    """Write three reviewer files and a summary; verdicts maps criterion id to per-reviewer verdicts."""
+    for index, reviewer_id in enumerate(("audit1", "audit2", "audit3")):
+        criteria = [
+            {
+                "id": criterion_id,
+                "text": f"Criterion {criterion_id}.",
+                "blocking": True,
+                "verdict": per_reviewer[index],
+                "confidence": 0.9,
+                "evidence": [{"kind": "quote", "location": "artifact:1", "text": "x"}],
+                "reasoning": "Evidence-bound reasoning.",
+                "counterevidence": [],
+            }
+            for criterion_id, per_reviewer in verdicts.items()
+        ]
+        payload = {
+            "feature_name": "login_flow",
+            "phase": "red",
+            "iteration": iteration,
+            "reviewer_id": reviewer_id,
+            "claim": "claim",
+            "overall_verdict": "pass",
+            "overall_confidence": 0.9,
+            "criteria": criteria,
+            "open_questions": [],
+            "disputed_points_if_any": [],
+        }
+        (audit_dir / f"login_flow_red_{reviewer_id}_iteration{iteration}.json").write_text(
+            json.dumps(payload)
+        )
+    summary_criteria = {}
+    disputed = []
+    for criterion_id, per_reviewer in verdicts.items():
+        converged = len(set(per_reviewer)) == 1
+        if not converged:
+            disputed.append(criterion_id)
+        summary_criteria[criterion_id] = {
+            "criterion_text": f"Criterion {criterion_id}.",
+            "reviewer_count": 3,
+            "verdicts": per_reviewer,
+            "confidences": [0.9] * 3,
+            "final_verdict": per_reviewer[0] if converged else None,
+            "converged": converged,
+        }
+    (audit_dir / f"login_flow_red_iteration{iteration}_summary.json").write_text(
+        json.dumps(
+            {
+                "feature_name": "login_flow",
+                "phase": "red",
+                "iteration": iteration,
+                "reviewer_count": 3,
+                "status": "converged" if not disputed else "not_converged",
+                "disputed_criteria": disputed,
+                "criteria": summary_criteria,
+            }
+        )
+    )
+
+
+def run_iteration(audit_dir: Path, iteration: int) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(VALIDATOR),
+            "advance_phase",
+            "--feature-name",
+            "login_flow",
+            "--from-phase",
+            "red",
+            "--to-phase",
+            "green",
+            "--iteration",
+            str(iteration),
+            "--audit-dir",
+            str(audit_dir),
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_follow_up_round_keeps_earlier_blocking_failure(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["fail"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1, result.stdout
+    assert "blocking_criteria_not_pass" in result.stdout
+    assert '"c1"' in result.stdout
+
+
+def test_follow_up_round_accepts_when_every_blocking_criterion_passes(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_follow_up_round_rejects_missing_earlier_round(tmp_path: Path) -> None:
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "missing_prior_round" in result.stdout

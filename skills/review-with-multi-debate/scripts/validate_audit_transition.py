@@ -182,6 +182,48 @@ def _provenance_errors(path: Path, audit: dict[str, object]) -> list[str]:
     ]
 
 
+def _blocking_ids(audits: list[dict[str, object]]) -> set[str]:
+    ids: set[str] = set()
+    for audit in audits:
+        criteria = audit.get("criteria")
+        if not isinstance(criteria, list):
+            continue
+        for criterion in criteria:
+            if (
+                isinstance(criterion, dict)
+                and criterion.get("blocking") is True
+                and isinstance(criterion.get("id"), str)
+            ):
+                ids.add(criterion["id"])
+    return ids
+
+
+def _load_prior_round(
+    audit_dir: Path, feature_name: str, phase: str, iteration: int
+) -> tuple[list[dict[str, object]], dict[str, object]] | str:
+    """Reviewer files and summary of an earlier round, or a rejection reason."""
+    audits: list[dict[str, object]] = []
+    for reviewer_id in REVIEWER_IDS:
+        audit, error = _load_json(audit_path(audit_dir, feature_name, phase, reviewer_id, iteration))
+        if error or audit is None:
+            return "missing_prior_round"
+        audits.append(audit)
+    summary, error = _load_json(
+        audit_dir / f"{feature_name}_{phase}_iteration{iteration}_summary.json"
+    )
+    if error or summary is None:
+        return "missing_prior_summary"
+    if (
+        summary.get("feature_name") != feature_name
+        or summary.get("phase") != phase
+        or summary.get("iteration") != iteration
+        or summary.get("status") not in {"converged", "not_converged"}
+        or not isinstance(summary.get("criteria"), dict)
+    ):
+        return "prior_summary_invalid"
+    return audits, summary
+
+
 def validate_advance_phase(
     audit_dir: Path,
     feature_name: str,
@@ -278,19 +320,10 @@ def validate_advance_phase(
             "summary": str(summary_path),
         }
 
-    blocking_ids: set[str] = set()
-    for audit in reviewer_audits:
-        criteria = audit.get("criteria")
-        if not isinstance(criteria, list):
-            continue
-        for criterion in criteria:
-            if (
-                isinstance(criterion, dict)
-                and criterion.get("blocking") is True
-                and isinstance(criterion.get("id"), str)
-            ):
-                blocking_ids.add(criterion["id"])
-    invalid_blocking = []
+    # Follow-up rounds re-review only disputed criteria, so a blocking criterion
+    # settled in an earlier round must still count: merge rounds 1..M, latest wins.
+    blocking_ids = _blocking_ids(reviewer_audits)
+    latest: dict[str, tuple[dict[str, object], list[object]]] = {}
     disputed = summary.get("disputed_criteria", [])
     if not isinstance(disputed, list):
         return {
@@ -298,13 +331,27 @@ def validate_advance_phase(
             "reason": "summary_invalid_disputes",
             "summary": str(summary_path),
         }
+    for prior in range(1, iteration):
+        prior_round = _load_prior_round(audit_dir, feature_name, from_phase, prior)
+        if isinstance(prior_round, str):
+            return {"status": "rejected", "reason": prior_round, "iteration": prior}
+        prior_audits, prior_summary = prior_round
+        blocking_ids |= _blocking_ids(prior_audits)
+        prior_disputed = prior_summary.get("disputed_criteria", [])
+        for criterion_id, entry in dict(prior_summary.get("criteria") or {}).items():
+            if isinstance(entry, dict):
+                latest[criterion_id] = (entry, list(prior_disputed or []))
+    for criterion_id, entry in summary_criteria.items():
+        if isinstance(entry, dict):
+            latest[criterion_id] = (entry, disputed)
+    invalid_blocking = []
     for criterion_id in sorted(blocking_ids):
-        criterion_summary = summary_criteria.get(criterion_id)
-        if not isinstance(criterion_summary, dict):
+        if criterion_id not in latest:
             invalid_blocking.append(criterion_id)
             continue
+        criterion_summary, round_disputed = latest[criterion_id]
         if (
-            criterion_id in disputed
+            criterion_id in round_disputed
             or criterion_summary.get("converged") is not True
             or criterion_summary.get("final_verdict") != "pass"
         ):

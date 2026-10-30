@@ -20,7 +20,7 @@
 | `audit_dir` | output | optional; `audits` | Directory for reviewer and summary files. |
 | `caller_tag` | opaque | optional; absent | Caller correlation label. Echoed in the final answer; never control. |
 
-Precedence: `frozen.criteria_manifest`, when present, fixes the criteria and replaces the skill's own decomposition. Otherwise the skill decomposes `claim`. `evidence` adds inputs; it never changes the claim. In frozen mode every `evidence` path is frozen with the bundle together with `frozen.include`, so reviewers never read an unfrozen input.
+Precedence: `frozen.criteria_manifest`, when present, fixes the criteria and replaces the skill's own decomposition. Otherwise the skill decomposes `claim`. `evidence` adds inputs; it never changes the claim. In frozen mode `artifact` must be a path, and the artifact and every `evidence` path are frozen with the bundle together with `frozen.include`, so reviewers never read an unfrozen input.
 
 ### Minimal third-party request
 
@@ -78,7 +78,7 @@ A caller that advances its own stages on a debate result may run these commands 
 |---|---|
 | `scripts/validate_audit_transition.py record_round --feature-name F --phase P --iteration M --audit-dir D` | All three reviewer files exist. |
 | `scripts/aggregate_audits.py <three reviewer files> --output <summary>` (plus `--criteria-manifest`, `--review-bundle-id`, `--criteria-manifest-digest` when frozen) | Mechanical convergence per criterion; `invalid_contract` on mismatched inputs. |
-| `scripts/validate_audit_transition.py advance_phase --feature-name F --from-phase P --to-phase N --iteration M --audit-dir D` (plus `--review-bundle`, `--repo-root`, `--criteria-manifest` when frozen) | Fails closed unless every blocking criterion converged on `pass`. |
+| `scripts/validate_audit_transition.py advance_phase --feature-name F --from-phase P --to-phase N --iteration M --audit-dir D` (plus `--review-bundle`, `--repo-root`, `--criteria-manifest` when frozen) | Fails closed unless every blocking criterion converged on `pass`. From iteration 2 it merges all earlier rounds (which must exist) and judges each blocking criterion by the latest round that reviewed it. |
 | `scripts/review_bundle.py freeze` / `verify` | Freezes and verifies the declared inputs of a frozen round. |
 
 `--to-phase` is the caller's own next-stage label; it is recorded, never interpreted.
