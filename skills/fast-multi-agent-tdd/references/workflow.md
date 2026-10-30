@@ -287,7 +287,7 @@ Never pass `--cause accidental_phase_write` for a semantic requirement conflict 
 
 Only start refactor after green plus regression are both clean.
 
-Run `code-smell-monitor` on the changed production scope before editing to have an understanding of code quality.
+Run `code-smell-monitor` on the changed production scope before editing to have an understanding of code quality. Use its call contract version 1 (`code-smell-monitor@^1.0.0`): record the request (scope and flags, including `--install`), the printed `out_dir`, and the result `status`. `complete` and `blocking_violations` are usable evidence; `incomplete` is partial evidence and never a clean result; `error` means the request was invalid, so correct the scope or flags and rerun before editing.
 
 Allowed actions:
 
@@ -307,6 +307,7 @@ Before closing refactor:
 
 - run the full available test suite again
 - rerun `code-smell-monitor` on the same scope and record both report paths
+- use the identical request for both runs and record both `status` values; compare findings only between runs whose status is not `error`, and state any `incomplete` category instead of reporting it as clean
 - run `python scripts/phase_guard.py --phase refactor --scope audits/<feature>_refactor_scope.json`
 - audit with `review-with-multi-debate` using the cumulative Refactor claim from [phase_audits.md](phase_audits.md)
 - include the cumulative production diff from pre-Green to post-Refactor, the refactor-only diff, the request map, the Red audit result, the Green gate result, and regression results
@@ -405,12 +406,14 @@ Use [phase_contracts.md](phase_contracts.md) for the exact phase ownership rules
 
 ## Audit Integration
 
-Each `review-with-multi-debate` audit should hand off:
+Each `review-with-multi-debate` audit is a Request under its call contract version 1 (`review-with-multi-debate@^1.0.0`, `references/call-contract.md` in that skill) with:
 
-- the artifact for the phase
-- the exact claim text from [phase_audits.md](phase_audits.md)
-- the `feature_name`
-- the phase label
+- `artifact`: the artifact for the phase
+- `claim`: the exact claim text from [phase_audits.md](phase_audits.md)
+- `feature_name`: the feature name
+- `phase`: this workflow's phase label (`red`, `refactor`, or `test_refactor`), which the debate treats as an opaque file-name label
+- `audit_dir`: `audits`
+- `require_reviewer_provenance`: `true`
 
 Each debate artifact must record every actual independent reviewer identity and delegation mechanism returned by the backend used. Missing provenance or any self-authored reviewer file invalidates the debate and stops the phase.
 
@@ -424,7 +427,7 @@ The local gates verify consistency and unchanged bytes; they cannot authenticate
 - `audits/<feature>_<phase>_audit2_iterationM.json`
 - `audits/<feature>_<phase>_audit3_iterationM.json`
 
-For Red, extend the loaded debate skill's top-level audit schema with these required ownership fields:
+Each reviewer fills the debate schema's optional provenance fields, which this workflow requires through `require_reviewer_provenance`:
 
 ```json
 {
@@ -433,7 +436,7 @@ For Red, extend the loaded debate skill's top-level audit schema with these requ
 }
 ```
 
-Use the stable identity returned by the actual delegation backend and the same nonempty mechanism name recorded in the role receipt. These fields are additions to, not replacements for, the debate skill's fields.
+Use the stable identity returned by the actual delegation backend and the same nonempty mechanism name recorded in the role receipt. The debate skill owns these fields; this workflow adds no reviewer fields of its own.
 
 <!-- capacity-aware-reviewer-scheduling --> Give each reviewer its distinct debate-skill role, the common artifact and claim decomposition, an isolated prompt, the schema, and only its own exact current-iteration destination. For an initial iteration, do not include or ask a later reviewer to read a completed sibling's current-iteration output. Independence does not require simultaneous execution. Use no more simultaneous reviewers than the available concurrency or capacity limit permits; with one free reviewer slot, delegate and await `audit1`, then `audit2`, then `audit3`.
 
@@ -475,10 +478,10 @@ Then read the three reviewer JSON files and deterministic summary. The main agen
 ```bash
 python <review-skill-dir>/scripts/validate_audit_transition.py advance_phase \
   --feature-name <feature> --from-phase <phase> --to-phase <next-phase> \
-  --iteration <M> --audit-dir audits
+  --iteration <M> --audit-dir audits --require-reviewer-provenance
 ```
 
-Do not create the next-phase scope or snapshot before `advance_phase` passes. If a blocking criterion does not converge, iteration `M + 1` keeps all three reviewer identities and writes three new correctly named files that address only the disputed criteria; repeat `record_round`, aggregation, inspection, and `advance_phase`. Never overwrite or reuse a prior iteration file. Stop at the debate skill's hard limit rather than forcing consensus.
+Do not create the next-phase scope or snapshot before `advance_phase` passes. If a blocking criterion does not converge, iteration `M + 1` keeps all three reviewer identities and writes three new correctly named files that address only the disputed criteria; repeat `record_round`, aggregation, inspection, and `advance_phase`. Never overwrite or reuse a prior iteration file. Stop at the debate skill's hard limit rather than forcing consensus: a final debate status of `unresolved` or `error` stops the phase and is reported with the disputed criteria or errors. Only `converged` with every blocking criterion on `pass` lets `advance_phase` pass.
 
 After `advance_phase` passes, provide the unchanged provenance output to the next `tdd_snapshot.py create` with `--provenance ... --review-iteration <M>`; snapshot publication verifies that this is the latest recorded iteration, re-hashes the staged in-repository receipt/provenance artifacts and the live ignored reviewer audits, and rejects any intervening mutation.
 

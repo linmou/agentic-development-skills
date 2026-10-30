@@ -106,3 +106,7 @@ Read `references/tool_matrix.md` when deciding whether to add another tool or in
 - Do not hide failed tool commands; failed checks are evidence about project setup.
 - Do not claim a complete scan from headline counts alone. Report each smell category as covered, failed, unavailable, or not applicable, with the command and package root used.
 - Preserve raw outputs so findings can be checked without rerunning tools.
+
+## Invocation contract
+
+Another skill invokes this one through the versioned Request/Response in [references/call-contract.md](references/call-contract.md) (checkable projection: `contract.json`). It maps each Request field to a CLI flag and defines one result `status` (`complete`, `incomplete`, `blocking_violations`, `error`) from the exit code and `summary.json`, so callers never treat incomplete coverage as a clean result.

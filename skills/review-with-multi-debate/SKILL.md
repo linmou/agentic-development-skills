@@ -34,12 +34,13 @@ If the claim cannot be decomposed into clear criteria, stop and rewrite the clai
 
 ### 1. Normalize the input
 
-Inputs:
+Inputs (full field list in [references/call-contract.md](references/call-contract.md)):
 
 - `artifact`
 - `claim`
-- `feature_name`
-- optional `phase`, default `green`
+- optional `feature_name`, derived from the claim when absent
+- optional `phase`, default `review`: an opaque label for file names; never branch on it
+- optional `evidence`, `frozen`, `require_reviewer_provenance`, `audit_dir`, `caller_tag`
 
 Write a short claim decomposition before running reviewers:
 
@@ -49,11 +50,11 @@ Write a short claim decomposition before running reviewers:
 
 If the user did not provide a `feature_name`, derive a short snake_case or kebab-case label from the claim.
 
-For Red audits, persist the decomposition as a criteria manifest. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
+When the caller requests a frozen round (`frozen`), use its criteria manifest as the decomposition. Every reviewer must receive that manifest and return exactly its criterion IDs, text, and blocking flags. The aggregator and phase gate must reject missing, extra, renamed, or redefined criteria.
 
-Before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the Red scope so its editable and protected paths are included, then add the criteria manifest, role receipt, request map, baseline reference, and relevant test/evidence files. Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
+In a frozen round, before spawning reviewers, freeze only the declared review inputs with `scripts/review_bundle.py freeze`: pass the caller's `frozen.scope` so its editable and protected paths are included, then add the criteria manifest and every `frozen.include` path (for example a role receipt, request map, baseline reference, and relevant test/evidence files). Do not include the audit output directory. Verify the bundle before each reviewer reads and before phase advancement. Parent edits to frozen inputs end the round; create a new bundle after the correction.
 
-Typical Red setup:
+Typical frozen setup (here a TDD caller passing its own `red` phase label):
 
 ```bash
 python <skill_dir>/scripts/review_bundle.py freeze --repo-root <repo> --output <bundle.json> --feature-name <feature_name> --phase red --iteration 1 --criteria-manifest <manifest.json> --scope <scope.json> --include <role_receipt.json> --include <request_map.md>
@@ -64,7 +65,7 @@ python <skill_dir>/scripts/review_bundle.py freeze --repo-root <repo> --output <
 Before writing audit files in a Git repository:
 
 - resolve the repository-local exclude file with `git rev-parse --git-path info/exclude`
-- add `/audits/` to that exclude file if the exact rule is absent
+- if `git check-ignore` does not already ignore a planned audit path, add a rule for `audit_dir` (default `/audits/`, relative to the repository root) to that exclude file
 - preserve all existing exclude rules
 - verify a planned audit path is ignored with `git check-ignore`
 - if any audit file is already tracked, stop and report it; do not alter the Git index without user approval
@@ -117,7 +118,7 @@ Reviewer JSON contract:
 ```json
 {
   "feature_name": "replace-me",
-  "phase": "green",
+  "phase": "review",
   "iteration": 1,
   "reviewer_id": "audit1",
   "review_bundle_id": "replace-me",
@@ -142,7 +143,7 @@ Reviewer JSON contract:
 }
 ```
 
-The two bundle fields are required for frozen Red rounds; omit them for ordinary reviews that do not use a review bundle.
+The two bundle fields are required for frozen rounds; omit them for ordinary reviews that do not use a review bundle. When the caller sets `require_reviewer_provenance`, each reviewer also writes `reviewer_agent_id` and `reviewer_source` (see [references/audit_schema.md](references/audit_schema.md)).
 
 Rules:
 
@@ -161,7 +162,7 @@ After each round, aggregate the reviewer JSON files with the skill's aggregator 
 python <skill_dir>/scripts/aggregate_audits.py audits/<feature_name>_<phase>_audit1_iteration1.json audits/<feature_name>_<phase>_audit2_iteration1.json audits/<feature_name>_<phase>_audit3_iteration1.json --output audits/<feature_name>_<phase>_iteration1_summary.json
 ```
 
-Pass `--criteria-manifest <manifest.json> --review-bundle-id <bundle_id> --criteria-manifest-digest <digest>` when the round uses a frozen Red bundle. The command returns `invalid_contract` instead of measuring convergence when reviewer inputs do not match.
+Pass `--criteria-manifest <manifest.json> --review-bundle-id <bundle_id> --criteria-manifest-digest <digest>` when the round uses a frozen bundle. The command returns `invalid_contract` instead of measuring convergence when reviewer inputs do not match.
 
 The aggregator mechanically reports:
 
@@ -188,7 +189,7 @@ python <skill_dir>/scripts/validate_audit_transition.py advance_phase \
   --audit-dir <audit_dir>
 ```
 
-For a frozen Red round, also pass `--review-bundle <bundle.json> --repo-root <repo> --criteria-manifest <manifest.json>`. The gate verifies the bundle and the shared criterion contract before checking convergence.
+For a frozen round, also pass `--review-bundle <bundle.json> --repo-root <repo> --criteria-manifest <manifest.json>`. The gate verifies the bundle and the shared criterion contract before checking convergence.
 
 This gate fails closed unless all three reviewer files have valid metadata and
 criterion contracts, the current iteration summary exists, and every blocking
@@ -236,6 +237,8 @@ Stop when any of the following is true:
 
 If iteration 3 still has unresolved blocking disagreement, do not force consensus. Mark the final status `unresolved` and report the exact disputed criteria and evidence conflict.
 
+If the claim cannot be decomposed, a reviewer file stays malformed after regeneration by its owning reviewer, a frozen bundle fails verification, or the aggregator returns `invalid_contract`, mark the final status `error` and report the reason. Nothing is converged.
+
 ## Output Contract
 
 For each iteration, produce:
@@ -249,9 +252,9 @@ Recommended summary names:
 - `audits/<feature_name>_<phase>_iteration2_summary.json`
 - `audits/<feature_name>_<phase>_iteration3_summary.json`
 
-The final user-facing answer should report:
+The final answer is the Response in [references/call-contract.md](references/call-contract.md). It should report:
 
-- the final status
+- the final status: `converged`, `unresolved`, or `error`, and the overall verdict when converged
 - the blocking criteria
 - the disputed criteria, if any
 - the main evidence that drove the result
@@ -273,3 +276,8 @@ Avoid these failure modes:
 - Load [references/audit_schema.md](references/audit_schema.md) when checking the reviewer schema, roles, convergence rules, or file naming.
 - Copy [assets/audit_result_template.json](assets/audit_result_template.json) as the starting structure for each reviewer result, then replace its placeholders.
 - Run [scripts/aggregate_audits.py](scripts/aggregate_audits.py) after each round to compute verdict and confidence alignment mechanically.
+- Load [references/call-contract.md](references/call-contract.md) when another skill invokes this one: Request and Response fields, final statuses, the gate commands callers may run, and owned files.
+
+## Invocation contract
+
+This skill works directly from a user request. A host skill or third-party caller invokes it through the versioned Request/Response in [references/call-contract.md](references/call-contract.md) (checkable projection: `contract.json`). The contract is owned here: callers pass their own stage names only as the opaque `phase` label, and must not redefine reviewer fields or write reviewer files.

@@ -1,0 +1,17 @@
+{
+  "case": "escalate an unresolved C4b verdict",
+  "request": {
+    "artifact": "skills/review-with-multi-debate/contract.json and .skill-contract/skill_contract_report.md#c4b",
+    "claim": "The review-with-multi-debate call contract passes C4b: all hard gates pass and D1-D6 are at least 4.",
+    "feature_name": "review-with-multi-debate",
+    "phase": "c4b",
+    "audit_dir": ".skill-contract/audits"
+  },
+  "provenance": {
+    "artifact": "Step 3 build output and the C4b section of the report",
+    "claim": "Pass D locked C4b verdict",
+    "feature_name": "the callee under audit",
+    "phase": "fixed label c4b",
+    "audit_dir": "out_dir (Inputs) plus /audits"
+  }
+}

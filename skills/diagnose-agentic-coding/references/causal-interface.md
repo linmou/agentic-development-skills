@@ -8,7 +8,7 @@ The `competing-explanations-causal-research` skill owns evidence assessment, riv
 
 ## Request
 
-Submit the Request version supported by the dependency's current call contract with:
+Submit a Request under call contract version 2 (`competing-explanations-causal-research@^2.0.0`) with:
 
 - `outcome`: the frozen observed outcome.
 - `scope`: analysis unit, attempt/time boundary, environment, intended outcome, and decision.
@@ -16,12 +16,18 @@ Submit the Request version supported by the dependency's current call contract w
 - `constraints`: evidence cutoff, permitted sources/tests, access limits, and the requirement to mark unknown links.
 - `detail`: `full` for an auditable ledger.
 - `output_language`: the requester's language.
-- `contract_version`: the version declared by the current call contract.
+- `contract_version`: `2`.
 
 Include `caller_tag` only when correlation is useful. Provide accessible sources or excerpts. Local-only access is a source constraint, not a reason to bypass the dependency.
 
 ## Response handling
 
-Map the response's `execution_status` and `evidence_status` defined by the current call contract to concrete L1 actions, artifact paths, and SYS transitions. For clarification or blocking, obtain the missing boundary or report errors and descriptive findings as required by that contract. A malformed response or unsupported version does not support a causal ruling.
+Act on `execution_status`:
+
+- `completed`: map the returned models and `evidence_status` (`supported`, `provisional`, or `insufficient`) to concrete L1 actions, artifact paths, and SYS transitions. Present `provisional` and `insufficient` rulings as such; never upgrade them.
+- `needs_clarification`: obtain the missing boundary from the user or the evidence, then submit a new Request. Do not issue a causal ruling meanwhile.
+- `blocked`: report `errors` and the descriptive graph with its unknowns; no causal ruling.
+
+A malformed response or unsupported version does not support a causal ruling.
 
 If the comparison lacks a material artifact link, proposes a new mechanism, or new evidence changes the case, submit an updated Request. The host adds graph references and presentation; causal revisions return to the dependency.

@@ -1,0 +1,23 @@
+{
+  "case": "Step 9 debate on a fat patch",
+  "request": {
+    "artifact": ".eft/m-12/PATCH.diff",
+    "claim": "This patch is minimum sufficient for the gold flip.",
+    "feature_name": "m-12",
+    "phase": "debate",
+    "audit_dir": ".eft/m-12/audits",
+    "evidence": [
+      ".eft/m-12/scores/r-0416.json",
+      ".eft/m-12/ROOT.md",
+      ".eft/m-12/LADDER.md"
+    ]
+  },
+  "provenance": {
+    "artifact": "Step 8: PATCH.diff under .eft/<miss_id>/",
+    "claim": "Step 9: fixed claim text",
+    "feature_name": "the miss id",
+    "phase": "Step 9: fixed label debate",
+    "audit_dir": "write fence: .eft/<miss_id>/",
+    "evidence": "Step 8 passing score, ROOT.md diagnosis, LADDER.md ranks"
+  }
+}

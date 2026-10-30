@@ -2,7 +2,7 @@
 name: auto-exp
 description: Run automatic research experiment loops from a user prompt. Use when the user asks for automatic experiments, autonomous experiment iteration, hypothesis testing, or work based on ~/.codex/prompts/auto_exp.md; enforce a dedicated auto_experiments folder, experiment log, branch isolation, per-iteration commits, and reproducible commands.
 metadata:
-  requires: experiment-log-writer@^1.0.0
+  requires: experiment-log-writer@^1.1.0
 ---
 
 # Auto Experiment
@@ -56,11 +56,17 @@ Do not discard unique scientific evidence. When raw artifacts are required but u
 
 ## Experiment Log
 
-Use `$experiment-log-writer` to create and update `auto_experiments/<date-topic>/experiment_log.md`. Read its `references/call-contract.md` before the first call. The writer owns the log template, field meanings, and all log edits; this skill owns experiment execution and the decision to call the writer.
+Use `$experiment-log-writer` to create and update `auto_experiments/<date-topic>/experiment_log.md`. Read its `references/call-contract.md` (version 1.1) before the first call. The writer owns the log template, field meanings, and all log edits; this skill owns experiment execution and the decision to call the writer.
 
 Call the writer with a `plan` entry before the first run and an `iteration` entry after each run, including failed or partial runs. Supply observed facts: changed factors, exact planned and executed commands, working directory, environment reference, exit status, input/config identifiers, metrics, decision reasoning, interpretation, and artifact locations. For externally stored raw evidence, supply a stable results address or manifest with generation command, run identifier, location, content hash, file count, and size. Pass representative input-output pairs when outputs are qualitative. Use a `correction` entry for later corrections; do not edit the log directly.
 
-Inspect the writer's response. If it reports missing information needed for a faithful record, gather it and call the writer again before committing. Never invent a command, result, timestamp, or artifact address to fill a gap.
+Inspect the writer's response `status` before doing anything else:
+
+- `written`: the entry is in the log. After a `plan` entry, keep the returned `hypothesis_ids` and pass the matching ID as `hypothesis_id` in each later `iteration` entry; do not read or parse the log to find it.
+- `needs_input`: nothing was written. Gather each fact listed in `missing` from the run, the user, or recorded evidence, then call again with a corrected Request. Do not commit the iteration until a call returns `written`.
+- `error`: nothing was written. Report `errors` to the user and stop the iteration; do not edit the log directly or commit as if it were recorded.
+
+Never invent a command, result, timestamp, or artifact address to fill a gap.
 
 ## Iteration Loop
 

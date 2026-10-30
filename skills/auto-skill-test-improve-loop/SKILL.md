@@ -4,6 +4,8 @@ description: >
   Auto skill test-improve loop — after a real multi-turn skill miss, quarantine
   dependencies, causally diagnose the failure, test a minimum worktree fix, and
   emit RESULTS with matched-environment comparison and cost rate.
+metadata:
+  requires: competing-explanations-causal-research@^2.0.0, review-with-multi-debate@^1.0.0
 ---
 
 # Auto Skill Test-Improve Loop
@@ -72,6 +74,8 @@ Detail: `references/failure-labels.md`.
 
 Invoke `competing-explanations-causal-research` through its versioned Request/Response contract. Freeze the exact failed outcome, assign evidence roles and timing, generate rival causal models, test them symmetrically, and make a bounded ruling about what most likely produced the missing gold. Do not constrain the potential explanations, mechanisms, relationships, or correction targets to a predefined list or ontology. Treat prior labels and suspected causes only as evidence seeds.
 
+Act on the response's `execution_status`: `completed` → use the ruling at its `evidence_status` (`supported`, `provisional`, or `insufficient`); a `provisional` or `insufficient` ruling does not by itself support a patch target. `needs_clarification` → supply the missing boundary from the case record, or ask the human, and invoke again; no patch target meanwhile. `blocked` → record `errors` in `ROOT.md` and stop before Step 7.
+
 Persist the response and the loop's evidence-grounded interpretation in `ROOT.md`. Do not select a patch target while the diagnosis says that more discriminating evidence is needed or does not support changing the skill. Any selected write target must remain under quarantine.
 
 **Done when:** `ROOT.md` records the frozen outcome, evidence roles, rival models, bounded ruling, material uncertainty, next discriminating evidence, and the reason for the next action and any patch target.
@@ -106,7 +110,12 @@ if no skill patch → debate: skipped
 else if single-file patch and ≤5 lines added and POS pass → debate: skipped
 else if fat patch was applied this run → run review-with-multi-debate on
   "this patch is minimum sufficient for the gold flip"
-  fail → strip / lower rank → step 8
+  (artifact: PATCH.diff; feature_name: <miss_id>; phase: debate;
+   audit_dir: .eft/<miss_id>/audits)
+  converged + pass → keep patch
+  converged + fail or insufficient_evidence → strip / lower rank → step 8
+  unresolved → record disputed criteria; treat as fail → step 8
+  error → record errors; stop and ask human
 else → debate: skipped
 ```
 

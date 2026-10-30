@@ -7,6 +7,8 @@ description: >
   change. Use when one skill calls another, after extracting a skill, before
   changing a callee's Request/Response, or when asked whether skills are safely
   coupled.
+metadata:
+  requires: review-with-multi-debate@^1.0.0
 ---
 
 # Skill Contract

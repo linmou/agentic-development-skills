@@ -173,6 +173,15 @@ def _validate_reviewer(
     return audit, errors
 
 
+def _provenance_errors(path: Path, audit: dict[str, object]) -> list[str]:
+    """Optional reviewer provenance owned by this schema; required only on request."""
+    return [
+        f"missing_reviewer_provenance:{path}:{key}"
+        for key in ("reviewer_agent_id", "reviewer_source")
+        if not isinstance(audit.get(key), str) or not str(audit.get(key)).strip()
+    ]
+
+
 def validate_advance_phase(
     audit_dir: Path,
     feature_name: str,
@@ -184,6 +193,7 @@ def validate_advance_phase(
     criteria_manifest_digest: str | None = None,
     review_bundle: Path | None = None,
     repo_root: Path | None = None,
+    require_reviewer_provenance: bool = False,
 ) -> dict[str, object]:
     if review_bundle is not None:
         bundle_result = verify_bundle_file(review_bundle, repo_root or Path.cwd())
@@ -211,6 +221,12 @@ def validate_advance_phase(
         errors.extend(reviewer_errors)
         if audit is not None:
             reviewer_audits.append(audit)
+            if require_reviewer_provenance:
+                errors.extend(_provenance_errors(path, audit))
+    if require_reviewer_provenance and not errors:
+        identities = [audit.get("reviewer_agent_id") for audit in reviewer_audits]
+        if len(set(identities)) != len(identities):
+            errors.append("duplicate_reviewer_agent_id")
     if errors:
         return {"status": "rejected", "reason": "invalid_reviewer_results", "errors": errors}
 
@@ -327,6 +343,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--criteria-manifest-digest")
     parser.add_argument("--review-bundle", type=Path)
     parser.add_argument("--repo-root", type=Path)
+    parser.add_argument(
+        "--require-reviewer-provenance",
+        action="store_true",
+        help="Reject reviewer files without reviewer_agent_id and reviewer_source (advance_phase).",
+    )
     args = parser.parse_args()
     if args.transition == "record_round" and not args.phase:
         parser.error("record_round requires --phase")
@@ -354,6 +375,7 @@ def main() -> int:
             args.criteria_manifest_digest,
             args.review_bundle,
             args.repo_root,
+            args.require_reviewer_provenance,
         )
     print(json.dumps(result, sort_keys=True))
     return 0 if result["status"] == "accepted" else 1

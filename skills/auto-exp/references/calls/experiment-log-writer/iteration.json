@@ -51,7 +51,7 @@
     "entry.kind": "Experiment Log: an iteration entry after each run",
     "entry.number": "Iteration Loop: count of iterations in this experiment",
     "entry.timestamp": "Iteration Loop step 3: time the run finished",
-    "entry.hypothesis_id": "Writer-assigned hypothesis ID, read from the log after the plan call; the plan Response returns only the RQ ID",
+    "entry.hypothesis_id": "hypothesis_ids returned by the writer's plan Response (Experiment Log: keep the returned hypothesis_ids)",
     "entry.changed_files": "Iteration Loop step 2: files and factors changed for this run",
     "entry.commands": "Iteration Loop step 3: the command actually run, with its directory, environment reference, exit status and output path",
     "entry.results": "Iteration Loop steps 3-4: observed metrics, evidence path and interpretation",

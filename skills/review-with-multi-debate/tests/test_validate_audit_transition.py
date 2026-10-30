@@ -172,3 +172,81 @@ def test_advance_phase_rejects_reviewer_specific_criteria(tmp_path: Path) -> Non
 
     assert result.returncode == 1
     assert "review_contract_mismatch" in result.stdout
+
+
+def add_provenance(audit_dir: Path, identities: dict[str, str]) -> None:
+    for reviewer_id, identity in identities.items():
+        path = audit_dir / f"login_flow_red_{reviewer_id}_iteration1.json"
+        payload = json.loads(path.read_text())
+        payload["reviewer_agent_id"] = identity
+        payload["reviewer_source"] = "subagent"
+        path.write_text(json.dumps(payload))
+
+
+def run_with_provenance(audit_dir: Path) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            sys.executable,
+            str(VALIDATOR),
+            "advance_phase",
+            "--feature-name",
+            "login_flow",
+            "--from-phase",
+            "red",
+            "--to-phase",
+            "green",
+            "--iteration",
+            "1",
+            "--audit-dir",
+            str(audit_dir),
+            "--require-reviewer-provenance",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
+def test_required_provenance_rejects_missing_fields(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path, reviewer_id, phase="red")
+    write_summary(tmp_path)
+    add_provenance(tmp_path, {"audit1": "agent:r1", "audit2": "agent:r2"})
+
+    result = run_with_provenance(tmp_path)
+
+    assert result.returncode == 1
+    assert "missing_reviewer_provenance" in result.stdout
+    assert "audit3" in result.stdout
+
+
+def test_required_provenance_rejects_shared_identity(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path, reviewer_id, phase="red")
+    write_summary(tmp_path)
+    add_provenance(tmp_path, {"audit1": "agent:r1", "audit2": "agent:r1", "audit3": "agent:r3"})
+
+    result = run_with_provenance(tmp_path)
+
+    assert result.returncode == 1
+    assert "duplicate_reviewer_agent_id" in result.stdout
+
+
+def test_required_provenance_accepts_distinct_identities(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path, reviewer_id, phase="red")
+    write_summary(tmp_path)
+    add_provenance(tmp_path, {"audit1": "agent:r1", "audit2": "agent:r2", "audit3": "agent:r3"})
+
+    result = run_with_provenance(tmp_path)
+
+    assert result.returncode == 0, result.stdout
+    assert '"phase_advanced"' in result.stdout
+
+
+def test_provenance_is_optional_by_default(tmp_path: Path) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        write_audit(tmp_path, reviewer_id, phase="red")
+    write_summary(tmp_path)
+
+    assert run_transition(tmp_path).returncode == 0

@@ -1,0 +1,111 @@
+{
+  "contract_format": "skill-contract/1",
+  "skill": "code-smell-monitor",
+  "version": "1.0.0",
+  "capability": "Run scoped, tool-based code smell monitoring and report findings with explicit coverage.",
+  "prose_contract": "references/call-contract.md",
+  "request": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "repo": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Default ."
+      },
+      "scope": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": "Required unless changed_only; default ['.']."
+      },
+      "changed_only": {
+        "type": "boolean"
+      },
+      "install": {
+        "enum": [
+          "missing",
+          "never"
+        ],
+        "description": "Default missing (may install tools; needs network)."
+      },
+      "out": {
+        "type": "string",
+        "minLength": 1
+      },
+      "architecture": {
+        "type": "boolean"
+      },
+      "architecture_only": {
+        "type": "boolean"
+      },
+      "requirements": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Requires architecture."
+      },
+      "architecture_max_degree": {
+        "type": "integer"
+      },
+      "fail_on_tool_error": {
+        "type": "boolean"
+      }
+    }
+  },
+  "response": {
+    "type": "object",
+    "required": [
+      "status",
+      "exit_code",
+      "errors"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "complete",
+          "incomplete",
+          "blocking_violations",
+          "error"
+        ]
+      },
+      "exit_code": {
+        "type": "integer"
+      },
+      "out_dir": {
+        "type": "string"
+      },
+      "coverage": {
+        "type": "object"
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "status_field": "status",
+  "statuses": [
+    "complete",
+    "incomplete",
+    "blocking_violations",
+    "error"
+  ],
+  "writes": [
+    {
+      "store": "code-smell-reports",
+      "location": "request.out or <repo>/.code-smell-monitor/<timestamp>/"
+    }
+  ],
+  "high_stakes": false,
+  "changes": [
+    {
+      "version": "1.0.0",
+      "note": "First contract: CLI flags as Request fields; status derived from exit code, coverage and enforced architecture violations."
+    }
+  ]
+}

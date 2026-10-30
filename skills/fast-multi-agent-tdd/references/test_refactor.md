@@ -19,7 +19,7 @@ Before editing:
   suite results
 - write a behavior map for each affected test:
   `stimulus -> boundary crossed -> observable result -> important edge case`
-- run `code-smell-monitor` on the selected test scope
+- run `code-smell-monitor` on the selected test scope, recording the request, `out_dir`, and result `status` as in the production Refactor step
 - preflight every planned path with `phase_guard.py --phase test_refactor --scope <scope-artifact>`
 
 If no demonstrated test smell exists and the test diff is empty, write
