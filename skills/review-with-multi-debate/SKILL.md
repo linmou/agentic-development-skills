@@ -196,7 +196,10 @@ criterion contracts, the current iteration summary exists, and every blocking
 criterion is converged with a final verdict of `pass`. For iteration M > 1 the
 gate also loads rounds 1 to M−1 (all of which must exist) and judges each
 blocking criterion by the latest round that reviewed it, so a blocking failure
-settled in an earlier round is never forgotten by a targeted follow-up round. A missing, malformed, or
+settled in an earlier round is never forgotten by a targeted follow-up round.
+A follow-up round must keep each criterion's round-1 text and blocking flag
+and may not add criterion IDs; the gate rejects any change as
+`criterion_definition_drift`. A missing, malformed, or
 `not_converged` blocking result must trigger a targeted follow-up round before
 the next phase. Non-blocking disputes may remain only when the blocking gate
 passes and must be reported explicitly.

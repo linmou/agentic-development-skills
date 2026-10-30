@@ -198,6 +198,29 @@ def _blocking_ids(audits: list[dict[str, object]]) -> set[str]:
     return ids
 
 
+def _definition_drift(
+    definitions: dict[str, tuple[object, object]],
+    audits: list[dict[str, object]],
+    first_round: bool,
+) -> list[str]:
+    """Record round-1 criterion definitions; reject later text/blocking changes or new IDs."""
+    errors: list[str] = []
+    for audit in audits:
+        for criterion in audit.get("criteria") or []:
+            if not isinstance(criterion, dict) or not isinstance(criterion.get("id"), str):
+                continue
+            criterion_id = criterion["id"]
+            definition = (criterion.get("text"), criterion.get("blocking"))
+            if criterion_id not in definitions:
+                if first_round:
+                    definitions[criterion_id] = definition
+                else:
+                    errors.append(f"criterion_added_in_follow_up:{criterion_id}")
+            elif definitions[criterion_id] != definition:
+                errors.append(f"criterion_redefined:{criterion_id}")
+    return sorted(set(errors))
+
+
 def _load_prior_round(
     audit_dir: Path, feature_name: str, phase: str, iteration: int
 ) -> tuple[list[dict[str, object]], dict[str, object]] | str:
@@ -331,16 +354,23 @@ def validate_advance_phase(
             "reason": "summary_invalid_disputes",
             "summary": str(summary_path),
         }
+    definitions: dict[str, tuple[object, object]] = {}
     for prior in range(1, iteration):
         prior_round = _load_prior_round(audit_dir, feature_name, from_phase, prior)
         if isinstance(prior_round, str):
             return {"status": "rejected", "reason": prior_round, "iteration": prior}
         prior_audits, prior_summary = prior_round
+        drift = _definition_drift(definitions, prior_audits, first_round=prior == 1)
+        if drift:
+            return {"status": "rejected", "reason": "criterion_definition_drift", "errors": drift}
         blocking_ids |= _blocking_ids(prior_audits)
         prior_disputed = prior_summary.get("disputed_criteria", [])
         for criterion_id, entry in dict(prior_summary.get("criteria") or {}).items():
             if isinstance(entry, dict):
                 latest[criterion_id] = (entry, list(prior_disputed or []))
+    drift = _definition_drift(definitions, reviewer_audits, first_round=iteration == 1)
+    if drift:
+        return {"status": "rejected", "reason": "criterion_definition_drift", "errors": drift}
     for criterion_id, entry in summary_criteria.items():
         if isinstance(entry, dict):
             latest[criterion_id] = (entry, disputed)

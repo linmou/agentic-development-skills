@@ -362,3 +362,45 @@ def test_follow_up_round_rejects_missing_earlier_round(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert "missing_prior_round" in result.stdout
+
+
+def rewrite_round_criterion(audit_dir: Path, iteration: int, criterion_id: str, **changes: object) -> None:
+    for reviewer_id in ("audit1", "audit2", "audit3"):
+        path = audit_dir / f"login_flow_red_{reviewer_id}_iteration{iteration}.json"
+        payload = json.loads(path.read_text())
+        for criterion in payload["criteria"]:
+            if criterion["id"] == criterion_id:
+                criterion.update(changes)
+        path.write_text(json.dumps(payload))
+
+
+def test_follow_up_round_rejects_weakened_criterion_text(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["pass"] * 3})
+    rewrite_round_criterion(tmp_path, 2, "c2", text="A weaker version of c2.")
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "criterion_redefined:c2" in result.stdout
+
+
+def test_follow_up_round_rejects_dropping_blocking_flag(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["fail", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c2": ["fail"] * 3})
+    rewrite_round_criterion(tmp_path, 2, "c2", blocking=False)
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "criterion_redefined:c2" in result.stdout
+
+
+def test_follow_up_round_rejects_new_criterion(tmp_path: Path) -> None:
+    write_round(tmp_path, 1, {"c1": ["pass"] * 3, "c2": ["pass", "fail", "pass"]})
+    write_round(tmp_path, 2, {"c3": ["pass"] * 3})
+
+    result = run_iteration(tmp_path, 2)
+
+    assert result.returncode == 1
+    assert "criterion_added_in_follow_up:c3" in result.stdout
