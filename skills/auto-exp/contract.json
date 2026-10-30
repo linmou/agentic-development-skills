@@ -1,0 +1,33 @@
+{
+  "contract_format": "skill-contract/1",
+  "skill": "auto-exp",
+  "version": "1.0.0",
+  "capability": "Execute a traceable research experiment with reproducible evidence and iteration commits.",
+  "prose_contract": "references/call-contract.md",
+  "request": {
+    "type": "object",
+    "required": ["repository", "task"],
+    "properties": {
+      "repository": {"type": "string", "minLength": 1},
+      "task": {"type": "string", "minLength": 1}
+    },
+    "additionalProperties": false
+  },
+  "response": {
+    "type": "object",
+    "required": ["status", "summary", "artifacts", "branch", "commits"],
+    "properties": {
+      "status": {"enum": ["completed", "needs_input", "incomplete", "error"]},
+      "summary": {"type": "string", "minLength": 1},
+      "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
+      "branch": {"type": ["string", "null"]},
+      "commits": {"type": "array", "items": {"type": "string", "minLength": 1}}
+    },
+    "additionalProperties": false
+  },
+  "status_field": "status",
+  "statuses": ["completed", "needs_input", "incomplete", "error"],
+  "writes": [],
+  "high_stakes": true,
+  "changes": [{"version": "1.0.0", "note": "Initial agent call interface for the existing experiment workflow."}]
+}
