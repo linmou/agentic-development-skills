@@ -1,0 +1,374 @@
+{
+  "feature_name": "call_contract_v4_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit3",
+  "role": "contradiction_hunter",
+  "claim": "call-contract v4 achieves all D1–D7 = 5.",
+  "contract_path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+  "rubric_path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+  "validator_path": "/Users/admin/.codex/skills/persist-rubrics-context/scripts/validate_rubric_memory.py",
+  "overall_verdict": "pass",
+  "c4b_verdict": "pass",
+  "overall_confidence": 0.93,
+  "dimension_scores": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 5,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 5
+  },
+  "hard_gates": {
+    "1_minimal_call_works": "pass",
+    "2_no_host_control_enums": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "pass",
+    "5_precedence": "pass",
+    "6_necessity_floor_d1_ge_3": "pass",
+    "7_sufficiency_floor_d2_ge_4": "pass",
+    "8_consistency_floor_d5_ge_3": "pass"
+  },
+  "contradiction_hunt_method": [
+    "Re-read C4b D1–D7 anchors and hard gates 1–8 against call-contract.md Version **4**.",
+    "Diff against audit3 v3 findings (gate 4 / D2=3 fail; residual alias/profile/echo smells).",
+    "Cross-walk validate_rubric_memory.py REQUIRED_* keys + nested non-empty checks to Write fill paths table rows.",
+    "Cross-walk context-persistence / rubric-persistence hard gates and memory-protocol templates for any storage-mandatory attr lacking source class.",
+    "Hunt D1 bloat, D3 dual-meaning, D5 dead inputs, D6 storage dump, D7 incomplete retirement — only drop below 5 on anchor mismatch, not invented nits."
+  ],
+  "fill_path_inventory_check": {
+    "result": "complete",
+    "required_context_keys": {
+      "id": "covered — both/inference (slug; merge keeps id)",
+      "statement": "covered — inference from human_feedback",
+      "intent_keywords": "covered — seed→inference Intent rule",
+      "context_keywords": "covered — inference situation tags",
+      "scope": "covered — scope.include + scope.exclude inference non-empty",
+      "lifecycle": "covered — inference object; sunset_condition string may be \"\""
+    },
+    "required_rubric_keys": {
+      "id": "covered — both/inference",
+      "title": "covered — inference",
+      "applicability": "covered — applicability.include + applicability.exclude inference non-empty",
+      "decision_rule": "covered — score_*_rule / support_examples / counter_examples (+ optional fail_fast); min one level; fail if missing",
+      "dependencies": "covered — intent_refs Intent rule; context_refs Situation rule",
+      "lifecycle": "covered — both/inference"
+    },
+    "required_index_keys": {
+      "id": "covered — both/inference",
+      "path": "covered — inference path under domain",
+      "status": "covered — inference status=active on append",
+      "intent_keywords": "covered — file+index Intent rule",
+      "context_keywords": "covered — index yes, inference situation tags",
+      "applicability_summary": "covered — inference one-line include/exclude summary"
+    },
+    "nested_validator_enforcement_also_covered": [
+      "scope.include/exclude non-empty string lists",
+      "applicability.include/exclude non-empty string lists",
+      "dependencies.context_refs/intent_refs non-empty string lists",
+      "per used score level: score_X_rule non-empty; support_examples non-empty list; counter_examples [counter+, counter-] pairs",
+      "lifecycle is object"
+    ],
+    "v3_audit3_gate4_gaps_status": {
+      "context_keywords": "FIXED — explicit inference row",
+      "scope.include_exclude": "FIXED — explicit inference rows",
+      "applicability.include_exclude": "FIXED — explicit inference rows",
+      "decision_rule_score_blocks": "FIXED — rule/support/counter/fail_fast rows",
+      "id_statement_title_lifecycle": "FIXED — all-entries + branch rows",
+      "index_applicability_summary_path_status": "FIXED — explicit rows"
+    },
+    "non_gaps_rejected_as_gate4_failures": [
+      {
+        "candidate": "ask source class listed in header but unused in table rows",
+        "why_not_fail": "Write fill paths are for successful write construction; interactive defer is no-write (pending). Missing attrs → infer again or fail (line 140). SKILL forbids hand-edit JSON asks."
+      },
+      {
+        "candidate": "intent_keywords on rubric file documented though REQUIRED_RUBRIC_KEYS omits it",
+        "why_not_fail": "Over-coverage for file+index; index still requires intent_keywords. Not a missing mandatory path."
+      },
+      {
+        "candidate": "templates/procedure as sole fill path",
+        "why_not_fail": "v4 no longer relies on that; contract table is the hard-gate-4 inventory with source classes."
+      },
+      {
+        "candidate": "domain folder path not a JSON key",
+        "why_not_fail": "Path component has inference row; not a validator REQUIRED key."
+      }
+    ]
+  },
+  "field_inventory": [
+    {"field": "project_root", "class": "content", "needed": true, "overlaps": false, "precedence": "n/a", "keep_merge_drop": "keep"},
+    {"field": "human_feedback", "class": "content", "needed": true, "overlaps": "also intent/situation inference channel", "precedence": "sole free-form content; situation step 1", "keep_merge_drop": "keep"},
+    {"field": "intents", "class": "seed", "needed": "optional", "overlaps": "stored intent_keywords/intent_refs", "precedence": "non-empty intents primary else infer; generalize", "keep_merge_drop": "keep"},
+    {"field": "correlation_id", "class": "opaque", "needed": "bookkeeping", "overlaps": "legacy section_id shim only", "precedence": "wins; section_id not first-class", "keep_merge_drop": "keep"},
+    {"field": "section_id", "class": "compat_shim", "needed": false, "overlaps": "correlation_id if alone", "precedence": "copy once then discard; not Request field", "keep_merge_drop": "retired active surface"},
+    {"field": "caller_tag", "class": "opaque", "needed": "bookkeeping", "overlaps": false, "precedence": "log-only", "keep_merge_drop": "keep"},
+    {"field": "decision_mode", "class": "control", "needed": true, "overlaps": "pre_decision gated", "precedence": "selects decider", "keep_merge_drop": "keep"},
+    {"field": "pre_decision", "class": "control", "needed": "predecided only", "overlaps": "decision_mode", "precedence": "required+valid under predecided else error", "keep_merge_drop": "keep"},
+    {"field": "output_profile", "class": "output", "needed": true, "overlaps": "include", "precedence": "defaults; replaced if include non-null", "keep_merge_drop": "keep"},
+    {"field": "include", "class": "output", "needed": "override/custom", "overlaps": "output_profile", "precedence": "non-null list replaces profile set entirely", "keep_merge_drop": "keep"},
+    {"field": "learning_log_path", "class": "output", "needed": "optional side-log", "overlaps": "caller session ownership", "precedence": "side-write after Response build", "keep_merge_drop": "keep"}
+  ],
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "D1 Necessity (minimal surface): every Request and default-profile Response field earns its place; no debug-only fields in standard; no seed-policy enum that only renames use-seed-else-infer.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "output_profile + include dual knobs = decorative bloat",
+          "result": "reject",
+          "reason": "Orthogonal roles: named preset vs explicit final field set. v4 states include replaces profile (not partial merge). Both earn place under output class."
+        },
+        {
+          "attack": "standard still carries validation + learning_log_row as debug/echo",
+          "result": "reject",
+          "reason": "validation supports fail-closed reporting; learning_log_row is thin-host log projection D2 wants. intent_resolution/field_build/raw_validator_log stay full-only."
+        },
+        {
+          "attack": "section_id residual surface",
+          "result": "reject",
+          "reason": "Not in Request table; one-shot compat shim only. No first-class dual opaque field."
+        }
+      ],
+      "evidence": [
+        "Request table classes content/seed/control/output/opaque only; no intent_seed_policy.",
+        "standard include omits proposals/raw_validator_log/intent_resolution/field_build.",
+        "decision_mode encodes three real write behaviors, not rename of seed-else-infer."
+      ],
+      "reasoning": "SCORE: 5. Anchor 5 met: each field is content, seed, control, output, or opaque; no debug-only in standard; no policy enum that only renames seed-else-infer. v3 residual section_id first-class surface is gone. Contradiction hunts on dual output knobs and standard log/validation fail to force anchor-3 bloat."
+    },
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency: required + defaults complete capability or fail closed; every mandatory stored attribute has defined source; Response carries status/writes/errors and optional log row. Hard gate 4.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.96,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "HOLD v3 audit3: missing fill paths for context_keywords/scope/applicability/decision_rule → gate4 fail D2=3",
+          "result": "reject_as_stale",
+          "reason": "v4 Write fill paths table lists every prior gap with source class inference or seed→inference. Validator REQUIRED_* cross-walk is complete (see fill_path_inventory_check)."
+        },
+        {
+          "attack": "implicit inference still not a defined source",
+          "result": "reject",
+          "reason": "v3 objection was silence. v4 names inference (and seed→inference, fail) per attribute. Anchor 5 allows inference as source class when stated."
+        },
+        {
+          "attack": "templates still do the real work; contract inventory is decorative",
+          "result": "reject",
+          "reason": "Contract explicitly: table is hard-gate-4 inventory; missing table attr = construction bug infer-again-or-fail; validation fail-closed after rubric write."
+        },
+        {
+          "attack": "predecided edge incomplete",
+          "result": "reject",
+          "reason": "Mode table: missing/invalid pre_decision → status=error, no write. Explicit fail-closed."
+        }
+      ],
+      "evidence": [
+        "call-contract.md Write fill paths § + Intent/Situation rules + Validation fail-closed.",
+        "REQUIRED_CONTEXT_KEYS / REQUIRED_RUBRIC_KEYS / REQUIRED_INDEX_KEYS all mapped.",
+        "Minimal Request examples; Response status/writes/errors/learning_log_row under standard."
+      ],
+      "reasoning": "SCORE: 5. This was the decisive v3 fail for audit3. v4 closes hard gate 4 with a full storage-mandatory inventory and source classes. Required+defaults complete capability; modes fail closed; Response carries operational + thin-host fields. Anchor 5 met; gate 4 and gate 7 pass. No remaining mandatory key without a fill path found after validator cross-walk."
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap: one job per field; aliases document winner + deprecation; multi-source precedence stated; default Response not audit echo stack.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "section_id + correlation_id still dual meaning",
+          "result": "reject",
+          "reason": "section_id removed as active field; alone → copy to correlation_id then discard. Winner + retirement complete. Pattern #6 (forever dual) does not fire."
+        },
+        {
+          "attack": "include×profile partial precedence (v3 smell forcing D3=4)",
+          "result": "reject",
+          "reason": "v4: non-null include replaces profile defaults entirely (not merge). Precedence complete."
+        },
+        {
+          "attack": "candidates + learning_log_row = audit echo",
+          "result": "reject",
+          "reason": "Contract states candidates operational; learning_log_row is session-log projection of primary candidate for thin hosts—not second decision channel. full-only holds intent_resolution/field_build. Pattern #5 does not fire."
+        }
+      ],
+      "evidence": [
+        "Intent rule and Situation rule ordered multi-source precedence.",
+        "No parallel context_hints/domain_hint channels.",
+        "Projection rule 2: include replaces; standard not audit stack paragraph."
+      ],
+      "reasoning": "SCORE: 5. Prior D3=3/4 residual smells (live alias surface, incomplete include merge, misclassified log row) are fixed or correctly non-echo. Anchor 5: one job per field; alias winner+retirement; multi-source precedence stated; default Response not audit echo. Do not invent residual dual-meaning failures."
+    },
+    {
+      "id": "d4",
+      "text": "D4 Clarity: stranger maps fields to roles; names match goal vs situation vs rule / seed vs stored / control vs opaque; defaults explicit; minimal third-party Request example.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "intents seed vs intent_keywords/intent_refs stored confuses strangers",
+          "result": "reject_as_anchor_fail",
+          "reason": "Intent rule explicitly maps seed→stored forms and generalizes. Mild reading cost remains but anchor 5 requires names match role with seed vs stored distinction — present."
+        },
+        {
+          "attack": "Response example lists skill/version not in standard include table",
+          "result": "non_blocking_nit",
+          "reason": "Real doc asymmetry, but D4 anchor 5 focuses on names/defaults/minimal Request examples — all present (minimal + seeded + predecided). Insufficient to force score 4 under do-not-invent."
+        }
+      ],
+      "evidence": [
+        "Request table with Required/Default/Class/Notes.",
+        "Examples: Minimal, Seeded goals, Predecided merge.",
+        "Intent rule vs Situation rule naming goal vs situation."
+      ],
+      "reasoning": "SCORE: 5. Defaults, classes, and three Request examples (including minimal third-party) meet anchor 5. Goal/situation/seed/stored/control/opaque roles are named. Micro-nit on Response envelope vs include list does not fail the stated D4 anchors."
+    },
+    {
+      "id": "d5",
+      "text": "D5 Consistency: modes, narrative, persistence agree; no dead fields; ephemeral vs durable with generalization; mode matrix matches minimal-call.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.91,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "Removed seeds accepted then ignored = dead inputs (anchor 1)",
+          "result": "reject",
+          "reason": "Not live Request fields; explicit Removed table + ignore unknown. Compatibility ignore is not silent dual persistence of decorative seeds."
+        },
+        {
+          "attack": "pre_decision accepted when mode≠predecided unspecified",
+          "result": "non_blocking_nit",
+          "reason": "Mode matrix implies gated use; fail-closed path is specified for the mode that uses it. Insufficient for D5=4 under excellence bar."
+        },
+        {
+          "attack": "context validation only recommended vs never write partial invalid",
+          "result": "reject",
+          "reason": "Construction fail-closed (table attrs) is mandatory; post-write validator required for rubrics, recommended for context — coherent with index coupling risk."
+        },
+        {
+          "attack": "minimal interactive call vs predecided fail-closed contradiction",
+          "result": "reject",
+          "reason": "Defaults interactive; predecided is opt-in control with explicit error path. Mode matrix matches minimal-call claim."
+        }
+      ],
+      "evidence": [
+        "predecided fail-closed sentence in mode table + SKILL rule 3.",
+        "Intent generalize / reject one-off titles.",
+        "learning_log_row fields omit section_id; No section_id field."
+      ],
+      "reasoning": "SCORE: 5. Persistence language matches seeds; generalization rule present; fail-closed predecided written; section_id dual-emit gone. Anchor 5 met. Documented ignore of removed fields and mode-gated pre_decision are not contradiction-level dead-input failures."
+    },
+    {
+      "id": "d6",
+      "text": "D6 Layering: Request is call I/O not full domain schema; no host control enums; callee owns Response.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "fill-path table dumps full file schema into contract → storage leakage",
+          "result": "reject",
+          "reason": "C4b explicitly scopes fill paths forced by storage hard gates into evaluation; Request table stays lean call I/O. Fill paths are construction rules, not Request fields."
+        },
+        {
+          "attack": "learning_log_path pulls session durability into callee",
+          "result": "reject",
+          "reason": "Optional side-write; multi-call session logs still caller-owned (coupling rule 4). Thin-host adapter, not host FSM enum."
+        },
+        {
+          "attack": "host tokens required",
+          "result": "reject",
+          "reason": "No PERSIST_OK/REVIEW_OK/host state required; SKILL forbids issuing host tokens."
+        }
+      ],
+      "evidence": [
+        "Roles table: callee owns entry construction/Response; caller packs Request.",
+        "Request fields are not template dump.",
+        "Coupling rules 1–2, 5."
+      ],
+      "reasoning": "SCORE: 5. Boundary correct: lean Request, storage fill paths as separate inventory (required by hard gate 4), no host control enums, callee-owned Response. Layering excellence, not leakage."
+    },
+    {
+      "id": "d7",
+      "text": "D7 Evolvability: version + changelog on field changes; alias winner + retirement path; additive optionals preferred.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "score": 5,
+      "contradiction_attempts": [
+        {
+          "attack": "changelog thin single-line → D7=4 only",
+          "result": "reject_as_force_below_5",
+          "reason": "v4 bullet names concrete field/behavior changes (fill-path inventory, section_id removal, fail-closed predecided, include replace, candidates vs learning_log_row, version 4). Anchor 5 does not require multi-page migration matrix."
+        },
+        {
+          "attack": "section_id shim forever",
+          "result": "reject",
+          "reason": "Active field removed; one-shot copy-then-discard is retirement path, not dual forever."
+        },
+        {
+          "attack": "no request-side version handshake",
+          "result": "non_blocking_nit",
+          "reason": "Response version + ignore-unknown support additive evolution; not required for D7=5 text."
+        }
+      ],
+      "evidence": [
+        "Version: **4**; Response version: 4.",
+        "Changelog v4 + Compatibility table.",
+        "Unknown other fields: ignore; removed seeds documented."
+      ],
+      "reasoning": "SCORE: 5. Version + changelog on contract changes; alias winner + completed retirement; additive/ignore-unknown preferred. Prior D7=4 was residual dual-alias until v4 — retirement is now done."
+    }
+  ],
+  "hard_gate_notes": {
+    "1": "project_root + human_feedback + defaults complete interactive path; predecided/propose_only documented.",
+    "2": "No host FSM tokens/states as required API.",
+    "3": "section_id not dual first-class; correlation_id winner; include replaces profile.",
+    "4": "Full write fill-path inventory matches validator REQUIRED keys and nested checks — v3 audit3 fail cured.",
+    "5": "Intent rule; Situation rule; include vs profile replace; section_id shim order.",
+    "6": "D1=5 ≥ 3.",
+    "7": "D2=5 ≥ 4.",
+    "8": "D5=5 ≥ 3."
+  },
+  "smells_non_blocking": [
+    "Response example shows skill/version while standard include list omits explicit envelope-always rule.",
+    "pre_decision when decision_mode≠predecided not one-line 'ignored'.",
+    "Removed v3 seeds still listed as ignore-if-sent (compat).",
+    "ask listed as source class in fill-path preamble without a table row that uses ask (write path uses fail instead)."
+  ],
+  "fix": [],
+  "claim_assessment": {
+    "claim": "call-contract v4 achieves all D1–D7 = 5.",
+    "supported": true,
+    "vs_v3_audit3": {
+      "d1": "was 4 (section_id surface) → 5 retired",
+      "d2": "was 3 (gate 4 incomplete) → 5 full inventory",
+      "d3": "was 3 then 4 → 5 include-replace + alias retired + non-echo clarified",
+      "d4": "was 4 → 5 examples+rules clear; residual nits non-anchor",
+      "d5": "was 4 → 5 fail-closed predecided written; log section_id gone",
+      "d6": "was 4 → 5 fill paths without Request schema dump",
+      "d7": "was 4 → 5 retirement completed"
+    }
+  },
+  "decision_policy_check": {
+    "all_hard_gates": "pass",
+    "d1_d6_ge_4": true,
+    "d7_ge_3_with_version_alias_plan": true,
+    "all_dimensions_exactly_5": true,
+    "verdict": "pass"
+  }
+}

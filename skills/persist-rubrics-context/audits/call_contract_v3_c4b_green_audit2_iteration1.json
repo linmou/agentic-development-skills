@@ -1,0 +1,229 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit2",
+  "claim": "persist-rubrics-context call-contract v3 passes C4b field-API design under call-contract-field-rubric.md: hard gates 1-8 all pass; D1–D6 each ≥ 4; D7 ≥ 3. Prior claimed scores were D1=5, D2=5, D3=4, D4=5, D5=5, D6=5, D7=4.",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.9,
+  "dimension_scores": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 4,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 4
+  },
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "Dimension D1 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:23-37",
+          "text": "Request table lists project_root, human_feedback (content); intents (seed); correlation_id/section_id/caller_tag (opaque); decision_mode/pre_decision (control); output_profile/include/learning_log_path (output) — each classed."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:41-47",
+          "text": "Removed in v3: context_hints, domain_hint, intent_seed_policy — former seed/policy bloat dropped; single intent rule replaces policy enum."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:78-85",
+          "text": "standard profile is minimal + learning_log_row + validation; intent_resolution/field_build only under full — no debug-only fields in default/standard."
+        }
+      ],
+      "reasoning": "SCORE: 5. Every Request field maps to content, seed, control, output, or opaque bookkeeping; v3 removes decorative situation/policy channels; standard Response stays non-debug. Meets D1≥4.",
+      "counterevidence": []
+    },
+    {
+      "id": "d2",
+      "text": "Dimension D2 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:87-94",
+          "text": "Minimal third-party Request: only project_root + human_feedback."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:51-58",
+          "text": "Intent fill path: non-empty intents → else infer from human_feedback → generalize durable goals → intent_keywords / intent_refs."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:60-68",
+          "text": "Situation grounding precedence when seeds omitted: claim in human_feedback → disk contexts → infer domain; only decided append/merge writes."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:129-159",
+          "text": "Response carries status, candidates, writes, validation, learning_log_row, errors."
+        }
+      ],
+      "reasoning": "SCORE: 5. Required fields + defaults complete the write capability with explicit inference/fail-closed paths; mandatory stored intent/situation attributes have sources; Response is structured (status/writes/errors + optional log row). Meets D2≥4; hard gates 1 and 4 supported.",
+      "counterevidence": []
+    },
+    {
+      "id": "d3",
+      "text": "Dimension D3 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.88,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:31",
+          "text": "section_id is deprecated alias of correlation_id; if both set, correlation_id wins."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:51-66",
+          "text": "Single intent rule and ordered situation channels; no parallel hint field."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:186-190",
+          "text": "intent_resolution and field_build optional full-only — not default Response audit stack."
+        }
+      ],
+      "reasoning": "SCORE: 4. Fields are largely orthogonal with stated multi-source precedence and a documented alias winner; residual dual Request surface (section_id through v3) is mild overlap, not silent dual meaning. Meets D3≥4; hard gate 3 supported.",
+      "counterevidence": []
+    },
+    {
+      "id": "d4",
+      "text": "Dimension D4 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:25-37",
+          "text": "Table: Required, Default, Class, Notes for each field — defaults explicit."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:87-107",
+          "text": "Examples include minimal third-party Request and seeded goals Request."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:29",
+          "text": "intents described as optional goal strings / seeds write-time intent fields — seed vs stored role named."
+        }
+      ],
+      "reasoning": "SCORE: 5. Names match roles (content/seed/control/output/opaque); defaults and classes are table-explicit; stranger-usable minimal + seeded examples present. Meets D4≥4.",
+      "counterevidence": []
+    },
+    {
+      "id": "d5",
+      "text": "Dimension D5 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.91,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:70-76",
+          "text": "decision_mode matrix: interactive/predecided/propose_only with who decides and whether writes occur."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:68",
+          "text": "Only decided append/merge writes persist; no parallel hint channel."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:19",
+          "text": "Opaque labels caller_tag/correlation_id are log-only; callee never branches control on them."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:57",
+          "text": "Before write, generalize to durable goals; reject one-off session titles as sole intent_refs."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:49",
+          "text": "Unknown fields ignored (including removed v2 seeds) — no dead accepted-then-used dual story for removed fields."
+        }
+      ],
+      "reasoning": "SCORE: 5. Mode matrix matches minimal-call story; persistence matches seed language; ephemeral/session goals distinguished via generalization rule; no silent durable promotion of opaque or removed seeds. Meets D5≥4; hard gates 5 and 8 supported.",
+      "counterevidence": []
+    },
+    {
+      "id": "d6",
+      "text": "Dimension D6 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:11-16",
+          "text": "Callee owns candidates, field construction, writes, Response schema; Caller packs Request and chooses which Response fields to keep — not full domain file dump as Request."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:194-201",
+          "text": "Coupling: callee never issues host tokens; opaque labels not control enums; callee owns row shape."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:33",
+          "text": "decision_mode values are interactive|predecided|propose_only — not host FSM state names."
+        }
+      ],
+      "reasoning": "SCORE: 5. Request is call I/O (not memory file schema); host tokens/states are not required API; callee owns Response. Meets D6≥4; hard gate 2 supported.",
+      "counterevidence": []
+    },
+    {
+      "id": "d7",
+      "text": "Dimension D7 meets minimum (D1-D6 ≥4, D7 ≥3)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:3",
+          "text": "Version: 3"
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:201",
+          "text": "Contract changes bump version and update the changelog."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:31",
+          "text": "section_id accepted through v3; removed in v4; correlation_id wins if both set."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:214-218",
+          "text": "Changelog entries for v3/v2/v1 documenting lean API field drops and deprecations."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:49",
+          "text": "Unknown fields: ignore (forward compatible)."
+        }
+      ],
+      "reasoning": "SCORE: 4. Versioned contract with changelog, alias winner, and explicit v4 retirement path; additive/ignore-unknown preferred. Changelog is brief but present — good not maximal. Meets D7≥3.",
+      "counterevidence": []
+    }
+  ],
+  "open_questions": [],
+  "disputed_points_if_any": []
+}

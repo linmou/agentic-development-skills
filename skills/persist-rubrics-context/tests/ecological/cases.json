@@ -1,0 +1,76 @@
+{
+  "design": "session-ecological",
+  "packaging": {
+    "source_of_truth": "~/.grok/sessions/<urlencode(cwd)>/<session-id>/",
+    "model_bound_history": "chat_history.jsonl",
+    "notes": [
+      "chat_history.jsonl is the raw message list the harness keeps as model-facing chat (system, synthetic user blocks, real <user_query> turns, assistant, tool_result).",
+      "Synthetic early user blocks inject user_info, project instructions, and Available Skills (name + description + absolute path).",
+      "updates.jsonl is the ACP UI stream; not a substitute for chat_history when scoring invoke.",
+      "Headless ecological probes: grok -p / grok -r with multi-turn; optional plant prefix by writing chat_history.jsonl then -r --fork-session.",
+      "Primary suite only. No explicit Use $skill lab controls."
+    ]
+  },
+  "pass_criteria": {
+    "strict_invoke": [
+      "tool read of persist-rubrics-context/SKILL.md (not merely the path string inside Available Skills text)",
+      "OR call-contract path (candidates + append|merge|skip|pending / propose_only Response)",
+      "must not only rewrite discussion_outputs/** unit prose"
+    ],
+    "catalog_precondition": "Available Skills block in that session's chat_history must list persist-rubrics-context (else auto-invoke is harness-impossible)"
+  },
+  "cases": [
+    {
+      "id": "ECO1_replay_prefix_original_miss",
+      "kind": "session_prefix_replay",
+      "source_session": "019f65eb-5e6a-7592-950e-9bf56b1e8dd1",
+      "prefix_fixture": "ECO1_prefix_chat_history.jsonl",
+      "probe_fixture": "ECO1_probe_user.txt",
+      "critical_index": 24,
+      "setup": "Plant chat_history prefix lines 0..23 (through B1 open after DRAFT_OK). Resume with --fork-session. Send probe = original academic Discussion constraints (no $skill name).",
+      "precondition_observed": {
+        "skills_in_prefix": 47,
+        "persist_in_available_skills": false
+      },
+      "gold": "strict_invoke if catalog lists skill; if catalog omits skill, harness_gap",
+      "run": {
+        "planted_session": "d4a6190e-83cd-4a5f-a786-be5f0d4bd523",
+        "result_session": "019f6610-76c7-7cd0-ba7d-eac4ca5654f5",
+        "result_file": "ECO1_run.json",
+        "pass_strict_invoke": false,
+        "fail_mode": "harness_catalog_missing_skill"
+      }
+    },
+    {
+      "id": "ECO2_fresh_multiturn_current_catalog",
+      "kind": "fresh_multiturn",
+      "setup": "Turn1: natural mid-B1 co-review status (co-improve path, DRAFT_OK, open B1) without naming persist. Turn2: same probe as ECO1.",
+      "precondition_observed": {
+        "persist_in_available_skills": true
+      },
+      "gold": "strict_invoke true when catalog has skill (caller/host must spawn or model must load)",
+      "run": {
+        "session_id": "019f6612-0000-7000-8000-0000000000e2",
+        "turn1": "ECO2_turn1.json",
+        "turn2": "ECO2_turn2.json",
+        "pass_strict_invoke": false,
+        "fail_mode": "prose_only_no_skill_load"
+      }
+    },
+    {
+      "id": "ECO3_negative_continue",
+      "kind": "fresh_multiturn",
+      "setup": "Same Turn1 as ECO2. Turn2 probe: 'continue' or 'looks fine'.",
+      "gold": "must NOT load persist skill; no learnt write",
+      "status": "not_run_yet"
+    }
+  ],
+  "next_hypothesis": "Caller learn-screen reduced prose-only rewrite but agent still short-circuits when learnt/ already has matching contexts, or inlines memory without reading callee. Tighten: learn-screen must still run $persist-rubrics-context (even propose_only / no_candidate) unless human message is unit-only; reading learnt/ alone is not a substitute.",
+  "ECO2b": {
+    "id": "ECO2b_post_learn_screen_patch",
+    "session_id": "019f6613-0000-7000-8000-0000000000e2",
+    "pass_strict_invoke": false,
+    "fail_mode": "no_skill_no_unit_informal_memory",
+    "notes": "Catalog had skill. Agent treated probe as durable constraints, inspected learnt/ contexts already present, did not rewrite B1 unit, but never loaded persist-rubrics-context/SKILL.md and did not state learn-screen class. Inlined memory judgment instead of callee."
+  }
+}

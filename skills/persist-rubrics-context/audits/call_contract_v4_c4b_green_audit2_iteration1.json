@@ -1,0 +1,358 @@
+{
+  "feature_name": "call_contract_v4_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit2",
+  "role": "charitable_but_evidence_bound",
+  "scope": "Score C4b D1–D7 and hard gates 1–8 for call-contract v4 (references/call-contract.md Version **4**).",
+  "claim": "call-contract v4 achieves D1=D2=D3=D4=D5=D6=D7=5 (all hard gates pass).",
+  "contract_path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+  "rubric_path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.93,
+  "dimension_scores": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 5,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 5
+  },
+  "hard_gates": {
+    "1_minimal_call_works": "pass",
+    "2_no_host_control_enums": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "pass",
+    "5_precedence": "pass",
+    "6_necessity_floor_d1_ge_3": "pass",
+    "7_sufficiency_floor_d2_ge_4": "pass",
+    "8_consistency_floor_d5_ge_3": "pass"
+  },
+  "field_inventory": [
+    {"field": "project_root", "class": "content", "needed": "yes", "overlaps": "no", "precedence": "n/a", "keep_merge_drop": "keep"},
+    {"field": "human_feedback", "class": "content", "needed": "yes", "overlaps": "sole free-form channel; multi-use under intent/situation rules", "precedence": "claim first for situation", "keep_merge_drop": "keep"},
+    {"field": "intents", "class": "seed", "needed": "optional", "overlaps": "seeds intent_* / intent_refs only", "precedence": "non-empty intents → else infer", "keep_merge_drop": "keep"},
+    {"field": "correlation_id", "class": "opaque", "needed": "bookkeeping", "overlaps": "section_id shim only", "precedence": "correlation_id wins; section_id not a Request field", "keep_merge_drop": "keep"},
+    {"field": "caller_tag", "class": "opaque", "needed": "bookkeeping", "overlaps": "no", "precedence": "log-only", "keep_merge_drop": "keep"},
+    {"field": "decision_mode", "class": "control", "needed": "yes", "overlaps": "pairs with pre_decision", "precedence": "mode matrix", "keep_merge_drop": "keep"},
+    {"field": "pre_decision", "class": "control", "needed": "when predecided", "overlaps": "no dual write channel", "precedence": "required under predecided (fail-closed)", "keep_merge_drop": "keep"},
+    {"field": "output_profile", "class": "output", "needed": "yes", "overlaps": "with include", "precedence": "include non-null replaces profile defaults entirely", "keep_merge_drop": "keep"},
+    {"field": "include", "class": "output", "needed": "override", "overlaps": "with output_profile", "precedence": "replace not merge when non-null", "keep_merge_drop": "keep"},
+    {"field": "learning_log_path", "class": "output", "needed": "side-log", "overlaps": "does not change Response shape", "precedence": "side-write of computed learning_log_row", "keep_merge_drop": "keep"},
+    {"field": "section_id", "class": "removed_shim", "needed": "no", "overlaps": "compat only", "precedence": "if sent without correlation_id → copy once then discard", "keep_merge_drop": "drop as field; shim only"}
+  ],
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "D1 Necessity (minimal surface): every Request and default-profile Response field earns its place; no debug-only fields in standard; no enum that only renames seed-if-present-else-infer.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:25-37",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Request fields each Classed content|seed|opaque|control|output with defaults; no decorative policy seed."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:40-47",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Not in Request: context_hints/domain_hint/intent_seed_policy removed (v3); section_id removed (v4) — only a one-shot correlation_id shim."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:66-73",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "standard include: status, candidates, writes, validation, learning_log_row, errors; full adds proposals/raw_validator_log/intent_resolution/field_build — debug/audit not default."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:120-125",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Intent rule is ordered seed→inference procedure, not a Request policy enum."
+        }
+      ],
+      "counterevidence": [
+        "Three decision_mode values + pre_decision is a multi-mode control surface (not pure minimal).",
+        "Three output knobs (output_profile, include, learning_log_path)."
+      ],
+      "reasoning": "SCORE: 5. Every live Request field maps to content, seed, control, output, or opaque bookkeeping. v3 dropped situation/policy bloat; v4 drops section_id as a field. decision_mode values change who decides and whether writes occur (real control), not rename 'use seed else infer'. standard Response has no field_build/intent_resolution. Output trio are orthogonal jobs (preset / replace-set / side-log path). Meets anchor 5; hard gate 6 pass."
+    },
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency (capability-complete): required+defaults complete capability or fail closed; every mandatory stored attribute has defined source; Response carries status/writes/errors and optional log row. Floor D2 ≥ 4; hard gate 4.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:146-153",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Minimal Request: project_root + human_feedback only."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:77-80",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Write fill paths: sources only required | seed | inference | ask | fail; table is hard-gate-4 inventory without adding Request fields."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:84-118",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Inventory covers id, lifecycle, domain folder; context statement/intent_keywords/context_keywords/scope.*; rubric title/intent_keywords/context_keywords/applicability.*/applicability_summary/dependencies.*/decision_rule.*/path/status."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:49-55",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Fail-closed predecided: missing/invalid pre_decision → status=error, no write; propose_only never writes; interactive defer → pending."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:137-140",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Validation fail-closed after rubric write; missing table attribute is construction bug — never write partial invalid JSON knowingly."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:181-213",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Response: status, candidates, writes, validation, learning_log_row, errors — thin-host complete."
+        },
+        {
+          "kind": "quote",
+          "location": "tests:test_call_contract_v4_fill_paths",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/tests/test_skill_semantics.py",
+          "text": "Smoke asserts Version 4, Write fill paths, context_keywords, scope.include, applicability.include, fail-closed; section_id not first-class Request row."
+        },
+        {
+          "kind": "quote",
+          "location": "validate_rubric_memory.py:180-190,223-230",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/scripts/validate_rubric_memory.py",
+          "text": "Storage enforces non-empty context_keywords, scope.include/exclude, applicability.include/exclude — matches fill-path inventory."
+        }
+      ],
+      "counterevidence": [
+        "Context-write validation is 'recommended' not mandatory (rubric write is required).",
+        "v3 audits disputed whether unnamed attrs blocked D2; v4 names them — residual risk is implementer quality of inference, not missing source class."
+      ],
+      "reasoning": "SCORE: 5. This is the v3 red-gate fix. Hard gate 4 required every storage-mandatory attribute to have a defined source on the contract surface; v4's Write fill paths table line-items context_keywords, scope.*, applicability.*, decision_rule.*, index fields, id/lifecycle/domain with source classes. Required+defaults complete the job (minimal example) or fail closed (predecided/validation). Response carries status/writes/errors + learning_log_row. Anchor 5 met; hard gates 1, 4, 7 pass. Claimed D2=5 supported."
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap: one job per field; aliases document winner+deprecation; multi-source precedence stated; default Response not audit echo stack.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:45-46",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "section_id removed (v4); if sent without correlation_id, copy once into correlation_id then discard (compat shim, not a second field)."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:59-64",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "If include is non-null list → replaces profile defaults entirely (not merge)."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:73",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Standard Response is not an audit echo stack: candidates operational; learning_log_row is session-log projection of primary decided candidate — not second decision channel; intent_resolution/field_build full-only."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:120-135",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Intent rule and Situation rule state ordered multi-source precedence; no parallel hint channel."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:225-228",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "learning_log_row fields listed; No section_id field."
+        }
+      ],
+      "counterevidence": [
+        "section_id still accepted as one-shot shim input (not dual first-class forever).",
+        "candidates[] and learning_log_row still share decision/status/summary-ish payload for the primary candidate (intentional thin-host projection, now role-separated in text)."
+      ],
+      "reasoning": "SCORE: 5. v3 held D3 at 4 for residual section_id dual surface, include×profile merge underspec, and mild candidates/log echo. v4 retires section_id as a field (shim-only winner path), states include replaces not merges, and explicitly denies audit-echo reading of standard Response while keeping learning_log_row as D2 thin-host surface. Multi-source attributes have stated precedence. Pattern #5 targets resolution/field_build on standard — those remain full-only. Mild shared payload is one job each (list vs log row), not dual decision channels. Anchor 5 met; hard gate 3 pass."
+    },
+    {
+      "id": "d4",
+      "text": "D4 Clarity: stranger maps fields to roles without host folklore; defaults explicit; minimal third-party Request example.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:25-37",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Request table: Required, Default, Class, Notes for every field."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:146-177",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Examples: Minimal; Seeded goals; Predecided merge — stranger third-party shapes."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:11-16",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Roles table: Callee owns field construction; Caller packs Request — no host FSM required in names."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:92-100 / 120-125",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "intent_keywords vs context_keywords roles named (goals vs situation tags); Intent rule generalizes durable goals."
+        }
+      ],
+      "counterevidence": [
+        "Domain folder inference 'from content topic keywords (e.g. workflow, writing)' is illustrative not exhaustive.",
+        "pre_decision object map form is one dense sentence."
+      ],
+      "reasoning": "SCORE: 5. Names match role (goal vs situation, seed vs stored, control vs opaque); defaults and classes are table-explicit; minimal + seeded (+ predecided) examples present. No host-shaped required enums. Micro-underspec on domain taxonomy does not drop below excellent for a stranger mapping call I/O. Meets anchor 5."
+    },
+    {
+      "id": "d5",
+      "text": "D5 Consistency: modes, narrative, and persistence rules agree; no dead fields; ephemeral vs durable distinguished.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:49-57",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Mode matrix: interactive/predecided/propose_only with Decider, Writes, Fail-closed columns; predecided missing/invalid → error no write."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:19 / 242",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Opaque labels log-only; never control flow / not control enums."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:122-125 / 135",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Generalize to durable goals; reject sole one-off titles; only decided append/merge persist."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:40-47 / 247-255",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Removed fields ignored or shimmed as documented; Compatibility table matches narrative (section_id → correlation_id; intent_resolution needs full/include)."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:63-64",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "learning_log_path does not change Response shape; side-writes same learning_log_row if computed."
+        }
+      ],
+      "counterevidence": [
+        "If both section_id and correlation_id are sent, discard of section_id is implied by 'without correlation_id' wording rather than an explicit both-set sentence (winner still clear)."
+      ],
+      "reasoning": "SCORE: 5. Mode matrix matches minimal-call and fail-closed claims; persistence matches seed language; generalization rule distinguishes session vs durable; no accepted-then-silently-used dual story for removed seeds. Opaque never steers control. Hard gates 5 and 8 pass. Both-set section_id wording is a micro-nit, not a contradiction that forces D5≤4."
+    },
+    {
+      "id": "d6",
+      "text": "D6 Layering: Request is call I/O not file schema dump; no host tokens as required API; callee owns schema.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:5-9 / 11-16",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Scope out of host lifecycle/tokens; Roles: callee owns field construction, writes, Response schema; caller packs Request only."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:82",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Fill-path table does not add Request fields (keeps layering: Request stays call I/O)."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:239-245",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Coupling: never reimplement validators; never name parent skill; never issue host tokens; opaque not control; callee owns row shape."
+        },
+        {
+          "kind": "quote",
+          "location": "tests:test_call_contract_v4_fill_paths / test_does_not_collect_persist_ok",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/tests/test_skill_semantics.py",
+          "text": "Contract must not contain co-improvement-adapt, PERSIST_OK, learn-interrupt host tokens."
+        }
+      ],
+      "counterevidence": [],
+      "reasoning": "SCORE: 5. Request remains lean call I/O; storage-mandatory attributes appear as fill-path rules with sources, not as dumped Request schema. decision_mode is interactive|predecided|propose_only — not host FSM names. Hard gate 2 pass. Anchor 5 met."
+    },
+    {
+      "id": "d7",
+      "text": "D7 Evolvability: version + changelog; alias winner + retirement path; additive optionals preferred.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:3",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Version: **4**"
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:245 / 257-261",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Version bumps + changelog on contract changes; Changelog **4** lists fill-path inventory, section_id removal, fail-closed predecided, include replaces, candidates vs learning_log_row, Response version 4."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:45-46 / 253-254",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "section_id retirement executed: not a Request field; shim path; hosts expecting learning_log_row.section_id use correlation_id."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:48 / 249-255",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Unknown fields ignored; Compatibility for minimal v1–v3 Requests and additive seeds."
+        }
+      ],
+      "counterevidence": [
+        "No request-side version handshake field (caller does not declare contract version).",
+        "v1/v2 changelog line is thin ('Superseded')."
+      ],
+      "reasoning": "SCORE: 5. Anchor 5 wants version + changelog on field changes, alias winner + retirement path, additive optionals over silent breaks. v4 ships versioned Response, substantive changelog for this major, and actually retires section_id (the planned path from v3 audits). Ignore-unknown + Compatibility table favor additive/forward use. Missing handshake and thin v1/v2 notes are residual polish, not enough under charitable reading to hold at 4 when retirement was executed. Meets D7≥3 pass bar at excellence."
+    }
+  ],
+  "smells_non_blocking": [
+    "section_id both-set case relies on 'without correlation_id' implication rather than an explicit 'if both, correlation_id wins; discard section_id' sentence",
+    "context-write validation 'recommended' vs rubric-write mandatory — mild asymmetry",
+    "v1/v2 changelog still 'Superseded' one-liner",
+    "no request-side contract version handshake (not required by anchor text)"
+  ],
+  "open_questions": [],
+  "disputed_points_if_any": [],
+  "claim_assessment": {
+    "claim_text": "call-contract v4 achieves D1=D2=D3=D4=D5=D6=D7=5 (all hard gates pass).",
+    "claim_supported": true,
+    "notes": "v4 closes the v3 C4b failure mode (hard gate 4 / D2 fill-path inventory) and the residual D3/D7 alias+merge smells. Charitably evidence-bound scores are all 5; all eight hard gates pass; overall_verdict pass."
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "feature_name": "call_contract_v4_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_count": 3,
+  "status": "converged",
+  "disputed_criteria": [],
+  "criteria": {
+    "d1": {
+      "criterion_text": "D1 Necessity score exactly 5 (blocking). Each Request/default-profile Response field is content, seed, control, output, or opaque; no debug-only fields in standard; no enum that only renames seed-if-present-else-infer.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.95,
+        0.94,
+        0.94
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d2": {
+      "criterion_text": "D2 Sufficiency score exactly 5 (blocking). Required+defaults complete capability or fail closed; every mandatory stored attribute has a named fill source; Response carries status/writes/errors and optional log row.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.94,
+        0.95,
+        0.96
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d3": {
+      "criterion_text": "D3 Non-overlap score exactly 5 (blocking). One job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.92,
+        0.92,
+        0.93
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d4": {
+      "criterion_text": "D4 Clarity score exactly 5 (blocking). Names match roles; defaults explicit; examples include a minimal third-party Request and optionally a seeded Request.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.94,
+        0.94,
+        0.92
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d5": {
+      "criterion_text": "D5 Consistency score exactly 5 (blocking). Modes, narrative, and persistence rules agree; no dead fields; ephemeral vs durable distinguished with generalization when needed.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.91,
+        0.93,
+        0.91
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d6": {
+      "criterion_text": "D6 Layering score exactly 5 (blocking). Request is call I/O not file schema; host tokens/states not required enums; callee owns schema.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.95,
+        0.95,
+        0.94
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    },
+    "d7": {
+      "criterion_text": "D7 Evolvability score exactly 5 (blocking). Version + changelog on field changes; alias winner + retirement path; additive optionals preferred over silent breaks.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.93,
+        0.92,
+        0.93
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    }
+  }
+}

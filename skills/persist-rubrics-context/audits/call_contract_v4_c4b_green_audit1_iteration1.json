@@ -1,0 +1,303 @@
+{
+  "feature_name": "call_contract_v4_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit1",
+  "claim": "call-contract v4 achieves D1=D2=D3=D4=D5=D6=D7=5 under the field rubric (all hard gates pass).",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.93,
+  "dimension_scores": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 5,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 5
+  },
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "D1 Necessity score exactly 5 (blocking). Each Request/default-profile Response field is content, seed, control, output, or opaque; no debug-only fields in standard; no enum that only renames seed-if-present-else-infer.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `project_root` | yes | — | content | ... |\n| `human_feedback` | yes* | — | content | ... |\n| `intents` | no | `[]` | seed | ... |\n| `correlation_id` | no | `null` | opaque | ... |\n| `caller_tag` | no | `\"standalone\"` | opaque | ... |\n| `decision_mode` | no | `\"interactive\"` | control | ... |\n| `pre_decision` | no | `null` | control | ... |\n| `output_profile` | no | `\"standard\"` | output | ... |\n| `include` | no | `null` | output | If non-null, **replaces** profile defaults entirely |\n| `learning_log_path` | no | `null` | output | ..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `section_id` | Removed (v4); if sent **without** `correlation_id`, copy once into `correlation_id` then discard (compat shim, not a second field) |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `standard` | `status`, `candidates`, `writes`, `validation`, `learning_log_row`, `errors` |\n| `full` | standard + `proposals`, `raw_validator_log`, `intent_resolution`, `field_build` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Each field is content, seed, control, output, or opaque bookkeeping; no debug-only fields in default/`standard` profile; no enum that only renames “use seed if present else infer” |"
+        }
+      ],
+      "counterevidence": [
+        "decision_mode still has three values; justified because each changes write behavior (interactive/predecided/propose_only), not a rename of the intent seed rule (intent_seed_policy already removed in v3)."
+      ],
+      "reasoning": "SCORE: 5. Every Request field maps to content/seed/control/output/opaque with a capability reason. section_id is no longer a first-class Request row (compat shim only). standard Response excludes intent_resolution/field_build/raw_validator_log (full-only debug/audit). decision_mode encodes real write/decision paths, not seed-vs-infer policy. D1 anchor 5 met; necessity floor hard gate 6 passes."
+    },
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency score exactly 5 (blocking). Required+defaults complete capability or fail closed; every mandatory stored attribute has a named fill source; Response carries status/writes/errors and optional log row.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "## Write fill paths (storage-mandatory fields)\n\nCallee **must** populate every attribute required by storage templates / `validate_rubric_memory.py` before a successful write.  \nSources (only these): `required` Request · `seed` Request · `inference` from `human_feedback` (+ disk where noted) · `ask` (interactive) · `fail` (error / no write).\n\nThis table is the hard-gate-4 inventory."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `context_keywords` | inference | Short situation tags from the claim ... |\n| `scope.include` | inference | Where the fact applies (non-empty list) |\n| `scope.exclude` | inference | Where it does not apply (non-empty list) |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `applicability.include` | inference | When to apply the rubric (non-empty) |\n| `applicability.exclude` | inference | When not to (non-empty) |\n| `decision_rule.score_*_rule` | inference | From feedback criteria / score meanings; only levels justified by feedback (min one level set) |\n| `decision_rule.score_*_support_examples` | inference | ... |\n| `decision_rule.score_*_counter_examples` | inference | ..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Decision modes (fail-closed)\n| Mode | Decider | Writes | Fail-closed |\n| `interactive` | Human in-run | on append/merge | Defer → `pending`, no write |\n| `predecided` | `pre_decision` | on append/merge | If `pre_decision` missing/invalid → `status=error`, no write |\n| `propose_only` | none | never | Candidates stay `pending` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Validation fail-closed\nAfter any rubric write ... If validation fails → do not leave partial index/file inconsistent; report `validation.ok=false` and fix or `status=error`. Missing any table attribute above is a construction bug (infer again or fail)—never write partial invalid JSON knowingly."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Minimal\n{\n  \"project_root\": \"/path/to/project\",\n  \"human_feedback\": \"Always prefer short commit messages under 50 chars.\"\n}"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Required + defaults complete the capability or fail closed with an explicit rule; every attribute the callee must write has source: required input, optional seed, inference, ask, or fail; Response carries status, writes/errors, and optional log row for thin hosts |\n4. **Write fill path** — every mandatory stored attribute has a defined source\n7. **Sufficiency floor** — D2 ≥ 4"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/scripts/validate_rubric_memory.py",
+          "quote": "REQUIRED_CONTEXT_KEYS = {id, statement, intent_keywords, context_keywords, scope, lifecycle}; REQUIRED_RUBRIC_KEYS = {id, title, applicability, decision_rule, dependencies, lifecycle}; REQUIRED_INDEX_KEYS include intent_keywords, context_keywords, applicability_summary, path, status"
+        }
+      ],
+      "counterevidence": [
+        "v3 audits correctly failed hard gate 4 for missing named fill paths on context_keywords/scope/applicability/decision_rule; v4 adds the inventory those audits required.",
+        "decision_rule is patterned as score_* rather than enumerating every possible score level key; acceptable because the source class and construction rule are stated for each used level, with min-one-level and fail-closed validation."
+      ],
+      "reasoning": "SCORE: 5. ACCEPT that v3 D2 failed gate 4; REJECT carrying that fail into v4. The Write fill paths section is an explicit hard-gate-4 inventory covering all storage-mandatory context, rubric, and index attributes (including the previously missing context_keywords, scope.*, applicability.*, decision_rule score blocks, lifecycle, domain folder, path/status). Sources are limited to required|seed|inference|ask|fail. Minimal Request is documented; modes fail closed (predecided missing pre_decision → error/no write; interactive defer → pending; propose_only never writes; validation fail-closed). Response standard carries status, candidates, writes, validation, learning_log_row, errors. Anchor 5 and hard gates 1/4/7 met."
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap score exactly 5 (blocking). One job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `section_id` | Removed (v4); if sent **without** `correlation_id`, copy once into `correlation_id` then discard (compat shim, not a second field) |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "2. If `include` is a non-null list → **replace** that set with `include` (not merge)."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**Standard Response is not an audit echo stack:** `candidates` is the operational list; `learning_log_row` is the **session-log projection of the primary decided candidate** (first decided, else first pending) for thin hosts—not a second decision channel. `intent_resolution` / `field_build` appear only under `full`."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Intent rule (seed → inference)\n1. If Request `intents` non-empty → primary seeds.\n2. Else → infer goals from `human_feedback` ...\n### Situation rule ...\nPrecedence:\n1. Claim in `human_feedback` ...\n2. Existing disk contexts under `project_root`\n3. Infer remaining situation tags / domain from content\nOnly decided `append`/`merge` persist. No parallel hint channel."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "No `section_id` field."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | One job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack |\nCommon failure patterns\n5. Audit echo in standard Response (resolution + tags + field_build)\n6. Alias soup (`section_id` + `correlation_id` both first-class forever)"
+        }
+      ],
+      "counterevidence": [
+        "learning_log_row still restates decision/status/summary also visible on candidates[]; contract classifies this as intentional thin-host session-log projection (also required by D2 anchor 5), not pattern #5 audit echo.",
+        "section_id compat shim remains for bare sends; not first-class dual surface—winner is correlation_id, then discard."
+      ],
+      "reasoning": "SCORE: 5. v3 residual D3 smells are closed in v4: (1) section_id removed from Request surface; retirement path complete with one-shot correlation_id shim—not alias soup forever. (2) include vs output_profile precedence is explicit replace-not-merge (closes the v3 partial-precedence ding that held D3 at 4). (3) standard Response explicitly non-audit-echo; intent_resolution/field_build full-only. Multi-source intent and situation attributes have ordered precedence; parallel hint channels remain removed. Anchor 5 and hard gates 3/5 met."
+    },
+    {
+      "id": "d4",
+      "text": "D4 Clarity score exactly 5 (blocking). Names match roles; defaults explicit; examples include a minimal third-party Request and optionally a seeded Request.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.94,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Field | Required | Default | Class | Notes |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**Opaque labels:** `caller_tag` and `correlation_id` are log-only; never control flow."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Minimal\n...\n### Seeded goals\n...\n### Predecided merge\n..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "3. **Generalize** to durable goals (reusable across runs). Reject sole use of one-off titles (“Finish B1 today”).\n4. `intent_refs` = goal sentence(s); `intent_keywords` = short tokens from those goals + feedback."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `context_keywords` | inference | Short situation tags from the claim (what world/state the fact is about)—not goals |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Names match role (goal vs situation vs rule; seed vs stored; control vs opaque); defaults explicit; examples include a **minimal** third-party Request and optionally one seeded Request |"
+        }
+      ],
+      "counterevidence": [],
+      "reasoning": "SCORE: 5. Request table states Required/Default/Class/Notes; opaque vs control is front-matter; goal vs situation is named in intent/situation rules and context_keywords note; seed vs stored is layered via fill-path table without dumping file schema into Request. Examples include minimal third-party Request, seeded goals, and predecided merge. A stranger can map fields without host folklore. Anchor 5 met."
+    },
+    {
+      "id": "d5",
+      "text": "D5 Consistency score exactly 5 (blocking). Modes, narrative, and persistence rules agree; no dead fields; ephemeral vs durable distinguished with generalization when needed.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.91,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Mode | Decider | Writes | Fail-closed |\n| `interactive` | Human in-run | on append/merge | Defer → `pending`, no write |\n| `predecided` | `pre_decision` | on append/merge | If `pre_decision` missing/invalid → `status=error`, no write |\n| `propose_only` | none | never | Candidates stay `pending` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `context_hints`, `domain_hint`, `intent_seed_policy` | Removed (v3); ignored if sent |\n| `section_id` | Removed (v4); if sent **without** `correlation_id`, copy once into `correlation_id` then discard |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "3. **Generalize** to durable goals ... Reject sole use of one-off titles (“Finish B1 today”).\nOnly decided `append`/`merge` persist. No parallel hint channel."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Minimal v1–v3 Request | Valid; fill paths apply |\n| Removed seeds / `section_id` alone | Ignored or shimmed as above |\n| Expects `learning_log_row.section_id` | Use `correlation_id` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "No `section_id` field."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | No dead fields; persistence rules match seed language; mode matrix matches minimal-call claim; ephemeral vs durable inputs distinguished with a generalization rule when needed |\n8. **Consistency floor** — D5 ≥ 3"
+        }
+      ],
+      "counterevidence": [
+        "pre_decision when decision_mode ≠ predecided is not labeled 'ignored' in one sentence; mode matrix makes it mode-gated control, not a silent durable seed—insufficient to drop below 5."
+      ],
+      "reasoning": "SCORE: 5. Mode matrix matches minimal-call defaults (interactive) and documents fail-closed edges. Removed seeds are ignored, not silently persisted. section_id is retired with documented shim, and learning_log_row no longer carries section_id. Intent seeds require generalization before durable write; one-off session titles rejected. include-replaces-profile matches projection steps. Hard gate 8 and D5 anchor 5 met."
+    },
+    {
+      "id": "d6",
+      "text": "D6 Layering score exactly 5 (blocking). Request is call I/O not file schema; host tokens/states not required enums; callee owns schema.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.95,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**Out of scope:** host lifecycle, host tokens, full retrieve orchestration (see `memory-protocol.md`)."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| **Callee** | Candidates, **entry field construction** (fill paths below), decisions, JSON writes, validation, Response schema | Host FSM, host tokens, multi-call session log lists |\n| **Caller** | When to invoke, Request packing, which Response fields to keep | Memory layout, validators, inventing Response schema |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "This table is the hard-gate-4 inventory. It does **not** add Request fields (keeps layering: Request stays call I/O)."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "2. Callee never names a parent skill; never issues host tokens.\n3. Opaque labels are not control enums."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Request is call I/O not file schema (unless skill job is schema edit); host tokens/states not required enums; callee owns schema; host adapter only packs/merges |\n2. **No host control enums** — third party need not know host state names as required API"
+        }
+      ],
+      "counterevidence": [],
+      "reasoning": "SCORE: 5. Request remains lean call I/O; storage-mandatory attributes are fill-path construction rules, not Request schema dump. Host tokens/FSM states are not required enums. Callee owns Response schema, validators, and memory layout; caller packs Request and chooses which Response fields to keep. Hard gate 2 and D6 anchor 5 met."
+    },
+    {
+      "id": "d7",
+      "text": "D7 Evolvability score exactly 5 (blocking). Version + changelog on field changes; alias winner + retirement path; additive optionals preferred over silent breaks.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Version: **4**"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "## Changelog\n- **4** — Full write fill-path inventory for all storage-mandatory fields; remove active `section_id`; fail-closed predecided; `include` replaces profile defaults; clarify candidates vs learning_log_row; Response `version: 4`.\n- **3** — Lean seeds; intent single rule; situation precedence.\n- **2** / **1** — Superseded."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `section_id` | Removed (v4); if sent **without** `correlation_id`, copy once into `correlation_id` then discard (compat shim, not a second field) |\nUnknown other fields: ignore."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "6. Version bumps + changelog on contract changes."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Minimal v1–v3 Request | Valid; fill paths apply |\n| Expects `learning_log_row.section_id` | Use `correlation_id` |\n| Expects `intent_resolution` in standard | Use `full` or `include` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Version + changelog on field changes; alias winner + retirement path; additive optionals preferred over silent breaks |"
+        }
+      ],
+      "counterevidence": [
+        "section_id bare-send shim is residual compat, not dual first-class names forever; retirement is completed at v4 with migration notes in Compatibility."
+      ],
+      "reasoning": "SCORE: 5. Version is 4 with a changelog entry covering fill-path inventory, section_id removal, fail-closed predecided, include-replaces-profile, and Response version. Alias winner (correlation_id) and retirement path (removed active field + one-shot shim + compatibility table) are documented. Unknown fields ignored for forward compatibility; coupling rule 6 mandates version bumps + changelog. Anchor 5 and decision-policy D7≥3 met."
+    }
+  ],
+  "hard_gates": {
+    "1_minimal_call_works": "pass",
+    "2_no_host_control_enums": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "pass",
+    "5_precedence": "pass",
+    "6_necessity_floor_d1_ge_3": "pass",
+    "7_sufficiency_floor_d2_ge_4": "pass",
+    "8_consistency_floor_d5_ge_3": "pass"
+  },
+  "hard_gates_touched": {
+    "1_minimal_call_works": "pass",
+    "2_no_host_control_enums": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "pass",
+    "5_precedence": "pass",
+    "6_necessity_floor_d1_ge_3": "pass",
+    "7_sufficiency_floor_d2_ge_4": "pass",
+    "8_consistency_floor_d5_ge_3": "pass"
+  },
+  "open_questions": [],
+  "disputed_points_if_any": [
+    "v3 audit1 iteration-2 / audit3 correctly held D2=3 for missing named fill paths; v4 Write fill paths inventory is the fix those rounds demanded—do not re-fail gate 4 on v3 evidence.",
+    "v3 audit1 iteration-2 held D3=4 for output_profile/include partial precedence; v4 explicit replace-not-merge + non-audit-echo standard language supports D3=5."
+  ],
+  "fix_from_this_round": [],
+  "smells_non_blocking": [
+    "learning_log_row restates primary candidate decision/status/summary (intentional thin-host product; not pattern #5).",
+    "pre_decision outside predecided mode not one-line 'ignored' (mode-gated; non-blocking)."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "ECO2b_post_learn_screen_patch",
+  "session_id": "019f6613-0000-7000-8000-0000000000e2",
+  "baseline_compare": "ECO2_fresh_multiturn_current_catalog (pre-patch fail: prose_only_no_skill_load)",
+  "persist_in_available_skills": true,
+  "skill_body_tool_reads": 0,
+  "wrote_b1_unit": false,
+  "persist_before_unit_write": false,
+  "response_mentions_persist": false,
+  "response_classifies_learn_screen": false,
+  "pass_strict_invoke": false,
+  "fail_mode": "no_skill_no_unit"
+}

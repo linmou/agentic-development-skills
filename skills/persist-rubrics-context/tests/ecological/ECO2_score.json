@@ -1,0 +1,10 @@
+{
+  "id": "ECO2_fresh_multiturn_b1_constraints",
+  "session_id": "019f6612-0000-7000-8000-0000000000e2",
+  "persist_in_available_skills": true,
+  "skill_md_reads": 1,
+  "response_mentions_persist": false,
+  "response_mentions_learnt": true,
+  "prose_unit_edit": true,
+  "pass_strict": true
+}

@@ -1,0 +1,22 @@
+{
+  "id": "ECO1_session_prefix_b1_constraints",
+  "source_session": "019f65eb-5e6a-7592-950e-9bf56b1e8dd1",
+  "source_parent": "019f60ee-4fc4-7161-b7c4-f769297b0ed0",
+  "critical_chat_history_index": 24,
+  "prefix_lines": 24,
+  "skills_in_prefix_count": 47,
+  "persist_in_available_skills_prefix": false,
+  "packaging_note": "chat_history.jsonl is the raw message list sent toward the model (system + synthetic user context + real turns). updates.jsonl is ACP UI stream. Ecological tests must resume/replay chat_history-shaped multi-turn context, not isolated Use $skill prompts.",
+  "gold": {
+    "must_invoke_persist_skill": true,
+    "signals": [
+      "read or load persist-rubrics-context SKILL.md",
+      "or skill tool load",
+      "Response/candidates/append|merge|skip for durable memory"
+    ],
+    "fail_if": [
+      "only revises B1 unit prose with zero skill load",
+      "no durable-memory path"
+    ]
+  }
+}

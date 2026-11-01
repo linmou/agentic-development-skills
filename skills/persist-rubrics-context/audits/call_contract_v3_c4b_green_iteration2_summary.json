@@ -1,0 +1,44 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "phase": "green",
+  "iteration": 2,
+  "reviewer_count": 3,
+  "status": "not_converged",
+  "disputed_criteria": [
+    "d2"
+  ],
+  "criteria": {
+    "d2": {
+      "criterion_text": "D2 Sufficiency score \u2265 4 (blocking). Capability-complete: required + defaults complete write capability or fail closed; every mandatory stored attribute has a defined fill source; Response carries status/writes/errors and optional log row.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "fail",
+        "pass",
+        "fail"
+      ],
+      "confidences": [
+        0.94,
+        0.87,
+        0.95
+      ],
+      "final_verdict": "disputed",
+      "converged": false
+    },
+    "d3": {
+      "criterion_text": "D3 Non-overlap score \u2265 4 (blocking). One job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack.",
+      "reviewer_count": 3,
+      "verdicts": [
+        "pass",
+        "pass",
+        "pass"
+      ],
+      "confidences": [
+        0.9,
+        0.9,
+        0.9
+      ],
+      "final_verdict": "pass",
+      "converged": true
+    }
+  }
+}

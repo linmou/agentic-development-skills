@@ -1,0 +1,109 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "prior_claimed": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 4,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 4
+  },
+  "final_dimension_analysis": {
+    "d1": {
+      "scores": [
+        5,
+        5,
+        4
+      ],
+      "median": 5,
+      "mean": 4.666666666666667,
+      "inter_spread": 1,
+      "max_abs_vs_prior": 1,
+      "prior": 5
+    },
+    "d2": {
+      "scores": [
+        3,
+        4,
+        3
+      ],
+      "median": 3,
+      "mean": 3.3333333333333335,
+      "inter_spread": 1,
+      "max_abs_vs_prior": 2,
+      "prior": 5
+    },
+    "d3": {
+      "scores": [
+        4,
+        4,
+        4
+      ],
+      "median": 4,
+      "mean": 4.0,
+      "inter_spread": 0,
+      "max_abs_vs_prior": 0,
+      "prior": 4
+    },
+    "d4": {
+      "scores": [
+        5,
+        5,
+        4
+      ],
+      "median": 5,
+      "mean": 4.666666666666667,
+      "inter_spread": 1,
+      "max_abs_vs_prior": 1,
+      "prior": 5
+    },
+    "d5": {
+      "scores": [
+        5,
+        5,
+        4
+      ],
+      "median": 5,
+      "mean": 4.666666666666667,
+      "inter_spread": 1,
+      "max_abs_vs_prior": 1,
+      "prior": 5
+    },
+    "d6": {
+      "scores": [
+        5,
+        5,
+        4
+      ],
+      "median": 5,
+      "mean": 4.666666666666667,
+      "inter_spread": 1,
+      "max_abs_vs_prior": 1,
+      "prior": 5
+    },
+    "d7": {
+      "scores": [
+        4,
+        4,
+        4
+      ],
+      "median": 4,
+      "mean": 4.0,
+      "inter_spread": 0,
+      "max_abs_vs_prior": 0,
+      "prior": 4
+    }
+  },
+  "iteration1_status": "not_converged",
+  "iteration1_disputed": [
+    "d2",
+    "d3"
+  ],
+  "iteration2_status": "not_converged",
+  "iteration2_disputed": [
+    "d2"
+  ],
+  "largest_inter_reviewer_spread": 1,
+  "largest_vs_prior": 2
+}

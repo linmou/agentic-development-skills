@@ -1,8 +1,8 @@
 # Agentic Development Skills
 
 Intent: store skills for agentic coding, research experiments, and skill development in one public repository, while exposing each skill as an independent directory.
-Updated: 2026-10-29
-Commit: 0df9e1a (base revision for the auto-exp and experiment-log-writer import)
+Updated: 2026-11-01
+Commit: 27b29a5 (base revision for the rubric-construction and persist-rubrics-context import)
 
 ## Layout
 
@@ -30,6 +30,10 @@ Included skills:
 - `speckit-orchestrate`
 - `auto-exp`
 - `experiment-log-writer`
+- `rubric-construction`
+- `persist-rubrics-context`
+
+`persist-rubrics-context` calls `rubric-construction` to build rubric entries; install both directories together.
 
 `auto-exp` requires `experiment-log-writer`; install both directories together. The dependency is declared in `auto-exp`'s `metadata.requires` and checked against `experiment-log-writer/contract.json`. The writer includes its versioned call contract and experiment log template. Both skills were imported from the local Codex skill collection with their workflow and UI metadata preserved. The `~/.codex/prompts/auto_exp.md` mention in `auto-exp` identifies a legacy invocation trigger; that prompt file is not a runtime dependency.
 

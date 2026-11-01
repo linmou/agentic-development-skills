@@ -1,0 +1,229 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit1",
+  "claim": "persist-rubrics-context call-contract v3 passes C4b field-API design under call-contract-field-rubric.md: hard gates 1-8 all pass; D1–D6 each ≥ 4; D7 ≥ 3. Prior claimed scores were D1=5, D2=5, D3=4, D4=5, D5=5, D6=5, D7=4.",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.88,
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "D1 Necessity score ≥ 4 (blocking). Also report exact 1-5 score.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `project_root` | yes | — | content | ... |\n| `human_feedback` | yes* | — | content | ... |\n| `intents` | no | `[]` | seed | ... |\n| `correlation_id` | no | `null` | opaque | ... |\n| `section_id` | no | `null` | opaque | **Deprecated alias** of `correlation_id` ... |\n| `caller_tag` | no | `\"standalone\"` | opaque | ... |\n| `decision_mode` | no | `\"interactive\"` | control | ... |\n| `pre_decision` | no | `null` | control | ... |\n| `output_profile` | no | `\"standard\"` | output | ... |\n| `include` | no | profile defaults | output | ... |\n| `learning_log_path` | no | `null` | output | ..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Removed in v3 (do not send)\n| Former field | Replacement |\n| `context_hints` | ... |\n| `domain_hint` | ... |\n| `intent_seed_policy` | Single rule below (always) |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | Each field is content, seed, control, output, or opaque bookkeeping; no debug-only fields in default/`standard` profile; no enum that only renames “use seed if present else infer” |"
+        }
+      ],
+      "reasoning": "SCORE: 5 Every Request field maps to content/seed/control/output/opaque; v3 removed the decorative seed policy enum and situation/domain hint bloat. decision_mode encodes three real write behaviors (interactive / predecided / propose_only), not a rename of the intent seed rule. standard Response keeps intent_resolution/field_build out of default profile (full-only). Residual section_id is a documented deprecated opaque alias with v4 removal—not decorative control surface. Meets D1=5 anchor; ≥4 threshold satisfied.",
+      "counterevidence": [
+        "section_id remains on the Request table through v3 (compatibility bloat); mitigated by deprecation + correlation_id winner + v4 removal."
+      ]
+    },
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency score ≥ 4 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.86,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Example — minimal\n```json\n{\n  \"project_root\": \"/path/to/project\",\n  \"human_feedback\": \"Always prefer short commit messages under 50 chars.\"\n}\n```"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Mandatory intent fields on written entries (`intent_keywords`; rubrics also `dependencies.intent_refs`) are filled as follows:\n1. If Request `intents` is non-empty → use as primary seeds.\n2. Else → **infer** goals from `human_feedback` ..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "For merge / non-overlap / `context_refs` (no Request situation seed):\n1. **Claim in `human_feedback`** ...\n2. **Existing disk contexts** under `project_root` ...\n3. Infer domain folder name from content ..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `minimal` | `status`, `candidates` (summary), `writes` |\n| `standard` | minimal + `learning_log_row` + `validation` |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `no_candidate` | Not reusable |\n| `error` | See `errors` |"
+        }
+      ],
+      "reasoning": "SCORE: 5 Required project_root + human_feedback with documented defaults complete the write capability for a third-party caller; empty intents infer; situation/context_refs fill without a Request situation seed; modes cover interactive/predecided/propose_only; Response carries status, writes, errors, and standard learning_log_row for thin hosts. Fail-closed statuses (no_candidate, error) are explicit. Hard gate 1 and 7 (D2≥4) pass. Minor residual: predecided with null pre_decision is only implied by the mode table/SKILL, not a one-line fail-closed sentence in the contract—insufficient to drop below 5 for capability completeness of the happy path and primary edges.",
+      "counterevidence": [
+        "context_keywords and other non-intent entry fields are not listed line-by-line with sources (only intent_* and context_refs/situation are); treated as inference from human_feedback under callee construction, which the D2 scale allows."
+      ]
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap score ≥ 4 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `section_id` | no | `null` | opaque | **Deprecated alias** of `correlation_id` (accepted through v3; removed in v4). If both set, `correlation_id` wins |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Only decided `append`/`merge` writes persist. Do not invent a parallel “hint” channel."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Optional (`full` only)\n- `intent_resolution`: ...\n- `field_build`: ...\n- `proposals`, `raw_validator_log`"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "quote": "| 5 | One job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack |"
+        }
+      ],
+      "reasoning": "SCORE: 5 Fields are orthogonal by class. Sole dual-name slot (section_id/correlation_id) documents winner and deprecation. Multi-source intents and situation channels have ordered precedence. Parallel context_hints channel removed. standard Response is status/candidates/writes/validation/learning_log_row/errors—not resolution+field_build audit stack (those are full-only). Prior claimed D3=4 is too low given winner+deprecation+no-hint-channel; D3=5 under rubric anchors. ≥4 satisfied.",
+      "counterevidence": [
+        "learning_log_row partially echoes decision/paths already present on candidates/writes; acceptable thin-host log shape, not the listed audit-echo failure pattern."
+      ]
+    },
+    {
+      "id": "d4",
+      "text": "D4 Clarity score ≥ 4 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.92,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Field | Required | Default | Class | Notes |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "### Example — minimal\n...\n### Example — seeded goals\n..."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**Opaque labels:** `caller_tag` / `correlation_id` are log-only; callee never branches control on them."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "3. Before write, **generalize** to durable goals ... Reject one-off session titles as sole `intent_refs` ..."
+        }
+      ],
+      "reasoning": "SCORE: 5 Request table names roles (content/seed/control/output/opaque), states defaults, and ships a minimal third-party Request plus seeded and predecided examples. Goal-vs-session distinction is explicit in the intent seeding rule; opaque vs control is front-matter. A stranger can map fields without host folklore. ≥4 satisfied.",
+      "counterevidence": []
+    },
+    {
+      "id": "d5",
+      "text": "D5 Consistency score ≥ 4 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.85,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| Mode | Who decides | Writes? |\n| `interactive` | Human in-run | if append/merge |\n| `predecided` | `pre_decision` | if append/merge |\n| `propose_only` | none | never |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| v1/v2 minimal (`project_root` + `human_feedback`) | Valid; intents inferred |\n| v2 `context_hints` / `domain_hint` / `intent_seed_policy` | **Ignored** (treat as unknown) |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**v3:** do **not** duplicate `section_id` on the row. Hosts that still read `section_id` should use `correlation_id`."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Reject one-off session titles as sole `intent_refs`"
+        }
+      ],
+      "reasoning": "SCORE: 5 Mode matrix matches the minimal-call story (defaults + interactive). Removed seeds are ignored, not silently persisted. Intent seeds are generalized before durable write; one-off session goals rejected. learning_log_row no longer dual-emits section_id. No contradiction found between narrative, modes, and persistence language. Hard gate 8 (D5≥3) and D5≥4 pass. Note: pre_decision when decision_mode≠predecided is not explicitly labeled ignored—normal mode-gated control, not a documented dead-field contradiction.",
+      "counterevidence": [
+        "pre_decision acceptance outside predecided mode is unspecified (could be treated as dead input); not strong enough to force D5≤3 or fail."
+      ]
+    },
+    {
+      "id": "d6",
+      "text": "D6 Layering score ≥ 4 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.93,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "**Out of scope:** host lifecycle, host tokens, full memory *retrieve* orchestration (see `memory-protocol.md` for readers)."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| **Callee** | Candidates, field construction, decision handling, JSON writes, validation, Response schema | Host FSM, host tokens, multi-call session log storage |\n| **Caller** | When to invoke, Request packing, which Response fields to keep | Memory layout, validators, inventing Response schema |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "2. Callee never names a parent skill and never issues host tokens.\n3. Opaque labels are not control enums."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/SKILL.md",
+          "quote": "4. Do not advance caller lifecycle; do not issue host tokens (`PERSIST_OK`, `REVIEW_OK`, etc.)."
+        }
+      ],
+      "reasoning": "SCORE: 5 Request is call I/O (feedback, optional intent seeds, decision/output controls), not a dump of context/rubric file schemas. Host tokens/states are not required enums. Callee owns Response schema; multi-row session logs stay caller-owned with callee-owned row shape. Storage lives in memory-protocol/templates. Hard gate 2 passes. ≥4 satisfied.",
+      "counterevidence": []
+    },
+    {
+      "id": "d7",
+      "text": "D7 Evolvability score ≥ 3 (blocking)",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Version: **3**"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "Unknown fields: ignore (forward compatible)."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "| `section_id` | ... | **Deprecated alias** of `correlation_id` (accepted through v3; removed in v4). If both set, `correlation_id` wins |"
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "## Changelog\n- **3** — Lean API: drop `context_hints`, `domain_hint`, `intent_seed_policy`; single intent seed rule + durable-goal generalization; situation precedence = feedback + disk; `intent_resolution`/`field_build` full-only; `section_id` deprecated (no row duplicate); Response `version: 3`.\n- **2** — Optional seeds and intent policy (superseded).\n- **1** — Initial write contract."
+        },
+        {
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "quote": "6. Contract changes bump `version` and update the changelog."
+        }
+      ],
+      "reasoning": "SCORE: 4 Version is present; field removals/changes are changelogged; unknown fields ignored (additive-friendly); section_id has documented winner and retirement (removed in v4). Meets ≥3 and the decision-policy “version/alias plan” bar. Not 5 only because the changelog is dense single-line bullets rather than a full per-field migration matrix—still solid evolvability, not thin enough to stay at the D7=3 floor.",
+      "counterevidence": []
+    }
+  ],
+  "open_questions": [
+    "Should predecided + pre_decision=null be an explicit fail-closed Response error in the contract?",
+    "Should context_keywords (and other non-intent mandatory entry fields) get a one-line “always inferred from candidate/human_feedback” fill note for gate-4 inventory completeness?"
+  ],
+  "disputed_points_if_any": [
+    "Prior claimed D3=4; this audit scores D3=5 (alias winner+deprecation + full-only audit fields + no parallel hint channel).",
+    "Prior claimed D7=4; this audit also scores D7=4 (aligned). Prior D1/D2/D4/D5/D6=5 aligned except D5 kept at 5 with a noted unspecified mode-gated pre_decision edge."
+  ],
+  "dimension_scores": {
+    "d1": 5,
+    "d2": 5,
+    "d3": 5,
+    "d4": 5,
+    "d5": 5,
+    "d6": 5,
+    "d7": 4
+  }
+}

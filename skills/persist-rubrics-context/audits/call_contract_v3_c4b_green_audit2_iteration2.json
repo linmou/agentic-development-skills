@@ -1,0 +1,216 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "phase": "green",
+  "iteration": 2,
+  "reviewer_id": "audit2",
+  "role": "charitable_but_evidence_bound",
+  "scope": "Re-score disputed criteria d2 and d3 only; accept/reject audit3 iteration1 points.",
+  "claim": "persist-rubrics-context call-contract v3 passes C4b on D2 Sufficiency and D3 Non-overlap (each ≥4). audit3 iteration1 scored both 3 and failed; audit1/audit2 iteration1 passed both.",
+  "overall_verdict": "pass",
+  "overall_confidence": 0.88,
+  "dimension_scores": {
+    "d2": 4,
+    "d3": 4
+  },
+  "hard_gates_related": {
+    "1_minimal_call_works": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "pass_with_smell",
+    "5_precedence": "pass",
+    "7_sufficiency_floor_d2_ge_4": "pass"
+  },
+  "criteria": [
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency (capability-complete): required fields + defaults complete the write capability or fail closed; every mandatory stored attribute has a defined source; Response carries status/writes/errors and optional log row. Blocking floor D2 ≥ 4.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.87,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:87-94",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Minimal third-party Request is only project_root + human_feedback — required set is capability-complete for a stranger caller."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:51-58",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Mandatory intent fields (intent_keywords; rubrics also dependencies.intent_refs): non-empty Request intents → else infer from human_feedback → generalize durable goals → derive intent_keywords. Explicit source chain when seeds omitted."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:60-68",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Situation grounding for merge/non-overlap/context_refs with no Request situation seed: claim in human_feedback → existing disk contexts → infer domain. Only decided append/merge writes; no parallel hint channel."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:14-16",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Callee owns candidates, field construction, decision handling, JSON writes, validation — non-seeded entry attributes are callee-constructed, not Request-packed schema fields."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:78-85 / 125-159 / 162-169",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Response carries status (including no_candidate/error), candidates, writes, validation, learning_log_row on standard, errors — thin-host complete."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:186-190",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "field_build (full only): per-candidate audit of keywords/refs/domain — confirms keywords are built under field construction, not missing as a capability."
+        },
+        {
+          "kind": "quote",
+          "location": "SKILL.md:62-66",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/SKILL.md",
+          "text": "Procedure: resolve intents per contract; ground situation; Build entry fields (context template / rubric template including dependencies); evaluate with persistence rubrics — construction path for remaining template fields."
+        },
+        {
+          "kind": "quote",
+          "location": "memory-protocol.md:120-135; context-persistence-rubric.md:31-37; validate_rubric_memory.py:24-30,177-190,223-230",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/memory-protocol.md",
+          "text": "Storage hard gates require non-empty context_keywords, scope.include/exclude, applicability.include/exclude — enforced at write/validation (fail closed), not as extra Request seeds."
+        }
+      ],
+      "counterevidence": [
+        "call-contract.md names fill rules for intent_keywords/intent_refs and context_refs/situation but does not line-item context_keywords, scope.*, or applicability.* with source class required|seed|inference|ask|fail.",
+        "predecided + pre_decision=null has no one-line fail-closed sentence in the contract (mode table only).",
+        "audit3 iteration1: SCORE 3 + hard gate 4 fail on missing context_keywords/scope/applicability fill paths."
+      ],
+      "reasoning": "SCORE: 4. Reject audit3 D2=3 / capability fail; lower own iteration1 D2=5.\n\nAccept from audit3: (1) storage-mandatory context_keywords, scope, applicability are not named with explicit fill rows in call-contract.md; (2) that is a real documentation smell under hard gate 4 inventory completeness and blocks claiming D2 excellence (5).\n\nReject from audit3: that omission equals 'lack a fill path' forcing anchor-3 fail and hard gate 4 hard-fail. Reasons, evidence-bound and charitable:\n(a) D2 lead question is third-caller capability with required+defaults — minimal Request works (audit3 itself passes hard gate 1).\n(b) Anchor 5 source classes include inference; non-seeded attributes are not missing seeds — they have a single source class (inference under callee field construction from required human_feedback + disk for situation). Multi-source / optional-seed attributes are the ones that need ordered rules, and those are stated (intents; situation/context_refs).\n(c) Requiring a Request-level restatement of every storage template field would fight D6 (Request is call I/O, not domain file dump). Lean v3 correctly dropped parallel situation seeds; fill-path duty is 'defined source', not 'new Request field per stored key'.\n(d) Fail-closed is real: persistence rubrics + validate_rubric_memory.py refuse empty context_keywords/scope/applicability; Response status error/no_candidate covers non-completion.\n(e) SKILL procedure step 6 + contract field_build 'keywords/refs/domain' corroborate construction of keyword-class fields from candidate content.\n\nHard gate 4: pass_with_smell (sources exist by class: content/seed/inference/validation-fail; not fully inventory-lined). Hard gate 7: pass (D2=4≥4). Not 5 because explicit one-liners for context_keywords/scope/applicability would finish the inventory without widening Request surface.",
+      "audit3_points": [
+        {
+          "point": "Missing fill paths for context_keywords / scope / applicability → D2=3 and hard gate 4 fail",
+          "decision": "reject_as_blocking_fail",
+          "accept_partial": "documentation inventory incomplete for those attributes; drop D2 from 5→4",
+          "rationale": "Inference + field construction from human_feedback is a valid defined source class for non-seeded mandatory attrs; multi-source cases already have precedence; validators fail closed. Anchor 3 'lack a fill path' overstates a doc density gap as capability incompleteness."
+        },
+        {
+          "point": "predecided with null pre_decision unspecified",
+          "decision": "accept_as_smell_not_D2_fail",
+          "rationale": "Edge mode underspec; does not collapse happy path or primary seed-omission fill rules. Insufficient alone for D2≤3."
+        },
+        {
+          "point": "Happy path and Response shape are fine",
+          "decision": "accept",
+          "rationale": "Aligned with gate 1 pass and D2≥4."
+        }
+      ]
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap (one job per field): fields orthogonal with precedence when channels meet; aliases document winner + deprecation; default Response is not an audit echo stack. Blocking floor D3 ≥ 4 (smell-only exception exists for mild D3=3).",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        {
+          "kind": "quote",
+          "location": "artifact:31",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "section_id is Deprecated alias of correlation_id (accepted through v3; removed in v4). If both set, correlation_id wins."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:51-66 / 68",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "Single intent seeding rule; ordered situation channels; Do not invent a parallel hint channel — multi-source attributes have stated precedence."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:184",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "v3: do not duplicate section_id on learning_log_row; hosts use correlation_id."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:186-190",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "intent_resolution / field_build / proposals / raw_validator_log are full-only — not default Response audit stack."
+        },
+        {
+          "kind": "quote",
+          "location": "rubric:D3 anchor 5",
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "text": "Score 5 includes: aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack."
+        },
+        {
+          "kind": "quote",
+          "location": "rubric:decision policy smell-only",
+          "path": "/Users/admin/.codex/skills/skill-extract-verify/references/call-contract-field-rubric.md",
+          "text": "D3=3 only from mild bloat/audit-echo/long aliases with a winner may be smell-only and need not alone fail — audit3's residual concerns are exactly that class, but with a documented winner they better fit 4 than forced 3."
+        },
+        {
+          "kind": "quote",
+          "location": "artifact:35-36 / 78-85",
+          "path": "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md",
+          "text": "output_profile sets default include; custom = only include list — related output knobs with partial merge rule, not dual fields for one storage slot."
+        }
+      ],
+      "counterevidence": [
+        "section_id remains on Request table through all of v3 (compat dual name).",
+        "non-custom include vs profile merge (replace vs intersect) not spelled beyond 'profile defaults'.",
+        "standard Response candidates[] and learning_log_row both carry decision/status/summary-ish fields — mild echo for thin-host log, not field_build audit stack.",
+        "audit3 iteration1: SCORE 3 for dual fields / mild overlap."
+      ],
+      "reasoning": "SCORE: 4. Reject audit3 D3=3 fail; hold iteration1 audit2 D3=4 (reject audit1's D3=5 as slightly high).\n\nAccept from audit3 as non-blocking smells: residual section_id surface until v4; output_profile×include merge underspec outside custom; mild candidates/learning_log_row narrative overlap.\n\nReject from audit3 that these force anchor-3 fail:\n(a) D3 score-5 anchor explicitly rewards aliases that document winner + deprecation — section_id/correlation_id matches that text. Common failure #6 is dual names 'forever'; contract retires in v4.\n(b) Pattern #5 audit-echo targets resolution + tags + field_build on standard — those are full-only. learning_log_row is the intentional thin-host log required by D2, not a forbidden echo stack.\n(c) output_profile (preset) vs include (subset) are orthogonal control/output roles with custom clarifying one winner; incomplete non-custom merge is mild partial precedence, not silent dual meaning (hard gate 3 still passes).\n(d) human_feedback serving content + situation claim + intent inference is one content field with multi-use under stated precedence — lean D1 design, not dual Request fields for the same slot.\n\nOrthogonality of primary API is good; residual alias/output/log mildness keeps D3 at 4 not 5. Meets D3≥4. Hard gate 3 (no silent dual meaning) pass.",
+      "audit3_points": [
+        {
+          "point": "section_id + correlation_id dual surface = alias soup → D3=3",
+          "decision": "reject",
+          "accept_partial": "compat dual name is mild residual until v4",
+          "rationale": "Winner + deprecation + v4 removal is exactly D3 anchor-5 alias handling; not forever dual first-class meaning."
+        },
+        {
+          "point": "output_profile + include dual channels with incomplete merge → anchor 3",
+          "decision": "reject_as_forcing_3",
+          "accept_partial": "non-custom merge rule is underspecified (smell)",
+          "rationale": "Different jobs (preset vs subset); custom has explicit winner. Mild partial precedence supports holding 4, not dropping to 3."
+        },
+        {
+          "point": "standard candidates + learning_log_row is audit echo stack",
+          "decision": "reject",
+          "rationale": "Pattern #5 names resolution/field_build; log row is designed thin-host surface required by D2, not default audit dump."
+        },
+        {
+          "point": "human_feedback multi-job field breaks orthogonality",
+          "decision": "reject",
+          "rationale": "Single content channel used as multi-source input with stated intent/situation precedence is lean, not dual fields for one slot."
+        },
+        {
+          "point": "Claimed D3=4 optimistic; mild-overlap anchor 3 fits better",
+          "decision": "reject",
+          "rationale": "Mild residual smells exist but alias winner+deprecation and removed hint channel already clear the anchor-3 'partial precedence / aliases without discipline' band. SCORE 4 remains correct."
+        }
+      ]
+    }
+  ],
+  "accept_reject_summary": {
+    "audit3_d2_score_3": "reject (score 4 pass; documentation smell only)",
+    "audit3_hard_gate_4_fail": "reject as hard fail; record pass_with_smell",
+    "audit3_d3_score_3": "reject (score 4 pass)",
+    "own_iteration1_d2_score_5": "revise down to 4",
+    "own_iteration1_d3_score_4": "hold"
+  },
+  "smells_non_blocking": [
+    "context_keywords / scope / applicability not line-itemed with inference source in call-contract (fix would be one blanket construction sentence, not new Request seeds)",
+    "section_id dual name until v4 (winner documented)",
+    "output_profile × include non-custom merge underspec",
+    "standard candidates + learning_log_row mild narrative overlap"
+  ],
+  "open_questions": [],
+  "disputed_points_if_any": [
+    {
+      "criterion_id": "d2",
+      "point": "audit3 treats unnamed context_keywords/scope/applicability as missing fill paths (D2=3, gate4 fail). audit2 iteration2: defined source = inference under callee field construction from human_feedback; multi-source attrs already have rules; D2=4 pass_with_smell."
+    },
+    {
+      "criterion_id": "d3",
+      "point": "audit3 scores residual alias + dual output knobs + log echo as D3=3. audit2 iteration2: D3 anchor 5 allows winner+deprecation aliases; log row is not pattern-5 audit stack; hold D3=4."
+    }
+  ]
+}

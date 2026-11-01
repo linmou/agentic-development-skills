@@ -1,0 +1,244 @@
+{
+  "feature_name": "call_contract_v3_c4b",
+  "phase": "green",
+  "iteration": 1,
+  "reviewer_id": "audit3",
+  "claim": "persist-rubrics-context call-contract v3 passes C4b field-API design under call-contract-field-rubric.md: hard gates 1-8 all pass; D1–D6 each ≥ 4; D7 ≥ 3. Prior claimed scores were D1=5, D2=5, D3=4, D4=5, D5=5, D6=5, D7=4.",
+  "overall_verdict": "fail",
+  "overall_confidence": 0.9,
+  "dimension_scores": {
+    "D1": 4,
+    "D2": 3,
+    "D3": 3,
+    "D4": 4,
+    "D5": 4,
+    "D6": 4,
+    "D7": 4
+  },
+  "hard_gates": {
+    "1_minimal_call_works": "pass",
+    "2_no_host_control_enums": "pass",
+    "3_no_silent_dual_meaning": "pass",
+    "4_write_fill_path": "fail",
+    "5_precedence": "pass",
+    "6_necessity_floor_d1_ge_3": "pass",
+    "7_sufficiency_floor_d2_ge_4": "fail",
+    "8_consistency_floor_d5_ge_3": "pass"
+  },
+  "c4b_verdict": "fail",
+  "field_inventory": [
+    {"field": "project_root", "class": "content", "needed": true, "overlaps": false, "precedence": "n/a", "keep_merge_drop": "keep"},
+    {"field": "human_feedback", "class": "content", "needed": true, "overlaps": "also situation + intent-inference channel", "precedence": "primary content; situation step 1", "keep_merge_drop": "keep"},
+    {"field": "intents", "class": "seed", "needed": "optional", "overlaps": "intent_keywords/intent_refs with inferred goals", "precedence": "non-empty intents primary else infer", "keep_merge_drop": "keep"},
+    {"field": "correlation_id", "class": "opaque", "needed": "bookkeeping", "overlaps": "section_id", "precedence": "wins over section_id", "keep_merge_drop": "keep"},
+    {"field": "section_id", "class": "opaque alias", "needed": "compat only", "overlaps": "correlation_id", "precedence": "loses; removed in v4", "keep_merge_drop": "drop in v4"},
+    {"field": "caller_tag", "class": "opaque", "needed": true, "overlaps": false, "precedence": "n/a", "keep_merge_drop": "keep"},
+    {"field": "decision_mode", "class": "control", "needed": true, "overlaps": "pre_decision gated by mode", "precedence": "mode selects decider", "keep_merge_drop": "keep"},
+    {"field": "pre_decision", "class": "control", "needed": "predecided only", "overlaps": "decision_mode", "precedence": "used only if predecided; mismatch unspecified", "keep_merge_drop": "keep; define fail-closed"},
+    {"field": "output_profile", "class": "output", "needed": true, "overlaps": "include", "precedence": "profile defaults include; custom=include only", "keep_merge_drop": "keep; specify non-custom merge"},
+    {"field": "include", "class": "output", "needed": "power/custom", "overlaps": "output_profile", "precedence": "partial", "keep_merge_drop": "keep with explicit override rule"},
+    {"field": "learning_log_path", "class": "output", "needed": "optional side-log", "overlaps": "session log ownership vs callee write", "precedence": "n/a", "keep_merge_drop": "keep; define when rows append"}
+  ],
+  "criteria": [
+    {
+      "id": "d1",
+      "text": "D1 Necessity (minimal surface): every Request and default-profile Response field earns its place; no debug-only fields in standard; no seed-policy enum that only renames use-seed-else-infer.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.88,
+      "evidence": [
+        "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md:23-37 Request table classes content/seed/control/output/opaque; intents is optional seed not a policy enum.",
+        "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md:41-47 Removed context_hints, domain_hint, intent_seed_policy (fat seed surface cut).",
+        "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md:78-85 standard profile = minimal + learning_log_row + validation; intent_resolution/field_build full-only (lines 186-190).",
+        "/Users/admin/.codex/skills/persist-rubrics-context/references/call-contract.md:51-58 single intent seeding rule replaces intent_seed_policy."
+      ],
+      "counterevidence": [
+        "call-contract.md:31 section_id remains on Request surface through v3 (deprecated alias) — residual dual name bloat even with retirement path.",
+        "call-contract.md:35-36 output_profile + include both shape Response; two knobs for one job (custom partially clarifies; standard+include merge not defined).",
+        "call-contract.md:125-159 default/standard Response restates decision story via candidates[] (summary/decision/status) and learning_log_row (candidate_summary/decision/status) plus top-level status — mild default-profile echo, not full audit stack.",
+        "Prior claim D1=5 overstates excellence; necessity is good-not-perfect after alias + dual output controls."
+      ],
+      "reasoning": "SCORE: 4. Lean v3 cut is real (removed three fat seeds; no use-seed-else-infer enum). Anchor 5 fails because section_id still occupies API surface, output_profile/include dual-control remains, and standard Response still double-tells candidate decision for log hosts. Anchor 3 (policy enum / core-only with bloat) is too low — core fields are justified. Floor hard gate 6 (D1≥3) passes. Claimed D1=5 should be lowered."
+    },
+    {
+      "id": "d2",
+      "text": "D2 Sufficiency (capability-complete): required fields + defaults complete the write capability or fail closed; every mandatory stored attribute has a defined fill source; Response carries status/writes/errors and optional log row.",
+      "blocking": true,
+      "verdict": "fail",
+      "confidence": 0.93,
+      "evidence": [
+        "call-contract.md:87-94 minimal Request (project_root + human_feedback) documented; intents default [] with inference rule (51-58).",
+        "call-contract.md:60-67 situation grounding for context_refs: feedback claim → disk contexts → domain folder.",
+        "call-contract.md:125-159 Response has status, candidates, writes, validation, learning_log_row, errors — thin-host complete for standard.",
+        "call-contract.md:70-76 decision_mode matrix covers interactive / predecided / propose_only."
+      ],
+      "counterevidence": [
+        "Hard gate 4 FAIL: storage-mandatory attributes lack contract fill sources. memory-protocol.md:120-135 and context-persistence-rubric.md:31-37 require non-empty context_keywords and scope.include/exclude; call-contract never names context_keywords or scope fill (only intent_keywords/intent_refs and context_refs).",
+        "rubric-entry-template.md / memory-protocol.md:112-114 require applicability.include/exclude and dependencies.context_refs/intent_refs; contract covers intent_refs + context_refs but not applicability boundaries or decision_rule/score_* construction path.",
+        "scripts/validate_rubric_memory.py enforces non-empty intent_keywords, context_keywords, scope, applicability, context_refs, intent_refs — contract is silent on context_keywords/scope/applicability → third caller cannot know how omitted seeds still produce valid writes.",
+        "call-contract.md:34/75 pre_decision required in practice for predecided writes, but no fail-closed rule when decision_mode=predecided and pre_decision is null; multi-candidate scope of a single pre_decision unspecified.",
+        "D2 anchor 3 exact match: happy path works; mandatory stored attributes lack fill path when seeds omitted. Hard gate 7 requires D2≥4 → fails. Claimed D2=5 disconfirmed."
+      ],
+      "reasoning": "SCORE: 3. Capability happy path and Response shape are fine, but C4b explicitly scopes fill paths forced by storage hard gates. Missing defined sources (required | seed | inference | ask | fail) for context_keywords, scope.*, and applicability.* is decisive under D2 anchor 3 and hard gate 4. This alone blocks C4b pass regardless of D1/D4/D7 excellence. Claimed D2=5 is not supported."
+    },
+    {
+      "id": "d3",
+      "text": "D3 Non-overlap: one job per field; aliases document winner + deprecation; multi-source attributes have stated precedence; default Response is not an audit echo stack.",
+      "blocking": true,
+      "verdict": "fail",
+      "confidence": 0.86,
+      "evidence": [
+        "call-contract.md:31 section_id deprecated alias of correlation_id; correlation_id wins; removed in v4.",
+        "call-contract.md:51-58 intent precedence: non-empty intents else infer; 60-67 situation precedence stated.",
+        "call-contract.md:186-190 intent_resolution/field_build kept off standard (reduces full audit echo)."
+      ],
+      "counterevidence": [
+        "Alias soup residual: section_id + correlation_id both first-class Request fields through entire v3 (common failure pattern #6); winner helps but dual surface remains.",
+        "output_profile + include dual channels for Response field set; only custom says 'only include list' — non-custom override/merge precedence incomplete (partial precedence = anchor 3).",
+        "Audit echo: standard example Response (lines 129-159) duplicates candidate_summary/decision/status across candidates[] and learning_log_row while top-level status retells aggregate — default profile is a mild echo stack (pattern #5), even without field_build.",
+        "human_feedback is one Request field with three jobs: learning content, situation claim (grounding step 1), and intent inference source when intents empty — lean, but not orthogonal.",
+        "Decision policy requires D1–D6 ≥ 4; D3=3 fails that bar (smell-only exception exists for mild D3=3 but does not rescue D2/gate4).",
+        "Claimed D3=4 is optimistic; mild-overlap anchor 3 fits better."
+      ],
+      "reasoning": "SCORE: 3. Precedence for intents/situation/alias winner is real progress vs fat multi-seed APIs, but orthogonality is still partial: live alias pair, dual output controls with incomplete merge rule, and standard Response double-narrative. Anchor 3 (mild overlap; aliases; partial precedence) matches better than claimed 4. Blocking under strict D1–D6≥4 table; smell-only would not alone fail if gates were green."
+    },
+    {
+      "id": "d4",
+      "text": "D4 Clarity: stranger can map fields to roles without host folklore; names match roles; defaults explicit; minimal third-party example present.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.87,
+      "evidence": [
+        "call-contract.md:23-37 Required/Default/Class/Notes table is stranger-readable.",
+        "call-contract.md:87-94 minimal third-party Request example; 96-108 seeded; 110-121 predecided merge.",
+        "call-contract.md:18-19 opaque labels never control; 162-169 status vocabulary defined.",
+        "SKILL.md:33 restates defaults aligned with contract."
+      ],
+      "counterevidence": [
+        "human_feedback name implies human utterance only; Notes (line 28) allow 'structured candidate text' — seed-vs-content naming confusion for batch callers.",
+        "human_feedback marked required* with footnote about standalone chat mapping (line 39) blurs whether structured API always requires it or chat maps into it.",
+        "intents (goal seeds) vs stored intent_refs / intent_keywords requires reading seeding section; easy seed-vs-stored mixup (D4 anchor 3 risk).",
+        "include default 'profile defaults' is circular until reader maps output_profile table; standard+include behavior undocumented.",
+        "section_id host-shaped residual name kept for folklore compatibility.",
+        "Claimed D4=5 overstates; clarity is good (4) not folklore-free excellent."
+      ],
+      "reasoning": "SCORE: 4. Strong table + three examples satisfy most of anchor 5, but naming dual-use of human_feedback, required* footnote, and include×profile underspec prevent excellent. Floor for pass met. Claimed D4=5 should be lowered."
+    },
+    {
+      "id": "d5",
+      "text": "D5 Consistency: modes, narrative, and persistence rules agree; no dead inputs; ephemeral vs durable distinguished with generalization when needed.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.84,
+      "evidence": [
+        "call-contract.md:51-58 durable-goal generalization + reject one-off session titles as sole intent_refs — session vs durable rule present.",
+        "call-contract.md:68 only decided append/merge persist; 70-76 mode matrix matches write claims.",
+        "call-contract.md:203-212 Compatibility documents removed seeds as ignored; section_id map; standard vs full intent_resolution.",
+        "SKILL.md:37-38 human decision required unless predecided/propose_only — agrees with contract modes."
+      ],
+      "counterevidence": [
+        "Dead-input pattern: Removed-in-v3 fields (context_hints, domain_hint, intent_seed_policy) are still accepted then ignored (lines 49, 209) — documented, but D5 anchor 1 flags 'dead inputs (accepted then ignored)'; severity reduced by explicit removal table, still not D5=5 purity.",
+        "predecided + pre_decision=null: matrix says pre_decision decides, but no consistent error/pending outcome — mode narrative incomplete.",
+        "learning_log_path: contract does not say whether JSONL appends on pending/propose_only/no_candidate/error or only decided rows — session-log side effect vs durable memory persistence confusion.",
+        "Coupling rule 4 (line 199): session multi-row logs caller-owned, yet learning_log_path makes callee write durable JSONL — session vs durable ownership blur.",
+        "SKILL.md non-negotiable #1 exact prose 'No reusable...' vs contract 'One fenced JSON block' Response — dual response-format signal for no_candidate (cross-doc).",
+        "memory-protocol.md:24/57 precondition 'Learning Log row already recorded' vs contract producing learning_log_row after decide/write — durable/session ordering echo that can confuse implementers.",
+        "Claimed D5=5 denied by these mild-to-moderate inconsistencies; anchor 3–4 range, score 4."
+      ],
+      "reasoning": "SCORE: 4. Core persistence story (interactive needs human; propose_only never writes; generalize session titles) is coherent. Not 5: dead-but-ignored removed fields, unspecified predecided fail-closed, learning_log_path timing, and session-vs-durable log ownership tension. Hard gate 8 (D5≥3) passes. Claimed D5=5 should be lowered."
+    },
+    {
+      "id": "d6",
+      "text": "D6 Layering: Request is call I/O not full domain file schema; no host tokens/states as required enums; callee owns Response schema.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.88,
+      "evidence": [
+        "call-contract.md:7-9 Out of scope: host lifecycle, host tokens, full retrieve orchestration.",
+        "call-contract.md:14-16 Caller vs Callee ownership table; 196-200 coupling rules forbid host tokens and parent skill naming.",
+        "tests/test_skill_semantics.py:54-57 assert no PERSIST_OK / host FSM tags in contract.",
+        "Request is not a dump of rubric-entry-template decision_rule score matrices — good abstraction."
+      ],
+      "counterevidence": [
+        "call-contract.md:53-67 leaks storage attribute names into Request narrative (intent_keywords, dependencies.intent_refs, context_refs, domain folder) — necessary for fill paths but is storage-shaped contract text; incomplete fill path makes leakage without payoff.",
+        "learning_log_path filesystem side-write is host/session adapter concern partially pulled into callee API (layering smell vs coupling rule 4).",
+        "memory-protocol.md still frames writes as executing a pre-recorded Learning Log (host-shaped precondition language) while call-contract is the import path — boundary docs not fully aligned.",
+        "Claimed D6=5 slightly high; residual storage/session leakage → 4."
+      ],
+      "reasoning": "SCORE: 4. Boundary is mostly right: no host control enums, callee-owned Response, lean Request. Not excellent because storage field names and domain folders are inlined without complete fill-path coverage, and learning_log_path pulls session durability into the callee. Claimed D6=5 should be lowered."
+    },
+    {
+      "id": "d7",
+      "text": "D7 Evolvability: version + changelog on field changes; alias winner + retirement path; additive optionals preferred over silent breaks.",
+      "blocking": true,
+      "verdict": "pass",
+      "confidence": 0.9,
+      "evidence": [
+        "call-contract.md:3 Version **3**; Response version: 3 in example.",
+        "call-contract.md:214-218 Changelog entries for v1–v3 including field drops and section_id deprecation.",
+        "call-contract.md:31 section_id accepted through v3, removed in v4 — retirement path.",
+        "call-contract.md:49 unknown fields ignore (forward compatible); Compatibility table 203-212."
+      ],
+      "counterevidence": [
+        "No Request.version negotiation field — callers cannot declare which contract they speak; reliance on ignore-unknown only.",
+        "section_id dual-name lives whole major version (through v3) — long alias window (pattern #6 mitigated by documented v4 removal).",
+        "Changelog is adequate but single-bullet dense for v3; still better than 'thin' anchor 3.",
+        "Claimed D7=4 is acceptable; not raised, not strongly lowered."
+      ],
+      "reasoning": "SCORE: 4. Version, changelog, alias winner, and v4 retirement meet good evolvability. Not 5 only because dual alias persists across the major and there is no request-side version handshake. Matches claimed D7=4; does not rescue overall pass given D2/gate failures."
+    }
+  ],
+  "smells_non_blocking": [
+    "section_id alias soup until v4 (winner documented)",
+    "standard Response candidates + learning_log_row echo",
+    "output_profile + include dual Response shapers",
+    "removed v2 seeds still accepted as unknown/ignored",
+    "human_feedback multi-role content channel"
+  ],
+  "fix": [
+    "HARD (gate 4 / D2): In call-contract, add an explicit Write fill-path table for every storage-mandatory attribute: id, statement/title, intent_keywords, intent_refs, context_keywords, context_refs, scope/applicability include+exclude, decision_rule scores, lifecycle — each with source class (required|seed|inference|ask|fail-closed).",
+    "Define fail-closed behavior for decision_mode=predecided when pre_decision is null; define whether one pre_decision applies to all candidates.",
+    "Specify include vs output_profile merge when profile is not custom (replace defaults vs intersect).",
+    "Specify learning_log_path append conditions (which status/decision rows).",
+    "Keep section_id retirement; avoid new aliases.",
+    "Align SKILL no_candidate prose rule with single fenced Response JSON requirement."
+  ],
+  "open_questions": [
+    "Is inference-from-human_feedback an acceptable implicit source for context_keywords/scope if stated once as a blanket rule, or must each field be listed?",
+    "Should learning_log_path move to caller-owned adapter to restore coupling rule 4 purity?"
+  ],
+  "disputed_points_if_any": [
+    {
+      "criterion_id": "d2",
+      "point": "Prior claim treats intent+situation rules as sufficient write fill path. Audit3: storage hard gates also mandate context_keywords, scope, applicability — absent from contract → hard gate 4 fail and D2=3."
+    },
+    {
+      "criterion_id": "d3",
+      "point": "Prior D3=4 credits alias winner + full-only audit fields. Audit3 lowers to 3 for residual alias surface, dual output controls, and standard candidates/learning_log_row echo. Smell-only exception could keep overall pass if only D3=3, but D2/gate4 still fail."
+    },
+    {
+      "criterion_id": "d5",
+      "point": "Documented ignore of removed fields can be read as forward-compat (good) or dead-input (bad). Audit3 scores mild inconsistency (4), not catastrophic (1)."
+    }
+  ],
+  "claim_assessment": {
+    "hard_gates_1_to_8_all_pass": false,
+    "d1_to_d6_each_ge_4": false,
+    "d7_ge_3": true,
+    "prior_scores_supported": {
+      "D1": "overclaim (5→4)",
+      "D2": "overclaim (5→3)",
+      "D3": "overclaim (4→3)",
+      "D4": "overclaim (5→4)",
+      "D5": "overclaim (5→4)",
+      "D6": "overclaim (5→4)",
+      "D7": "supported (4)"
+    },
+    "blocking_failures": [
+      "hard_gate_4_write_fill_path",
+      "hard_gate_7_d2_floor",
+      "d2_score_3",
+      "d3_score_3_under_strict_d1_d6_ge_4"
+    ]
+  }
+}
