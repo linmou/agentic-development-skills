@@ -21,3 +21,37 @@ jobs:
         run: python -m unittest discover -s skills/code-smell-monitor/tests -v
       - name: Compile script
         run: python -m py_compile skills/code-smell-monitor/scripts/code_smell_monitor.py
+
+  import-linter-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install real Import Linter
+        run: python -m pip install import-linter
+      - name: Exercise real configured contract
+        run: |
+          python - <<'PY'
+          import json, subprocess, tempfile
+          from pathlib import Path
+          from importlib.util import spec_from_file_location, module_from_spec
+          spec = spec_from_file_location('python_contracts', 'skills/code-smell-monitor/scripts/python_contracts.py')
+          mod = module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          with tempfile.TemporaryDirectory() as folder:
+              root = Path(folder)
+              pkg = root / 'archfixture'
+              pkg.mkdir()
+              (pkg/'__init__.py').write_text('')
+              (pkg/'domain.py').write_text('from archfixture import infrastructure\n')
+              (pkg/'infrastructure.py').write_text('VALUE = 1\n')
+              (root/'.importlinter').write_text('[importlinter]\nroot_package = archfixture\n\n[importlinter:contract:domain]\nname = Domain boundary\ntype = forbidden\nsource_modules = archfixture.domain\nforbidden_modules = archfixture.infrastructure\n')
+              result = subprocess.run(['lint-imports', '--config', '.importlinter', '--no-cache'], cwd=root, text=True, capture_output=True)
+              classified = mod.classify({'cmd':['lint-imports'],'exit_code':result.returncode,'stdout':result.stdout,'stderr':result.stderr,'timed_out':False}, mod.discover(root))
+              print(json.dumps(classified, indent=2))
+              print(result.stdout)
+              assert classified['status'] == 'violations', (result.stdout, result.stderr)
+              assert classified['enforced_violations'] == 1
+          PY

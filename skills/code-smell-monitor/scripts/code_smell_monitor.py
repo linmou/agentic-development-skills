@@ -577,6 +577,13 @@ def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: i
                 outcome['files_discovered'] = len(expected)
                 outcome['unrepresented_files'] = missing
                 outcome["status"] = "partial" if unresolved or missing else "covered"
+                outcome['resolution_coverage'] = {
+                    'unresolved_count': len(unresolved),
+                    'unrepresented_count': len(missing),
+                    'source_files': len(expected),
+                    'represented_files': len(expected) - len(missing),
+                    'typescript_unrepresented': [p for p in missing if p.endswith(('.ts','.tsx','.mts','.cts'))],
+                }
                 outcome['limitations'] = ['Static dependency-cruiser graph; generated/dependency '
                                           'directories excluded, node_modules not followed. '
                                           'Project configuration may further restrict coverage; '
@@ -629,6 +636,29 @@ def analyze_architecture(repo: Path, raw: Path, stack: dict[str, bool],
                'adapters': adapters, 'findings': sorted(findings.values(), key=lambda f: f['id']),
                'enforced_violations': sum(a['enforced_violations'] for a in adapters)}
     (raw / 'architecture_summary.json').write_text(json.dumps(outcome, indent=2), encoding='utf-8')
+    if stack['python']:
+        try:
+            config = bundled_module('python_contracts').discover(repo)
+            contract = {'status': 'not_configured', 'detector': 'import-linter',
+                        'findings': [], 'enforced_violations': 0}
+            if config['status'] == 'configured':
+                command = ['lint-imports', '--config', config['config']]
+                result = run_command(command, repo, 600) if executable_exists('lint-imports') else {
+                    'cmd': command, 'exit_code': 127, 'stdout': '', 'stderr': 'lint-imports unavailable',
+                    'timed_out': False, 'duration_seconds': 0}
+                write_raw(raw, 'architecture_import_linter', result)
+                contract = bundled_module('python_contracts').classify(result, config)
+            outcome['python_contracts'] = contract
+        except (ValueError, TypeError, OSError) as exc:
+            outcome['python_contracts'] = {'status': 'failed', 'error': str(exc),
+                                           'findings': [], 'enforced_violations': 0}
+        contract = outcome['python_contracts']
+        (raw / 'architecture_import_linter_summary.json').write_text(json.dumps(contract, indent=2), encoding='utf-8')
+        if contract['status'] not in ('not_configured', 'covered', 'violations') and outcome['status'] == 'covered':
+            outcome['status'] = 'partial'
+        outcome['enforced_violations'] += contract['enforced_violations']
+        outcome['findings'] = sorted(outcome['findings'] + contract['findings'], key=lambda f: f['id'])
+        (raw / 'architecture_summary.json').write_text(json.dumps(outcome, indent=2), encoding='utf-8')
     return outcome
 
 
@@ -645,6 +675,10 @@ def write_architecture_report(out: Path, architecture: dict[str, Any], interpret
                 report.write('- Limitation: ' + limitation + '\n')
             if adapter.get('error'):
                 report.write('- Error: ' + adapter['error'] + '\n')
+        if 'python_contracts' in architecture:
+            c = architecture['python_contracts']
+            report.write("- Python Import Linter contracts: " + c['status'] +
+                         "; details: raw/architecture_import_linter_summary.json\\n")
         report.write('Confirmed error-rule violations: ' + str(architecture['enforced_violations']) + '\n')
         for finding in architecture['findings']:
             report.write(f"- {finding['id']}: {finding['classification']}, {finding['category']} "
