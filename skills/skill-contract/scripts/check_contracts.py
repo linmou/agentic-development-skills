@@ -327,8 +327,8 @@ def load_contract(path: Path, findings: list[Finding], owner: str) -> dict[str, 
 
 def contract_problems(contract: dict[str, Any], skill: Skill | None) -> list[str]:
     problems: list[str] = []
-    for key in ("contract_format", "skill", "version", "capability", "prose_contract",
-                "request", "response", "status_field", "statuses", "writes", "changes"):
+    for key in ("contract_format", "skill", "version", "capability",
+                "request", "response", "status_field", "statuses", "rules", "writes", "changes"):
         if key not in contract:
             problems.append(f"missing key '{key}'")
     if problems:
@@ -340,9 +340,11 @@ def contract_problems(contract: dict[str, Any], skill: Skill | None) -> list[str
     if skill is not None:
         if contract["skill"] != skill.name or skill.path.name != skill.name:
             problems.append(f"skill '{contract['skill']}' must match folder '{skill.path.name}' and SKILL.md name '{skill.name}'")
-        prose = skill.path / str(contract["prose_contract"]).split("#", 1)[0]
-        if not prose.is_file():
-            problems.append(f"prose_contract not found: {prose}")
+    if "prose_contract" in contract:
+        problems.append("prose_contract is not allowed: contract.json is the only authority; move field meanings into descriptions and conditions into rules")
+    rules = contract["rules"]
+    if not isinstance(rules, list) or not all(isinstance(r, str) and r.strip() for r in rules):
+        problems.append("rules must be a list of non-empty strings")
     for part in ("request", "response"):
         problems += [f"{part}: {issue}" for issue in schema_problems(contract[part])]
     statuses = contract["statuses"]

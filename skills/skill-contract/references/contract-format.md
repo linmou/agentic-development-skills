@@ -10,7 +10,7 @@ A contract has three parts, owned by different skills:
 | Dependency declaration | caller | `metadata.requires` in the caller's `SKILL.md` frontmatter |
 | Call examples | caller | `<caller>/references/calls/<callee>/*.json` |
 
-The callee's prose contract (for example `references/call-contract.md`) stays the authority for meaning. `contract.json` is its checkable projection; the two must agree.
+`contract.json` is the one authoritative contract: shape, field meanings, conditional rules, statuses and owned stores all live in it. The callee's `SKILL.md` links to it and must not restate fields, statuses or rules in prose — a second copy drifts.
 
 ---
 
@@ -22,11 +22,11 @@ The callee's prose contract (for example `references/call-contract.md`) stays th
   "skill": "note-store",
   "version": "1.0.0",
   "capability": "Store a plain-text note and return its id.",
-  "prose_contract": "SKILL.md#call-contract-v1",
-  "request": { "type": "object", "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 } } },
+  "request": { "type": "object", "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1, "description": "Note body, stored verbatim." } } },
   "response": { "type": "object", "required": ["status"], "properties": { "status": { "enum": ["ok", "error"] } } },
   "status_field": "status",
   "statuses": ["ok", "error"],
+  "rules": ["On `error`, nothing was written; the caller must not report a note id."],
   "writes": [{ "store": "notes", "location": "notes/<note_id>.json" }],
   "high_stakes": false,
   "changes": [{ "version": "1.0.0", "note": "Initial contract." }]
@@ -39,19 +39,19 @@ The callee's prose contract (for example `references/call-contract.md`) stays th
 | `skill` | yes | Callee skill name; must equal the folder and `SKILL.md` `name`. |
 | `version` | yes | Semantic version `MAJOR.MINOR.PATCH`. Bump MAJOR when a valid old Request may now fail, a status disappears, or a field changes meaning. |
 | `capability` | yes | One line: the reusable job, never a host state. |
-| `prose_contract` | yes | Path (optionally `#anchor`) of the human contract, relative to the callee folder. |
-| `request` | yes | Request schema (JSON Schema subset, §4). |
-| `response` | yes | Response schema (JSON Schema subset, §4). |
+| `request` | yes | Request schema (JSON Schema subset, §4). Each field's meaning goes in its `description`. |
+| `response` | yes | Response schema (JSON Schema subset, §4), with `description`s likewise. |
 | `status_field` | yes | Response key carrying the status. |
 | `statuses` | yes | Every status the callee can return. Callers must handle each one. |
+| `rules` | yes | List of one-sentence rules the schema subset cannot express (conditional fields, value meanings, what a status guarantees). `[]` when there are none. |
 | `writes` | yes | Stores the callee owns and writes. `[]` for a read-only skill. Each item: `store` (stable id, unique across all contracts), `location` (path pattern or `request.<field>` when the caller chooses the path). |
 | `high_stakes` | no | `true` when the trace tier is recommended (see `trace-check.md`). Default `false`. |
 | `changes` | yes | Changelog, newest last; the last entry's `version` equals `version`. |
 
 Rules:
 - The callee alone writes its `writes` stores. A second contract claiming the same `store` id is an error.
-- Opaque fields such as `caller_tag` may appear in `request`; the prose contract must say they are log-only.
-- Conditional rules the subset cannot express (for example "if `prior_log` then `prior_result`") stay in the prose contract and are checked by the semantic pass, not the script. Do not invent schema keywords to encode them.
+- Opaque fields such as `caller_tag` may appear in `request`; their `description` must say they are log-only.
+- Conditional rules the subset cannot express (for example "if `prior_log` then `prior_result`") go in `rules` and are checked by the semantic pass, not the script. Do not invent schema keywords to encode them.
 
 ## 2. Caller: dependency declaration
 

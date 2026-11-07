@@ -23,7 +23,6 @@ CONTRACT = {
     "skill": "note-store",
     "version": "1.2.0",
     "capability": "Store a plain-text note and return its id.",
-    "prose_contract": "SKILL.md",
     "request": {
         "type": "object",
         "required": ["text"],
@@ -41,6 +40,7 @@ CONTRACT = {
     },
     "status_field": "status",
     "statuses": ["ok", "error"],
+    "rules": ["On error nothing was written."],
     "writes": [{"store": "notes", "location": "notes/<note_id>.json"}],
     "changes": [{"version": "1.2.0", "note": "Add tags."}],
 }
@@ -191,6 +191,27 @@ class CheckContractsTest(unittest.TestCase):
         self.assertIn("not MAJOR.MINOR.PATCH", messages)
         self.assertIn("unsupported keyword 'pattern'", messages)
         self.assertIn("differ from response status enum", messages)
+
+    def contract_messages(self, contract: dict) -> str:
+        self.ws.callee(contract)
+        return " | ".join(f.message for f in self.run_check() if f.code == "contract-invalid")
+
+    def test_empty_rules_is_valid(self) -> None:
+        self.assertEqual(self.contract_messages(dict(CONTRACT, rules=[])), "")
+
+    def test_missing_rules_is_invalid(self) -> None:
+        contract = {k: v for k, v in CONTRACT.items() if k != "rules"}
+        self.assertIn("missing key 'rules'", self.contract_messages(contract))
+
+    def test_malformed_rules_are_invalid(self) -> None:
+        for rules in ("one rule", [""], ["ok", 3], None):
+            with self.subTest(rules=rules):
+                self.assertIn("rules must be a list", self.contract_messages(dict(CONTRACT, rules=rules)))
+
+    def test_prose_contract_key_is_rejected(self) -> None:
+        # contract.json is the only authority; a pointer to a second prose contract is an error
+        messages = self.contract_messages(dict(CONTRACT, prose_contract="references/call-contract.md"))
+        self.assertIn("prose_contract is not allowed", messages)
 
     def test_impact_breaking_change_without_major(self) -> None:
         self.ws.callee()

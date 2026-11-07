@@ -11,8 +11,8 @@
 ## Contract (build)
 
 - `contract.json` path:
-- Prose contract path:
-- Agreement with prose (fields, statuses, writes, conditional rules left to prose):
+- Prose contract folded in and replaced by a link: path | none existed
+- `rules` (conditions the schema cannot express):
 - `high_stakes`: true | false — reason:
 
 ### C4b — Field API design

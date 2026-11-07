@@ -4,7 +4,7 @@ Intent: decide, per caller, whether it can call the callee correctly using only 
 
 Score each caller on its own. Verdicts: `pass` | `fail` | `insufficient_evidence`; V7 is `pass` | `warn`. Every verdict cites a file path and line or quote, and for `pass` names one counterexample you looked for and did not find.
 
-Read for each caller: its `SKILL.md`, its `references/`, its call examples, and the callee's prose contract. Do not read callee internals to excuse a caller; if the caller only works because of undocumented callee behaviour, that is a V6 fail.
+Read for each caller: its `SKILL.md`, its `references/`, its call examples, and the callee's `contract.json`. Do not read callee internals to excuse a caller; if the caller only works because of undocumented callee behaviour, that is a V6 fail.
 
 ---
 
@@ -17,7 +17,7 @@ Read for each caller: its `SKILL.md`, its `references/`, its call examples, and 
 
 - There is a call example for each distinct way the caller invokes the callee (each `kind`, mode or profile it uses).
 - Examples validate against the schema (script: `example-invalid`).
-- Examples also satisfy the prose contract's conditional rules the schema subset cannot express (paired fields, required-if rules, value meanings).
+- Examples also satisfy the contract's `rules` and field `description`s (paired fields, required-if rules, value meanings).
 - Examples match the caller's procedure: the procedure would actually produce this shape. An example that is cleaner than what the procedure sends fails.
 
 ## V3 — Field provenance (blocking)
@@ -45,7 +45,8 @@ Read for each caller: its `SKILL.md`, its `references/`, its call examples, and 
 
 ## V7 — Call hygiene (non-blocking)
 
-- The caller points to the callee's prose contract and names the version it was written against.
+- The caller points to the callee's `contract.json` and names the version it was written against.
+- The caller does not copy the callee's fields, statuses or rules into its own prose; it links instead.
 - For a `high_stakes` callee, the caller emits the explicit Request block before each call (`contract-format.md` §5).
 - List misses as fixes; V7 never changes the verdict.
 

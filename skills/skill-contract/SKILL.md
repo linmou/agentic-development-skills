@@ -13,14 +13,14 @@ metadata:
 
 # Skill Contract
 
-Make a callee's interface a checked artifact instead of prose, then prove the local callers fit it.
-Write only contract artifacts (`contract.json`, call examples, and a prose contract when the callee has none and the user agrees). Do not rewrite caller or callee procedures unless the user asks after the report.
+Make a callee's interface one checked artifact, `contract.json`, instead of prose, then prove the local callers fit it.
+Write only contract artifacts (`contract.json` and call examples). Do not rewrite caller or callee procedures unless the user asks after the report.
 
 ## Modes
 
 | Mode | Use when | Inputs |
 |------|----------|--------|
-| `build` | A callee has no `contract.json`, or its prose contract changed | `callee` folder |
+| `build` | A callee has no `contract.json`, or its interface changed | `callee` folder |
 | `verify` (default) | Checking one callee's callers, or every contract in local storage | skill roots; optional `callee` |
 | `impact` | Before changing a callee's contract | skill roots; `callee`; proposed `contract.json` |
 | `extract` | A capability was just split out of a host skill | `host_skill`, `extracted_skill` |
@@ -35,9 +35,9 @@ Skill roots are folders whose direct children are skills, for example `~/.codex/
 2. **Extract** (`extract` only) — Read `references/criteria.md` and `references/extraction-split-rubric.md`, score C1–C3, C4a, C5–C6 on the host/extract pair and record them with `references/extraction-report-template.md`. If C2 or C3 fail, report and stop: a contract does not fix a reversed or dual-writer split.
    *Done when:* the extraction report exists; continue to step 3 with the extracted skill as callee and the host as its first caller.
 
-3. **Build** (`build` and `extract`) — Write `<callee>/contract.json` as the checkable projection of the callee's prose contract. Every request field, status and owned store comes from callee text; never add a field because a caller happens to send it. Add a prose contract first if none exists, and mark `high_stakes` using `references/trace-check.md`.
+3. **Build** (`build` and `extract`) — Write `<callee>/contract.json` as the single authoritative contract. Derive every request field, status, rule and owned store from what the callee actually does; never add a field because a caller happens to send it. Put field meanings in schema `description`s and conditions the schema cannot express in `rules`. If the callee already has a prose contract (for example `references/call-contract.md` or a Call contract section), fold its content into `contract.json`, then replace the prose with a one-line link to `contract.json` so no second copy remains. Mark `high_stakes` using `references/trace-check.md`.
    Then audit the result as a separate pass: read `references/call-contract-field-rubric.md` and `references/single-agent-multi-pass-scoring.md` and run C4b Passes A–D on the contract you just wrote. Pass C is mandatory because you authored it.
-   *Done when:* `contract.json` exists, agrees with the prose contract, and C4b is locked.
+   *Done when:* `contract.json` exists, nothing in the callee restates it, and C4b is locked.
 
 4. **Mechanical check** — Run
    `python3 scripts/check_contracts.py <root>... [--callee NAME] [--proposed FILE] --json`
@@ -64,7 +64,7 @@ Skill roots are folders whose direct children are skills, for example `~/.codex/
 
 | File | Role |
 |------|------|
-| `references/contract-format.md` | `contract.json`, `metadata.requires`, call examples, schema subset, explicit Request block |
+| `references/contract-format.md` | Authoritative `contract.json`, `metadata.requires`, call examples, schema subset, explicit Request block |
 | `references/caller-verify-rubric.md` | V1–V7 per-caller semantic checks |
 | `references/call-contract-field-rubric.md` | C4b D1–D7 field API rubric (build audit) |
 | `references/single-agent-multi-pass-scoring.md` | How to score C4b without grading your own work |

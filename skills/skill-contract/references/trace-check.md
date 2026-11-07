@@ -21,7 +21,7 @@ Run it only when the user agrees. Otherwise write `suggested, not run` in the re
 ## Procedure
 
 1. **Select** — Find sessions that loaded the callee (a skill invocation, or a read of its `SKILL.md`). Keep a window from session start to the callee's response for each call.
-2. **Match version** — Hash the callee `SKILL.md` text the session read, when present, and compare it with the current file. Judge only matching calls; list the rest as `stale`.
+2. **Match version** — Compare the contract version the session saw (the `skill-request` block, or a read of `contract.json`) with the current `contract.json` version. Judge only matching calls; list the rest as `stale`.
 3. **Extract calls** — For each call record: caller skill, Request, Response status, and what the caller did next.
 4. **Trace provenance** — For every field the Request sets, find the earliest source in the window: user message, tool output, file content, or a value fixed by the caller's procedure. A value with no source is `unsourced`. Exact or near-exact matches can be found mechanically; judge the rest by reading.
 5. **Check status handling** — For each non-success status, confirm the next actions follow the caller's documented handling and do not claim the write happened.
