@@ -339,6 +339,7 @@ def run_js_checks(repo: Path, paths: list[str], raw_dir: Path, has_typescript: b
         commands.append(("eslint", node_runner(repo, "eslint", ["--format", "json", *paths], install_mode), 600))
         commands.append(("jscpd", node_runner(repo, "jscpd", jscpd_args(paths, raw_dir), install_mode), 600))
         commands.append(("knip_dead_code", node_runner(repo, "knip", ["--reporter", "json"], install_mode), 600))
+        commands.append(("knip_production", node_runner(repo, "knip", ["--production", "--reporter", "json"], install_mode), 600))
         commands.append(("madge_circular", node_runner(repo, "madge", ["--circular", "--json", *paths], install_mode), 600))
     commands.append(("depcheck", node_runner(repo, "depcheck", ["--json"], install_mode), 600))
     commands.append(("package_audit", audit_command(repo), 600))
@@ -425,7 +426,58 @@ def extract_headlines(raw_dir: Path) -> dict[str, Any]:
                 if isinstance(knip.get(category), list)
             }
 
+    production = load_json(raw_dir / "knip_production.json")
+    if isinstance(production, dict):
+        headlines["knip_production_findings"] = knip_counts(production)
+        if isinstance(knip, dict):
+            only = sorted(knip_records(production) - knip_records(knip))
+            headlines["knip_production_only_candidates"] = [
+                {"file": file, "category": category, "symbol": symbol}
+                for file, category, symbol in only
+            ]
+            headlines["knip_production_only_note"] = (
+                "Candidates are reported by production-mode Knip but not ordinary Knip; "
+                "this does not prove test-only references or exclude dynamic/public consumers."
+            )
     return headlines
+
+
+def knip_counts(payload: dict[str, Any]) -> dict[str, int]:
+    """Count unused-code categories across supported Knip JSON reporter shapes."""
+    categories = ("files", "exports", "types", "dependencies", "devDependencies", "unlisted", "duplicates")
+    issues = payload.get("issues")
+    groups = issues if isinstance(issues, list) else [payload]
+    counts: dict[str, int] = {}
+    for group in groups:
+        if isinstance(group, dict):
+            for category in categories:
+                entries = group.get(category)
+                if isinstance(entries, list):
+                    counts[category] = counts.get(category, 0) + len(entries)
+    return counts
+
+
+def knip_records(payload: dict[str, Any]) -> set[tuple[str, str, str]]:
+    """Stable exact comparison, not a claim of reachability completeness."""
+    categories = ("files", "exports", "types")
+    issues = payload.get("issues")
+    groups = issues if isinstance(issues, list) else [payload]
+    records: set[tuple[str, str, str]] = set()
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        file = str(group.get("file", ""))
+        for category in categories:
+            entries = group.get(category)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if isinstance(entry, str):
+                    records.add((file if category != "files" else entry, category, entry if category != "files" else ""))
+                elif isinstance(entry, dict):
+                    symbol = str(entry.get("name", entry.get("file", entry.get("path", ""))))
+                    records.add((file if category != "files" else symbol, category, symbol if category != "files" else ""))
+    return records
 
 
 def top_counts(values: Any) -> list[dict[str, Any]]:
@@ -437,13 +489,13 @@ def top_counts(values: Any) -> list[dict[str, Any]]:
 
 FINDINGS_CODES = {
     "ruff": {1}, "vulture": {3}, "bandit": {1}, "mypy": {1},
-    "package_lint": {1}, "eslint": {1}, "knip_dead_code": {1},
+    "package_lint": {1}, "eslint": {1}, "knip_dead_code": {1}, "knip_production": {1},
     "depcheck": {1}, "package_audit": {1}, "package_typecheck": {1},
     "tsc_no_emit": {1}, "gitleaks": {1},
 }
 JSON_RESULTS = {
     "ruff", "radon_cc", "radon_mi", "bandit", "eslint",
-    "madge_circular", "depcheck", "knip_dead_code",
+    "madge_circular", "depcheck", "knip_dead_code", "knip_production",
 }
 CATEGORIES = {
     "ruff": ("complexity", "dead_code", "static_safety"),
@@ -452,6 +504,7 @@ CATEGORIES = {
     "package_lint": ("static_safety",),
     "eslint": ("complexity", "dead_code", "static_safety"),
     "jscpd": ("duplication",), "knip_dead_code": ("dead_code",),
+    "knip_production": ("production_reachability",),
     "madge_circular": ("coupling",), "depcheck": ("dependency_health",),
     "package_audit": ("dependency_health",), "package_typecheck": ("static_safety",),
     "tsc_no_emit": ("static_safety",), "gitleaks": ("security",),
@@ -524,6 +577,8 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
     lines.append("## Review Prompts")
     lines.append("- Check highest-complexity functions before extracting abstractions.")
     lines.append("- Treat dead-code reports as suspected when routing, decorators, plugins, or dynamic imports exist.")
+    lines.append("- Compare Knip normal vs production-mode candidates without deleting or excluding tests from the repository.")
+    lines.append("- For reachable implementation or repeated-execution overlap, review call paths, event triggers, and resource reads; imports alone are insufficient.")
     lines.append("- Investigate circular dependencies before moving shared code.")
     lines.append("- Keep security/dependency findings separate from maintainability findings.")
     lines.append("- Re-run the same scope after changes and compare this report with the new one.")
@@ -723,7 +778,7 @@ def main() -> int:
         (raw_dir / 'requirement_interpretation.json').write_text(json.dumps(interpretation, indent=2), encoding='utf-8')
 
 
-    package_detectors = {"knip_dead_code", "depcheck", "package_audit",
+    package_detectors = {"knip_dead_code", "knip_production", "depcheck", "package_audit",
                          "package_typecheck", "tsc_no_emit", "package_lint"}
     for item in results:
         item["status"] = detector_status(item, raw_dir)
