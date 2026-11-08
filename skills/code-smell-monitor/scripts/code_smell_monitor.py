@@ -790,6 +790,12 @@ def main() -> int:
     if architecture is not None:
         coverage['categories']['architecture'] = architecture['status']
         coverage['complete'] = all(v == 'covered' for v in coverage['categories'].values())
+    headlines = extract_headlines(raw_dir)
+    knip_statuses = {item["name"]: item["status"] for item in results if item["name"] in ("knip_dead_code", "knip_production")}
+    if any(knip_statuses.get(name) not in ("clean", "findings") for name in ("knip_dead_code", "knip_production")):
+        headlines.pop("knip_production_only_candidates", None)
+        headlines.pop("knip_production_only_note", None)
+        headlines["knip_production_comparison"] = "incomplete: both normal and production Knip must run successfully"
     summary = {
         "coverage": coverage,
         "architecture": architecture,
@@ -799,7 +805,7 @@ def main() -> int:
         "out_dir": str(out_dir),
         "stack": stack,
         "install_mode": args.install,
-        "headlines": extract_headlines(raw_dir),
+        "headlines": headlines,
         "results": [{key: value for key, value in item.items() if key not in {"stdout", "stderr"}} for item in results],
         "install_results": [{key: value for key, value in item.items() if key not in {"stdout", "stderr"}} for item in install_results],
     }
