@@ -7,7 +7,9 @@ description: Build and run objective code quality smell monitoring for a reposit
 
 ## Purpose
 
-Use this skill to produce reproducible code-quality evidence for a repository. The monitor reports signals and suspected risks while leaving contextual judgment to the user.
+Produce reproducible code-quality **evidence**, then use repository-specific context to decide which findings deserve review. The bundled runner collects deterministic signals; **you**, the agent, own repository discovery, tool selection, source authority, interpretation, and the final issue-oriented report. No user-authored requirements manifest or configured architecture rules are prerequisites for an advisory scan.
+
+Use judgment to adapt to repositories with different stacks and document systems. For interpretation details and evidence classification, read [references/agent-interpretation.md](references/agent-interpretation.md) when reporting architectural or requirements-aware findings.
 
 ## Quick Start
 
@@ -25,7 +27,7 @@ python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo
 
 When dependency-cruiser is installed, this mode generates package-wide JS/TS dependency graph findings. Python uses a bundled static AST import adapter without executing target code. Mixed projects report both adapters. Cycles are structural facts; high fan-in/out are review candidates, not confirmed design violations. Only explicitly configured `error` rule violations are CI-blocking. Missing tools or unresolved imports produce unavailable or partial coverage, not a clean scan. See `references/architecture-analysis.md`.
 
-Use `--architecture-only` to run architecture adapters without unrelated detectors. Add `--requirements path/to/requirements.json` for functional/quality requirement associations grounded in exact source quotations and explicit module mappings. The monitor validates quotations, line ranges and source hashes; it preserves rationale and uncertainty. Associations are impact hypotheses, never proof of a requirement violation and never CI-blocking. No requirements are invented when the mapping is absent.
+Use `--architecture-only` to run architecture adapters without unrelated detectors. The legacy `--requirements path/to/requirements.json` flag is an **optional evidence-mapping adapter**, not a way to discover or interpret ADRs. Do not ask the user to author that JSON to run a review. When legacy mappings cite documents above a nested package root, use `--workspace-root path/to/workspace` (the workspace must contain `--repo`). Its quote/hash/path checks do not establish decision authority or semantic correctness. Neither mapped nor agent-interpreted requirements alone trigger CI enforcement.
 
 For a full repository pass:
 
@@ -56,14 +58,15 @@ Use the command appropriate for the repository and do not run all three. For a l
 
 ## Workflow
 
-1. Choose the smallest meaningful scope first: changed files, touched module, or package boundary.
-2. Run `scripts/code_smell_monitor.py` with that scope.
-3. Check coverage before interpreting results. A JavaScript/TypeScript pass must include lint, type safety, duplication, dead or unused code, dependency coupling, and dependency health when the relevant tools can run.
-4. Read `code_smell_report.md` first, then inspect `raw/*.json` or `raw/*.txt` for exact tool output.
-5. Treat type/static safety, dead-code, security, and dependency findings as higher priority than style-only findings.
-6. Check `summary.json` coverage (`complete` and per-category statuses) before trusting any clean results. Mark the pass incomplete when a required detector is missing, fails to start, runs from the wrong package root, or scans generated/dependency/history files.
-7. Escalate to a wider scope only when the change affects shared abstractions, imports, package boundaries, build config, or dependency versions.
-8. Re-run the same scoped command after changes and compare summaries.
+1. **Discover before selecting tools.** Inspect the repository structure, package/build roots, language stacks, existing check commands and analyzer configurations, and any agent/project instructions. Identify what is actually in scope; never assume a fixed JavaScript/Python-only script covers every repository.
+2. **Find applicable design authority, if architectural interpretation is needed.** Inspect repository index/docs and follow explicit links to ADRs, Architecture Spines, PRDs, NFRs, constitutions, and code-level policy. Check whether each decision is accepted/adopted, target-only, superseded, disputed, or historical. Prefer authoritative current decisions; report ambiguity rather than choosing a random matching file. Other repository documents can live above package roots.
+3. **Select the smallest meaningful analysis scope and available tools.** Prefer the repository's established linters, build scripts and graph analyzers. Use `scripts/code_smell_monitor.py` for supported deterministic checks; use another existing analyzer directly when the bundled runner cannot cover the stack. Install tools only with permitted environment changes.
+4. **Execute and assess coverage.** Inspect detector statuses, effective package roots, unresolved imports, omitted source files and raw evidence. Missing or failed checks mean incomplete coverage, never clean findings. Graph-wide checks may cover a wider scope than file-level checks.
+5. **Interpret structural findings against real code and applicable decisions.** Distinguish measured facts from universal review candidates; investigate actual module responsibilities before connecting them to an ADR or requirement. Cite exact source path and lines, code locations, and observed import/tool evidence. Explain the plausible impact, alternative explanations and what further test or inspection would discriminate them. An `ADOPTED` decision, a `TARGET` decision, and an unsupported assumption have different implications.
+6. **Report actionable, evidence-backed issues rather than verification claims.** Group repeated symptoms, prioritize consequential candidates, preserve uncertainty, and propose follow-up investigation/verification separately. No semantic interpretation alone constitutes a configured-rule or behavioral violation. Issue creation requires an explicit request.
+7. **Re-run objective tools on the same scope after changes** and compare like-for-like reports. Never claim the skill has automatically created requirement mappings, enforced an ADR, or proved behavior.
+
+**Done when:** Each surfaced issue has observable evidence, a confidence/epistemic label, grounded repository context when available, and the unverified portion stated; coverage gaps and document-authority gaps are visible. A repository with no authoritative requirements can still receive a useful structural report.
 
 ## Scope Selection
 
@@ -97,9 +100,13 @@ Use common external tools instead of hand-rolled pattern matching:
 
 For nested applications or monorepos, run the monitor once per package root so project config, local binaries, lockfiles, and package scripts resolve in the correct directory. Aggregate the reports only after each package pass has a valid coverage status.
 
-Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category.
+Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category. For cross-repo agent-level interpretation examples and boundary tests, read `references/agent-interpretation.md`.
 
 ## Interpretation Rules
+
+- An agent's source-backed architectural interpretation is **not** the same as the optional JSON adapter's path-match association; label them separately.
+- Treat documents marked target/future as intended direction, not proof the current legacy code violates an adopted rule; distinguish known migration debt from newly introduced violations.
+- Do not manufacture an ADR, responsibility mapping, requirement, or enforcement contract from folder names.
 
 - Report suspected dead code, not certain dead code, in framework-heavy or plugin-based projects.
 - Keep semantic responsibility issues as review prompts unless a tool gives direct evidence.
