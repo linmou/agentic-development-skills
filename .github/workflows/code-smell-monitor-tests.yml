@@ -32,3 +32,29 @@ jobs:
         run: node --test skills/code-smell-monitor/tests/test_behavioral_redundancy.cjs
       - name: Syntax-check behavioral redundancy analyzer
         run: node --check skills/code-smell-monitor/scripts/behavioral_redundancy.cjs
+
+      # TEMPORARY integration smoke test against a public repository; remove after recording results.
+      - name: Checkout temporary integration target
+        uses: actions/checkout@v4
+        with:
+          repository: linmou/PhishingTrainingProgram
+          ref: no_sign_up
+          path: target-repo
+          persist-credentials: false
+      - name: Scan actual integration target for redundant execution
+        env:
+          NODE_PATH: ${{ runner.temp }}/csm-tools/node_modules
+        run: |
+          node skills/code-smell-monitor/scripts/behavioral_redundancy.cjs --repo target-repo/tutor-system --out integration-results.json
+          python - <<'PY'
+          import json
+          from collections import Counter
+          p=json.load(open("integration-results.json"))
+          print("ACTUAL_REPO_INTEGRATION_START")
+          print(json.dumps({"status":p.get("status"),"scanned_files":p.get("scanned_files"),"omissions":p.get("omissions"),"types":dict(Counter(f["type"] for f in p.get("findings",[]))),"findings":p.get("findings",[])[:70]}, indent=2))
+          print("ACTUAL_REPO_INTEGRATION_END")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: actual-repo-behavioral-scan-temporary
+          path: integration-results.json
