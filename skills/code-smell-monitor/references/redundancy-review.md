@@ -1,6 +1,6 @@
 # Redundant code and execution review
 
-The monitor reports possible redundancies; it does not remove application code or tests, prove a safe deletion, or launch a second issue-generation pipeline. Use the existing `code_smell_report.md` and raw tool records. Apply this workflow across languages/frameworks only where actual evidence is available.
+The monitor reports possible redundancies; it does not remove application code or tests, prove a safe deletion, or launch a second issue-generation pipeline. The bundled `scripts/behavioral_redundancy.cjs` is an executable TypeScript compiler-API adapter automatically invoked for JS/TS; its output is advisory, not a claim of equivalent runtime behavior. Use the existing `code_smell_report.md` and raw tool records. Apply this workflow across languages/frameworks only where actual evidence is available.
 
 ## 1. Dead code and production reachability
 
@@ -17,11 +17,11 @@ When two *reachable* functions appear to implement the same responsibility, `kni
 3. The conditions that invoke each implementation and the documented reason for separate paths, if any.
 4. Whether repo history shows a migration or superseded implementation. Old and new code coexisting is a review candidate, not proof of incorrect redundancy.
 
-Use existing AST/call-graph/data-flow tools where available. Prefer language-appropriate analyzers over bespoke regex. Report uncertainty for dynamic invocation and unresolved imports. Do not hard-code a dependency on any named documentation architecture.
+The bundled TypeScript AST pass follows statically resolvable direct calls across modules and inspects React custom-hook state/effect wiring. It detects some overlapping resource reads and repeated calls, not arbitrary semantic equivalence. Use additional AST/call-graph/data-flow tools where available. Prefer language-appropriate analyzers over bespoke regex. Report uncertainty for dynamic invocation and unresolved imports. Do not hard-code a dependency on any named documentation architecture.
 
 ## 3. Redundant execution
 
-Trace `trigger -> callback -> callee -> resource operation`, including language/framework semantics supported by evidence (e.g., subscription callback, lifecycle effect, request handler). Identify the same concrete resource, comparable operation and relevant key arguments, and whether triggers overlap. Avoid equating two references to the same function with simultaneous execution.
+Trace `trigger -> callback -> callee -> resource operation`, including language/framework semantics supported by evidence (e.g., subscription callback, lifecycle effect, request handler). The TypeScript adapter reports `state_effect_resource_overlap`, `same_entrypoint_repeated_read`, and `periodic_state_allocation` in the existing report when its supported patterns are present. Identify the same concrete resource, comparable operation and relevant key arguments, and whether triggers overlap. Avoid equating two references to the same function with simultaneous execution.
 
 Review ordering, cancellation, retry/backoff, state transitions, idempotency, authorization and recovery conditions. Multiple reads on initialization can be necessary to close the gap between initial history and event subscription.
 
@@ -38,4 +38,4 @@ Diagnostic traces, profiling counters or existing tests can supply *observations
 | Two uses of the same table for different users or phases | No automatic redundancy inference |
 | Unresolved imports or unavailable Knip | Partial/unavailable coverage, not a clean scan |
 
-If coverage or trigger identity is inadequate, present the missing analysis rather than constructing a behavioral claim.
+The TypeScript adapter requires `typescript` available through Node resolution and marks missing relative imports, parse errors or file-limit truncation as partial coverage. Dynamic dispatch, framework state semantics beyond the supported React hook pattern, transitive aliases, non-Supabase resource adapters, conditional exclusivity, and symbol resolution gaps remain limitations. If coverage or trigger identity is inadequate, present the missing analysis rather than constructing a behavioral claim.
