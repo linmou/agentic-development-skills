@@ -26,6 +26,10 @@ For each relevant tool finding:
 
 Keep report text concise: finding ID, observed evidence and effective scope, relevant code, authoritative source+status if available, risk mechanism, competing explanations, what is unverified, suggested follow-up.
 
+## Redundancy interpretation boundary
+
+Production-only Knip candidates are unused-code signals, not proof that test references alone keep an export reachable or that deletion is safe. For code that is reachable by multiple production paths, use a call-path or event-trigger analysis rather than dead-code analysis. Before labeling a repeated resource access as redundant, inspect arguments, triggers, ordering, cancellation, recovery requirements and side effects; express unresolved alternatives in the existing report. Requirements refine the risk interpretation but are neither mandatory nor sufficient to certify redundancy. The monitor never deletes tests or code and does not verify a proposed removal.
+
 ## 3. Optional legacy JSON evidence adapter
 
 `--requirements path/to/requirements.json` remains for existing automation requiring machine-readable associations. It must be **preauthored**, with exact requirement quotations, source paths, explicit module paths, rationale and uncertainty. The script validates literal text/path consistency and performs a module-path join. **It does not** select documents, interpret semantics, determine source authority, enforce requirements, or prove impact.
