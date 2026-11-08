@@ -21,3 +21,14 @@ jobs:
         run: python -m unittest discover -s skills/code-smell-monitor/tests -v
       - name: Compile script
         run: python -m py_compile skills/code-smell-monitor/scripts/code_smell_monitor.py
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install TypeScript compiler API for AST regression tests
+        run: npm install --no-save --prefix "$RUNNER_TEMP/csm-tools" typescript@5.9.3
+      - name: Behavioral redundancy analyzer tests
+        env:
+          NODE_PATH: ${{ runner.temp }}/csm-tools/node_modules
+        run: node --test skills/code-smell-monitor/tests/test_behavioral_redundancy.cjs
+      - name: Syntax-check behavioral redundancy analyzer
+        run: node --check skills/code-smell-monitor/scripts/behavioral_redundancy.cjs
