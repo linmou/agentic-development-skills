@@ -150,6 +150,8 @@ function analyze(ts, repo, filenames, omitted = []) {
       if (!ts.isImportDeclaration(statement) || !ts.isStringLiteral(statement.moduleSpecifier)) continue;
       const spec = statement.moduleSpecifier.text;
       if (!spec.startsWith('.')) continue;
+      // Styles/images are bundler assets, not missing JS/TS call-graph modules.
+      if (/\.(css|scss|sass|less|svg|png|jpe?g|gif|webp|ico|woff2?|ttf|eot)(\?.*)?$/i.test(spec)) continue;
       const resolved = ts.resolveModuleName(spec, sf.fileName, opts, ts.sys).resolvedModule;
       if (!resolved || !fs.existsSync(resolved.resolvedFileName)) {
         unresolved.push({ file: filename, module: spec });
