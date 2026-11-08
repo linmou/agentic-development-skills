@@ -181,7 +181,7 @@ function analyze(ts, repo, filenames, omitted = []) {
       }
       if (ts.isVariableDeclaration(n) && ts.isArrayBindingPattern(n.name) && ts.isCallExpression(n.initializer || {})
           && callNames(n.initializer.expression) === 'useState') {
-        const names = n.name.elements.map(e => e.name.getText());
+        const names = n.name.elements.map(e => e && e.name ? e.name.getText() : '');
         if (names.length >= 2) {
           stateNames.set(`${filename}:${names[1]}`, names[0]);
           if (fid) nodes.get(fid).stateSetters.add(names[1]);
