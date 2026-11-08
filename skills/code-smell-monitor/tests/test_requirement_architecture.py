@@ -114,9 +114,9 @@ class RequirementArchitectureTests(unittest.TestCase):
         workspace = self.repo
         package = workspace / 'app'
         package.mkdir()
-        (workspace / 'architecture.md').write_text('# Architecture\\nGateway owns writes.\\n')
-        (package / 'a.py').write_text('import b\\n')
-        (package / 'b.py').write_text('import a\\n')
+        (workspace / 'architecture.md').write_text('# Architecture\nGateway owns writes.\n')
+        (package / 'a.py').write_text('import b\n')
+        (package / 'b.py').write_text('import a\n')
         requirement = {
             'id': 'AD-2', 'kind': 'quality', 'modules': ['a.py'],
             'source': {'path': 'architecture.md', 'line_start': 2, 'line_end': 2,
@@ -155,7 +155,7 @@ class RequirementArchitectureTests(unittest.TestCase):
 
     def test_requirement_document_status_is_not_inferred_from_quote(self):
         self.manifest()
-        self.write('req.md', '# Requirements\\nState survives reloads.\\n')
+        self.write('req.md', '# Requirements\nState survives reloads.\n')
         result = requirements.interpret(self.repo, self.architecture, self.path)
         self.assertIn('authority', result['limitations'][0])
         self.assertEqual(result['associations'][0]['classification'], 'impact_hypothesis')
