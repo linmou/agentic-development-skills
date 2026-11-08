@@ -20,15 +20,15 @@ Mixed projects preserve per-adapter statuses and findings. One successful adapte
 
 ## Agent-led architectural interpretation (default)
 
-The script emits structural evidence, **not** a verdict against the repository's design decisions. The agent reads [agent-interpretation.md](agent-interpretation.md) and discovers the appropriate current ADRs, BMAD Architecture Spine, PRD, or other local documentation itself. It investigates code responsibility, quotes exact evidence, marks status (`ADOPTED`, `TARGET`, superseded/assumption), and explains competing interpretations. The agent may do this with **no** JSON manifest.
+The script emits structural evidence, **not** a verdict against the repository's design decisions. The agent reads [agent-interpretation.md](agent-interpretation.md), discovers whichever authoritative sources actually exist in the target repository (including code-level policies or no written design records), examines the relevant implementation, and identifies source authority and currency using local conventions. No named workflow, filename, status vocabulary, or JSON manifest is required for interpretation.
 
 Report an absent optional requirements manifest as `not_provided` for the machine evidence adapter only; it does not mean agent interpretation was not performed.
 
 ## Optional requirement evidence adapter (legacy API)
 
-Pass `--requirements requirements.json` with `--architecture` or `--architecture-only` **only** when a preauthored v1 JSON mapping is available or a downstream machine consumer explicitly needs one. This JSON is **not** the input format for arbitrary ADRs or a required output of the skill. It does not discover documents, interpret semantics, or decide whether the document is approved.
+Pass `--requirements requirements.json` with `--architecture` or `--architecture-only` **only** when a preauthored v1 JSON mapping is available or a downstream machine consumer explicitly needs one. This JSON is **not** the input format for arbitrary project documents or a required output of the skill. It does not discover documents, interpret semantics, or decide whether the document is approved.
 
-Paths in `modules` are relative to the analyzed `--repo`. Source `path` references are relative to `--workspace-root`, which defaults to `--repo`; the workspace must contain the analyzed repository. This allows a package-local analysis to cite a parent-workspace ADR without altering analyzer resolution or accepting path traversal. The manifest path itself is resolved from the caller's working directory.
+Paths in `modules` are relative to the analyzed `--repo`. Source `path` references are relative to `--workspace-root`, which defaults to `--repo`; the workspace must contain the analyzed repository. This allows a package-local analysis to cite a parent-workspace document without altering analyzer resolution or accepting path traversal. The manifest path itself is resolved from the caller's working directory.
 
 The adapter requires explicit existing module files, `kind: functional|quality`, exact source lines, rationale and uncertainty, e.g.:
 
