@@ -553,7 +553,7 @@ def coverage_status(results: list[dict[str, Any]]) -> dict[str, Any]:
         covered = sum(status in ("clean", "findings") for status in statuses)
         out[cat] = (
             "covered" if covered == len(statuses) else
-            "partial" if covered else
+            "partial" if covered or "partial" in statuses else
             "unavailable" if all(v == "unavailable" for v in statuses) else "failed"
         )
     return {"complete": bool(out) and all(v == "covered" for v in out.values()),
