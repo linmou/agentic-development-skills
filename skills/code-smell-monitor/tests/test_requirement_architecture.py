@@ -110,7 +110,7 @@ class RequirementArchitectureTests(unittest.TestCase):
         self.assertEqual(result['requirements'][0]['kind'], 'quality')
         self.assertEqual(len(result['unmapped_findings']), 1)
 
-    def test_nested_package_can_quote_parent_workspace_adr(self):
+    def test_nested_package_can_quote_workspace_document(self):
         workspace = self.repo
         package = workspace / 'app'
         package.mkdir()
@@ -118,7 +118,7 @@ class RequirementArchitectureTests(unittest.TestCase):
         (package / 'a.py').write_text('import b\n')
         (package / 'b.py').write_text('import a\n')
         requirement = {
-            'id': 'AD-2', 'kind': 'quality', 'modules': ['a.py'],
+            'id': 'POLICY-2', 'kind': 'quality', 'modules': ['a.py'],
             'source': {'path': 'architecture.md', 'line_start': 2, 'line_end': 2,
                        'quote': 'Gateway owns writes.'},
             'rationale': 'Review dependencies of the gateway.',
@@ -140,7 +140,7 @@ class RequirementArchitectureTests(unittest.TestCase):
              '--out', str(out)], capture_output=True, text=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         summary = json.loads((out / 'summary.json').read_text())
-        self.assertEqual(summary['requirement_interpretation']['associations'][0]['requirement_id'], 'AD-2')
+        self.assertEqual(summary['requirement_interpretation']['associations'][0]['requirement_id'], 'POLICY-2')
 
     def test_workspace_root_rejects_unrelated_root_and_outside_source(self):
         self.manifest()
