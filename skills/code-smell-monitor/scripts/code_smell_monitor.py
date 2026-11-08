@@ -70,7 +70,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--changed-only", action="store_true", help="Replace scope with git changed files under the repo.")
     parser.add_argument("--architecture", action="store_true", help="Run optional universal architecture graph checks.")
     parser.add_argument("--architecture-only", action="store_true", help="Run architecture adapters without unrelated detectors.")
-    parser.add_argument("--requirements", type=Path, help="Versioned JSON requirement-to-module mappings with exact source quotes; requires architecture analysis.")
+    parser.add_argument("--requirements", type=Path, help="Optional preauthored JSON evidence mappings (legacy); not required for agent-led interpretation.")
+    parser.add_argument("--workspace-root", type=Path, help="Root for optional requirement document citations; defaults to --repo and must contain it.")
     parser.add_argument("--architecture-max-degree", type=int, default=12, help="Fan-in/out review threshold.")
     parser.add_argument("--fail-on-tool-error", action="store_true", help="Exit non-zero when any tool cannot run cleanly.")
     return parser.parse_args()
@@ -664,8 +665,8 @@ def write_architecture_report(out: Path, architecture: dict[str, Any], interpret
 def main() -> int:
     args = parse_args()
     args.architecture = args.architecture or args.architecture_only
-    if args.architecture_max_degree < 1 or (args.requirements and not args.architecture):
-        print('positive architecture threshold and --architecture for --requirements are required', file=sys.stderr)
+    if args.architecture_max_degree < 1 or (args.requirements and not args.architecture) or (args.workspace_root and not args.requirements):
+        print('positive architecture threshold, --architecture for --requirements, and --requirements for --workspace-root are required', file=sys.stderr)
         return 2
     repo = Path(args.repo).resolve()
     if not repo.exists():
@@ -714,7 +715,8 @@ def main() -> int:
     if args.architecture:
         architecture = analyze_architecture(repo, raw_dir, stack, args.install, args.architecture_max_degree)
         try:
-            interpretation = bundled_module('requirement_interpretation').interpret(repo, architecture, args.requirements)
+            interpretation = bundled_module('requirement_interpretation').interpret(
+                repo, architecture, args.requirements, workspace_root=args.workspace_root)
         except (ValueError, TypeError, OSError) as exc:
             interpretation = {'status': 'failed', 'error': str(exc), 'requirements': [],
                               'associations': [], 'unmapped_findings': [f['id'] for f in architecture['findings']]}
