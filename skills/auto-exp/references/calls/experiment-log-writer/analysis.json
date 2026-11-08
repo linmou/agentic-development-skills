@@ -1,7 +1,7 @@
 {
   "case": "cite an iteration commit in a subsequent analysis entry",
   "request": {
-    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "log_path": "/work/research/evals/emotion/2026-05-22-emotion-defection/experiment_log.md",
     "entry": {
       "kind": "analysis",
       "timestamp": "2026-05-22T16:20:00-04:00",

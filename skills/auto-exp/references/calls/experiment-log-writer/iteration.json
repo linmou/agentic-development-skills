@@ -1,7 +1,7 @@
 {
   "case": "iteration entry after each run, including failed runs",
   "request": {
-    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "log_path": "/work/research/evals/emotion/2026-05-22-emotion-defection/experiment_log.md",
     "entry": {
       "kind": "iteration",
       "number": 1,
@@ -9,7 +9,7 @@
       "hypothesis_id": "H1",
       "changed_files": [
         {
-          "path": "auto_experiments/2026-05-22-emotion-defection/prompts/anger.txt",
+          "path": "/work/research/evals/emotion/2026-05-22-emotion-defection/prompts/anger.txt",
           "factor": "system prompt framing"
         }
       ],
@@ -19,10 +19,10 @@
           "status": "Executed",
           "command": "python run_games.py --prompt prompts/anger.txt --games 200",
           "timestamp": "2026-05-22T13:40:00-04:00",
-          "working_directory": "auto_experiments/2026-05-22-emotion-defection",
+          "working_directory": "/work/research/evals/emotion/2026-05-22-emotion-defection",
           "environment": ".env.experiment",
           "exit_status": 0,
-          "output_path": "auto_experiments/2026-05-22-emotion-defection/outputs/run1.log"
+          "output_path": "/work/research/evals/emotion/2026-05-22-emotion-defection/outputs/run1.log"
         }
       ],
       "results": [
@@ -42,7 +42,7 @@
       "decision": "support",
       "decision_reason": "Observed 8-point increase exceeds the 5-point criterion",
       "artifacts": {
-        "results_address": "auto_experiments/2026-05-22-emotion-defection/outputs/"
+        "results_address": "/work/research/evals/emotion/2026-05-22-emotion-defection/outputs/"
       }
     }
   },

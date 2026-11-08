@@ -1,6 +1,6 @@
 ---
 name: auto-exp
-description: Run automatic research experiment loops from a user prompt. Use when the user asks for automatic experiments, autonomous experiment iteration, hypothesis testing, or work based on ~/.codex/prompts/auto_exp.md; enforce a dedicated auto_experiments folder, experiment log, branch isolation, per-iteration commits, and reproducible commands.
+description: Run automatic research experiment loops from a user prompt. Use when the user asks for automatic experiments, autonomous experiment iteration, hypothesis testing, or work based on ~/.codex/prompts/auto_exp.md; use a caller-selected experiment root, experiment log, branch isolation, per-iteration commits, and reproducible commands.
 metadata:
   requires: experiment-log-writer@^1.1.0
 ---
@@ -11,12 +11,17 @@ metadata:
 
 Run experiments as traceable scientific work, not as one-off scripts. Keep every iteration reproducible: what question was asked, what hypothesis was tested, what changed, what command ran, what result appeared, and what commit records it.
 
+Updated: 2026-11-07. Source baseline: `aff8194`.
+
+Use [contract.json](contract.json) for the authoritative Request, Response, and placement rules.
+
 ## Start Gate
 
 Before changing files or running the experiment, ask only for missing information needed to proceed:
 
 - Research question or target phenomenon, unless the user already specified it.
 - Success metric or evaluation signal.
+- Experiment placement root from the calling skill or, for direct invocation, the user; apply the placement rules in `contract.json`.
 - Allowed runtime, model/API/GPU constraints, and whether GPU-consuming work is permitted.
 
 If these details are already supplied, proceed to workspace setup without another general question.
@@ -27,8 +32,8 @@ If these details are already supplied, proceed to workspace setup without anothe
 2. Check the current branch, worktrees, and working-tree status. Tell the user if the current worktree is dirty and summarize the existing changes; a new worktree will not automatically contain uncommitted changes.
 3. For every new experiment, ask whether to create a new worktree on `auto-experiment/<short-topic>` or continue on an existing `auto-experiment/` branch in its worktree. Name the available branch when one exists. Wait for the choice before changing files or running the experiment.
 4. Use the chosen worktree. Do not commit pre-existing changes unless the user identifies them as part of the experiment.
-5. Create a new experiment folder under `auto_experiments/`. Use a date plus short topic, for example `auto_experiments/2026-05-22-emotion-defection/`.
-6. Put all experiment-specific scripts, configs, raw outputs, summaries, and logs in that folder unless existing project conventions require a closer location.
+5. Resolve the supplied placement root using `contract.json`, then create a new date-and-topic child directory. Record the actual experiment directory for subsequent commands, artifacts, and logging.
+6. Put experiment-specific scripts, configs, raw outputs, summaries, and logs in the resolved experiment directory. Resolve conflicts with project placement requirements through the contract before writing.
 
 Filesystem placement does not imply Git tracking. Apply the policy below before generating large artifacts.
 
@@ -56,7 +61,7 @@ Do not discard unique scientific evidence. When raw artifacts are required but u
 
 ## Experiment Log
 
-Use `$experiment-log-writer` to create and update `auto_experiments/<date-topic>/experiment_log.md`. Read its `references/call-contract.md` (version 1.1) before the first call. The writer owns the log template, field meanings, and all log edits; this skill owns experiment execution and the decision to call the writer.
+Use `$experiment-log-writer` to create and update `experiment_log.md` inside the resolved experiment directory. Pass that actual path as the writer's `log_path` on every call. Read its `references/call-contract.md` (version 1.1) before the first call. The writer owns the log template, field meanings, and all log edits; this skill owns experiment execution and the decision to call the writer.
 
 Call the writer with a `plan` entry before the first run and an `iteration` entry after each run, including failed or partial runs. Supply observed facts: changed factors, exact planned and executed commands, working directory, environment reference, exit status, input/config identifiers, metrics, decision reasoning, interpretation, and artifact locations. For externally stored raw evidence, supply a stable results address or manifest with generation command, run identifier, location, content hash, file count, and size. Pass representative input-output pairs when outputs are qualitative. Use a `correction` entry for later corrections; do not edit the log directly.
 
@@ -99,7 +104,7 @@ Do not delete files except temporary test scripts created during the current wor
 
 ## Final Report
 
-End with:
+Return the Response defined in `contract.json`, including:
 
 - Experiment folder path
 - Branch name

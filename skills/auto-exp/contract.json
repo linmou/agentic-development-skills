@@ -1,15 +1,15 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "auto-exp",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "capability": "Execute a traceable research experiment with reproducible evidence and iteration commits.",
-  "prose_contract": "references/call-contract.md",
   "request": {
     "type": "object",
-    "required": ["repository", "task"],
+    "required": ["repository", "task", "experiment_root"],
     "properties": {
-      "repository": {"type": "string", "minLength": 1},
-      "task": {"type": "string", "minLength": 1}
+      "repository": {"type": "string", "minLength": 1, "description": "Absolute path to the existing repository; inspect it before choosing the execution worktree."},
+      "task": {"type": "string", "minLength": 1, "description": "Research question, evaluation signal, known execution constraints, and references to applicable plans or domain procedures; missing facts are resolved through the Start Gate."},
+      "experiment_root": {"type": "string", "minLength": 1, "description": "Caller-selected parent directory for new experiment folders, with no default. A relative path resolves against the selected execution worktree root; an absolute path retains its supplied location. This selects the parent, not an existing run to resume."}
     },
     "additionalProperties": false
   },
@@ -17,17 +17,35 @@
     "type": "object",
     "required": ["status", "summary", "artifacts", "branch", "commits"],
     "properties": {
-      "status": {"enum": ["completed", "needs_input", "incomplete", "error"]},
-      "summary": {"type": "string", "minLength": 1},
-      "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}},
-      "branch": {"type": ["string", "null"]},
-      "commits": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      "status": {"enum": ["completed", "needs_input", "incomplete", "error"], "description": "completed means scope, records and iteration commits are complete, even if the hypothesis was rejected; needs_input means required facts or decisions are missing; incomplete means unfinished scope; error means a tool, configuration, validation or commit failure prevents completion."},
+      "summary": {"type": "string", "minLength": 1, "description": "Conclusion or explanation of missing information, unfinished work, or failure; domain acceptance remains the caller's decision."},
+      "artifacts": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "Actual artifact paths or durable locations, including the resolved experiment directory and experiment log when created."},
+      "branch": {"type": ["string", "null"], "description": "Actual experiment branch, or null before one exists."},
+      "commits": {"type": "array", "items": {"type": "string", "minLength": 1}, "description": "Verified iteration commit hashes; empty before any exists."}
     },
     "additionalProperties": false
   },
   "status_field": "status",
   "statuses": ["completed", "needs_input", "incomplete", "error"],
+  "rules": [
+    "This agent skill requires filesystem and Git tools plus the experiment's execution capabilities; unreadable referenced artifacts or unavailable capabilities prevent dependent execution.",
+    "The caller supplies experiment_root explicitly; direct invocations obtain it from the user, and missing or blank placement input returns needs_input before experiment writes or execution.",
+    "Resolve relative experiment_root paths against the chosen execution worktree, not the initial checkout or process working directory; retain absolute paths and make the resolved location explicit before writes.",
+    "experiment_root is authoritative over placement suggestions embedded in task; a conflict with repository guidance or authorized scope returns needs_input for a placement decision rather than silently substituting a directory.",
+    "Create a fresh date-and-topic child beneath the resolved root; if that child already exists, choose an unused suffix without overwriting or resuming the existing run.",
+    "Pass the resolved child directory's experiment_log.md path to experiment-log-writer on every call and derive experiment-specific command and artifact paths from that same directory.",
+    "A root that cannot be created or written produces error with the affected location; do not fall back to another root.",
+    "Caller-supplied domain procedures govern scientific interpretation and acceptance; auto-exp owns execution, while domain specifications and evaluation reports remain caller-owned.",
+    "Requests confer no authorization beyond the user's scope, and missing research facts or worktree decisions are resolved through the existing Start Gate and workspace procedure.",
+    "Delegate every experiment-log edit to experiment-log-writer; a missing or incompatible logging dependency blocks execution, and its needs_input and error results propagate to the corresponding response status.",
+    "Construct responses from observed tool results, the experiment log and verified Git state; validate the response schema and existence of listed artifacts before reporting completion.",
+    "Preserve available evidence on every status; empty artifact and commit lists are valid before anything exists, and storage failure still returns error with available evidence locations.",
+    "Breaking changes to fields or status meanings require a major version."
+  ],
   "writes": [],
   "high_stakes": true,
-  "changes": [{"version": "1.0.0", "note": "Initial agent call interface for the existing experiment workflow."}]
+  "changes": [
+    {"version": "1.0.0", "note": "Initial agent call interface for the existing experiment workflow."},
+    {"version": "2.0.0", "note": "Require caller-selected experiment_root without a default; define worktree-relative resolution and consistent log placement; consolidate contract semantics here."}
+  ]
 }

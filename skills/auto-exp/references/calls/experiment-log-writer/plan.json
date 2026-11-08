@@ -1,7 +1,7 @@
 {
   "case": "plan entry before the first run",
   "request": {
-    "log_path": "auto_experiments/2026-05-22-emotion-defection/experiment_log.md",
+    "log_path": "/work/research/evals/emotion/2026-05-22-emotion-defection/experiment_log.md",
     "entry": {
       "kind": "plan",
       "question": "Does an emotion-framed system prompt increase defection rates in the iterated prisoner's dilemma?",
@@ -15,12 +15,12 @@
         }
       ],
       "repository": "git@github.com:example/agents.git",
-      "working_directory": "auto_experiments/2026-05-22-emotion-defection",
+      "working_directory": "/work/research/evals/emotion/2026-05-22-emotion-defection",
       "source_commit": "3f2a9c1"
     }
   },
   "provenance": {
-    "log_path": "Workspace Setup step 5: the experiment folder created under auto_experiments/",
+    "log_path": "Workspace Setup step 5: the directory resolved from caller experiment_root=evals/emotion in execution worktree /work/research",
     "entry.kind": "Experiment Log: a plan entry before the first run",
     "entry.question": "Start Gate: research question supplied by the user or asked for",
     "entry.answer_criterion": "Start Gate: success metric or evaluation signal",
