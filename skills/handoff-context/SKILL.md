@@ -13,10 +13,10 @@ Create a handoff document in a temporary directory that lets a fresh agent conti
 
 ### 1. Create the Draft
 
-Use the helper script to create a dated Markdown template:
+Use the bundled deterministic helper to create a dated Markdown template. Resolve its location relative to this skill's installed directory, not an author's home directory; the surrounding agent owns what context belongs in the handoff:
 
 ```bash
-python3 /Users/admin/.codex/skills/handoff-context/scripts/create_handoff.py \
+python3 "<skill-root>/scripts/create_handoff.py" \
   --task "short task name" \
   --workdir "$PWD" \
   --session-link "local session link or locator"

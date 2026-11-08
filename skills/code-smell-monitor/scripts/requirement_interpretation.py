@@ -1,4 +1,8 @@
-"""Associate structural evidence with explicitly sourced requirements, without inferring violations."""
+"""Validate optional, analyst-authored requirement evidence and associate exact module paths.
+
+This is a deterministic compatibility adapter, not an ADR interpreter or document selector.
+The calling agent chooses authoritative documents and reasons about their meaning.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -7,7 +11,8 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 
-def interpret(repo: Path, architecture: dict[str, Any], manifest: Path | None) -> dict[str, Any]:
+def interpret(repo: Path, architecture: dict[str, Any], manifest: Path | None,
+              workspace_root: Path | None = None) -> dict[str, Any]:
     if manifest is None:
         return {'status': 'not_provided', 'requirements': [], 'associations': [],
                 'unmapped_findings': [f['id'] for f in architecture['findings']],
@@ -17,6 +22,9 @@ def interpret(repo: Path, architecture: dict[str, Any], manifest: Path | None) -
         raise ValueError('requirements manifest needs version 1 and a requirements array')
     requirements, associations, ids = [], [], set()
     repo = repo.resolve()
+    workspace_root = (workspace_root or repo).resolve()
+    if not repo.is_relative_to(workspace_root):
+        raise ValueError('workspace root must contain the analyzed repository')
     for item in data['requirements']:
         if not isinstance(item, dict):
             raise ValueError('requirement must be an object')
@@ -41,9 +49,9 @@ def interpret(repo: Path, architecture: dict[str, Any], manifest: Path | None) -
         source = item.get('source')
         if not isinstance(source, dict) or not isinstance(source.get('path'), str):
             raise ValueError(f'{identity}: precise source is required')
-        path = (repo / source['path']).resolve()
-        if Path(source['path']).is_absolute() or not path.is_relative_to(repo):
-            raise ValueError(f'{identity}: source must stay inside repository')
+        path = (workspace_root / source['path']).resolve()
+        if Path(source['path']).is_absolute() or not path.is_relative_to(workspace_root):
+            raise ValueError(f'{identity}: source must stay inside workspace root')
         raw = path.read_bytes()
         lines = raw.decode('utf-8').splitlines()
         start, end, quote = source.get('line_start'), source.get('line_end'), source.get('quote')
@@ -52,7 +60,7 @@ def interpret(repo: Path, architecture: dict[str, Any], manifest: Path | None) -
             or quote != '\n'.join(lines[start - 1:end])):
             raise ValueError(f'{identity}: source quote must match the exact line range')
         requirement = {**item, 'source': {**source, 'sha256': hashlib.sha256(raw).hexdigest()},
-                       'validation': 'source_quote_verified_mapping_user_supplied'}
+                       'validation': 'source_quote_verified_mapping_analyst_supplied'}
         requirements.append(requirement)
         for finding in architecture['findings']:
             involved = {finding['source'], finding.get('target')}

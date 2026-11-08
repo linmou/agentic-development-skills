@@ -110,6 +110,56 @@ class RequirementArchitectureTests(unittest.TestCase):
         self.assertEqual(result['requirements'][0]['kind'], 'quality')
         self.assertEqual(len(result['unmapped_findings']), 1)
 
+    def test_nested_package_can_quote_workspace_document(self):
+        workspace = self.repo
+        package = workspace / 'app'
+        package.mkdir()
+        (workspace / 'architecture.md').write_text('# Architecture\nGateway owns writes.\n')
+        (package / 'a.py').write_text('import b\n')
+        (package / 'b.py').write_text('import a\n')
+        requirement = {
+            'id': 'POLICY-2', 'kind': 'quality', 'modules': ['a.py'],
+            'source': {'path': 'architecture.md', 'line_start': 2, 'line_end': 2,
+                       'quote': 'Gateway owns writes.'},
+            'rationale': 'Review dependencies of the gateway.',
+            'uncertainty': 'An import cycle alone cannot prove bypassing the gateway.',
+        }
+        manifest = workspace / 'mapping.json'
+        manifest.write_text(json.dumps({'version': 1, 'requirements': [requirement]}))
+        payload, _ = python.collect(package)
+        architecture = graph.analyze(payload)
+        result = requirements.interpret(package, architecture, manifest, workspace_root=workspace)
+        self.assertEqual(result['status'], 'covered')
+        self.assertEqual(result['associations'][0]['source']['path'], 'architecture.md')
+        self.assertEqual(result['associations'][0]['classification'], 'impact_hypothesis')
+        out = workspace / 'report'
+        completed = subprocess.run(
+            [sys.executable, str(SCRIPTS / 'code_smell_monitor.py'),
+             '--repo', str(package), '--architecture-only', '--install', 'never',
+             '--requirements', str(manifest), '--workspace-root', str(workspace),
+             '--out', str(out)], capture_output=True, text=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        summary = json.loads((out / 'summary.json').read_text())
+        self.assertEqual(summary['requirement_interpretation']['associations'][0]['requirement_id'], 'POLICY-2')
+
+    def test_workspace_root_rejects_unrelated_root_and_outside_source(self):
+        self.manifest()
+        unrelated = self.repo / 'unrelated'
+        unrelated.mkdir()
+        with self.assertRaisesRegex(ValueError, 'must contain'):
+            requirements.interpret(self.repo, self.architecture, self.path, workspace_root=unrelated)
+        self.item['source']['path'] = '../outside.md'
+        self.path.write_text(json.dumps(self.document))
+        with self.assertRaisesRegex(ValueError, 'must stay inside'):
+            requirements.interpret(self.repo, self.architecture, self.path)
+
+    def test_requirement_document_status_is_not_inferred_from_quote(self):
+        self.manifest()
+        self.write('req.md', '# Requirements\nState survives reloads.\n')
+        result = requirements.interpret(self.repo, self.architecture, self.path)
+        self.assertIn('authority', result['limitations'][0])
+        self.assertEqual(result['associations'][0]['classification'], 'impact_hypothesis')
+
     def test_python_relative_src_layout_and_package_initializers(self):
         self.write('src/pkg/__init__.py', '')
         self.write('src/pkg/a.py', 'from . import b\nfrom pkg.b import value\n')
