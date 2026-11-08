@@ -1,0 +1,48 @@
+name: Code Smell Monitor PhishingTrainingProgram Evaluation
+
+on:
+  pull_request:
+    paths:
+      - 'skills/code-smell-monitor/**'
+      - '.github/workflows/code-smell-monitor-ptp-eval.yml'
+  workflow_dispatch:
+
+jobs:
+  phish-redundancy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: linmou/PhishingTrainingProgram
+          ref: a69b836b7a46d801beb8139415691f4cb3b494ae
+          path: ptp
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the TypeScript AST library
+        run: npm install --no-save --prefix "$RUNNER_TEMP/csm-tools" typescript@5.9.3
+      - name: Run executable analyzer on pinned PhishingTrainingProgram source
+        env:
+          NODE_PATH: ${{ runner.temp }}/csm-tools/node_modules
+        run: |
+          node skills/code-smell-monitor/scripts/behavioral_redundancy.cjs --repo ptp/tutor-system --out "$RUNNER_TEMP/ptp-behavioral-redundancy.json"
+          cp "$RUNNER_TEMP/ptp-behavioral-redundancy.json" ptp-behavioral-redundancy.json
+          node -e "
+            const r = require('./ptp-behavioral-redundancy.json');
+            console.log('PTP_ANAYLZER_STATUS', r.status, 'SCANNED_FILES', r.scanned_files, 'OMISSIONS', JSON.stringify(r.omissions));
+            console.log('FINDINGS_COUNT', r.findings.length);
+            for (const [index, f] of r.findings.entries()) {
+              const pos = f.source || f.at || {};
+              console.log('CANDIDATE', index + 1, f.type, f.resource || '-', pos.file || '-', pos.line || '-', JSON.stringify(f).slice(0, 1500));
+            }
+          "
+      - name: Upload complete analysis evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ptp-behavioral-redundancy
+          path: ptp-behavioral-redundancy.json
+          retention-days: 14
