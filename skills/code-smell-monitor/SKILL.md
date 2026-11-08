@@ -1,6 +1,6 @@
 ---
 name: code-smell-monitor
-description: Build and run objective code quality smell monitoring for a repository. Use when you need scoped, tool-based feedback on complexity, duplication, dead code, dependency coupling, type/static safety, security, dependency health, observability risks, or general maintainability signals for a small module, changed files, a package, or the whole repo.
+description: Build and run objective code quality smell monitoring for a repository. Use for scoped tool-based analysis of complexity, duplication, dead or production-unused code, possibly redundant implementations and execution paths, dependency coupling, static safety, security, dependency health, or maintainability across files, packages, and repositories.
 ---
 
 # Code Smell Monitor
@@ -42,7 +42,7 @@ Use `--install never` in locked-down environments and in offline regression test
 The monitor requires Python 3.10 or newer to run. It uses these external tools:
 
 - Python repositories: `ruff`, `radon`, `vulture`, `bandit`, and `mypy`.
-- JavaScript/TypeScript repositories: Node.js with `npm`/`npx`, plus the project's package manager when a lockfile or package script requires it. The application dependencies must already be installed for project-local lint, typecheck, and dependency resolution.
+- JavaScript/TypeScript repositories: Node.js with `npm`/`npx`, plus the project's package manager when a lockfile or package script requires it. The application dependencies must already be installed for project-local lint, typecheck, and dependency resolution. The JS/TS behavioral adapter additionally requires `typescript` resolvable from the analyzed package or the monitor Node environment; if unavailable it reports unavailable coverage.
 
 By default, `--install missing` checks for the Python tools and installs missing ones with `python3 -m pip install --user`. For JavaScript/TypeScript tools, it uses a local `node_modules/.bin` tool first, then a tool on `PATH`, and otherwise fetches the tool through `npx --yes` for that run. This requires network access. The installation commands and their exit codes are recorded in the report.
 
@@ -61,10 +61,11 @@ Use the command appropriate for the repository and do not run all three. For a l
 1. **Discover before selecting tools.** Inspect the repository structure, package/build roots, language stacks, existing check commands and analyzer configurations, and any agent/project instructions. Identify what is actually in scope; never assume a fixed JavaScript/Python-only script covers every repository.
 2. **Discover relevant project intent without assuming a documentation framework.** Inspect the repository's own instructions, tracked decisions, source, tests, configuration, and navigation to determine what evidence exists and which sources actually govern the area being reviewed. Repositories may use unconventional names, formats, directories, approval processes, or no design documents at all. Determine each source's applicability, provenance, currency, and authority from repository evidence; do not presume a fixed hierarchy or label vocabulary. Surface conflicts or missing authority rather than inventing rules. Relevant documents may live above package roots.
 3. **Select the smallest meaningful analysis scope and available tools.** Prefer the repository's established linters, build scripts and graph analyzers. Use `scripts/code_smell_monitor.py` for supported deterministic checks; use another existing analyzer directly when the bundled runner cannot cover the stack. Install tools only with permitted environment changes.
-4. **Execute and assess coverage.** Inspect detector statuses, effective package roots, unresolved imports, omitted source files and raw evidence. Missing or failed checks mean incomplete coverage, never clean findings. Graph-wide checks may cover a wider scope than file-level checks.
-5. **Interpret structural findings against real code and the project's own intent.** Distinguish measured facts from universal review candidates; investigate actual module responsibilities before relating a finding to any applicable source. Cite code locations, import/tool evidence, and exact source paths/locations where available. Explain plausible impact, alternatives, and discriminating checks. Distinguish an enforceable current decision from proposed, uncertain, historical, or superseded intent using the repository's own conventions, not preselected status labels.
-6. **Report actionable, evidence-backed issues rather than verification claims.** Group repeated symptoms, prioritize consequential candidates, preserve uncertainty, and propose follow-up investigation/verification separately. No semantic interpretation alone constitutes a configured-rule or behavioral violation. Issue creation requires an explicit request.
-7. **Re-run objective tools on the same scope after changes** and compare like-for-like reports. Never claim the skill has automatically created requirement mappings, enforced an undocumented design rule, or proved behavior.
+4. **Execute and assess coverage.** Inspect detector statuses, effective package roots, unresolved imports, omitted source files and raw evidence. Missing or failed checks mean incomplete coverage, never clean findings. Graph-wide checks may cover a wider scope than file-level checks. For JS/TS compare normal Knip with production-only Knip: report candidates absent from normal results but present in production results, without deleting tests or claiming that they are necessarily only test-referenced.
+5. **Inspect redundant implementations and execution candidates.** The bundled `behavioral_redundancy.cjs` runs automatically for supported JavaScript/TypeScript packages using the TypeScript compiler API. It follows statically resolved cross-file calls, React custom-hook state/effect wiring, database resource reads, repeated calls and periodic state allocations. Read `summary.json.behavioral_redundancy`, `raw/behavioral_redundancy.json` and the existing Markdown report. Follow [references/redundancy-review.md](references/redundancy-review.md) for interpretation and other repo/language-specific analyzers. Imports alone do not prove execution; repeated reads may provide recovery or idempotency. Do not claim safe deletion.
+6. **Interpret structural findings against real code and the project's own intent.** Distinguish measured facts from universal review candidates; investigate actual module responsibilities before relating a finding to any applicable source. Cite code locations, import/tool evidence, and exact source paths/locations where available. Explain plausible impact, alternatives, and discriminating checks. Distinguish an enforceable current decision from proposed, uncertain, historical, or superseded intent using the repository's own conventions, not preselected status labels.
+7. **Report within the existing code_smell_report.md and summary.json, not a new issue-generation pipeline.** Group repeated symptoms, prioritize consequential candidates, preserve uncertainty, and propose follow-up investigation/verification separately. No semantic interpretation alone constitutes a configured-rule or behavioral violation. Issue creation requires an explicit request.
+8. **Re-run objective tools on the same scope after changes** and compare like-for-like reports. Never claim the skill has automatically created requirement mappings, enforced an undocumented design rule, or proved behavior.
 
 **Done when:** Each surfaced issue has observable evidence, a confidence/epistemic label, grounded repository context when available, and the unverified portion stated; coverage gaps and document-authority gaps are visible. A repository with no authoritative requirements can still receive a useful structural report.
 
@@ -84,7 +85,7 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 The script writes reports under `--out` or `.code-smell-monitor/<timestamp>/`:
 
 - `code_smell_report.md`: human-readable summary, category coverage, commands, exit codes, and ranked signals.
-- `summary.json`: optional `architecture` results when `--architecture` is requested; stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
+- `summary.json`: automatic `behavioral_redundancy` findings/status for JS/TS when TypeScript is available, plus optional `architecture` results when `--architecture` is requested; stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
 - `raw/`: exact tool outputs for auditability.
 - Exclude `.code-smell-monitor/` from local Git tracking as needed.
 
@@ -94,13 +95,13 @@ Use common external tools instead of hand-rolled pattern matching:
 
 - Python: `ruff`, `radon`, `vulture`, `bandit`, `mypy`.
 - JavaScript/TypeScript: project `lint` or `typecheck` scripts, `eslint`, `tsc --noEmit`, `jscpd`, `knip`, `madge`, `depcheck`, and package-manager audit.
-- JavaScript/TypeScript dead code: use `knip` for unused files, exports, types, and dependencies. Treat findings as suspected when routing, dynamic imports, registries, plugin hooks, or framework conventions can hide consumers.
+- JavaScript/TypeScript dead code: run normal and `--production` Knip to distinguish general unused code from candidates unused by production. Keep tests intact. Treat findings as suspected when routing, dynamic imports, registries, external consumers, plugin hooks, or framework conventions hide callers.
 - Hard-coded secrets: use Gitleaks or an equivalent repository secret scanner when available. A regex search or a clean result from another tool is not evidence that hard-coded secrets are absent.
 - The bundled monitor records `gitleaks` as covered, failed, or unavailable. Treat exit `1` as findings requiring inspection and exit `127` as unavailable coverage.
 
 For nested applications or monorepos, run the monitor once per package root so project config, local binaries, lockfiles, and package scripts resolve in the correct directory. Aggregate the reports only after each package pass has a valid coverage status.
 
-Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category. For cross-repo agent-level interpretation examples and boundary tests, read `references/agent-interpretation.md`.
+Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category. For redundant code or execution review, read `references/redundancy-review.md`. The built-in JS/TS detector reports statically visible candidates; use alternate analyzers for unsupported stacks and mark incomplete coverage. For cross-repo agent-level interpretation examples and boundary tests, read `references/agent-interpretation.md`.
 
 ## Interpretation Rules
 

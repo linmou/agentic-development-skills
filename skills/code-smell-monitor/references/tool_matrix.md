@@ -15,8 +15,17 @@ Intent: Map smell requirements to common deterministic tools so the monitor stay
 ## Dead or Unused Code
 
 - Python: `ruff` for unused imports and variables, `vulture` for suspected unused functions/classes/modules.
-- JavaScript/TypeScript: `eslint` for unused variables/imports, `knip` for unused files/exports/types/dependencies, and `depcheck` for an additional suspected-unused-dependency signal.
+- JavaScript/TypeScript: `eslint` for unused variables/imports, ordinary `knip` for unused files/exports/types/dependencies, `knip --production` for candidates lacking production consumers (tests remain intact), and `depcheck` for an additional suspected-unused-dependency signal.
+- Compare equivalent files/exports in normal and production Knip JSON; production-only candidates are not guaranteed test-only, since configuration, entrypoints, external API consumers and dynamic resolution affect reachability.
 - Dynamic imports, decorators, routing, registries, plugin hooks, and reflection make dead-code findings suspect.
+
+## Redundant Implementations and Execution
+
+- Imported-by does not mean invoked-by. For independently reachable alternative implementations, follow caller/callee relationships, inputs and returned effects, and optional refactor history. Only report observed overlap and explicit limitations.
+- For repeated execution, inspect event/trigger -> function -> resource-operation chains, including framework effects/subscriptions when supported. Detect comparable resource reads/writes with matching keys and overlapping triggering conditions; do not infer redundancy from the same endpoint or table alone.
+- For JS/TS, the bundled `behavioral_redundancy.cjs` uses the TypeScript compiler API to build bounded interprocedural call paths and flag React state/effect resource overlap, direct repeated reads and periodic fresh state allocations. It records raw/summary/Markdown signals; it neither executes target code nor decides whether behavior is redundant.
+- For additional cases and unsupported stacks, prefer established language-appropriate AST/call-graph/data-flow tools and repo-native diagnostic instrumentation; the agent interprets the findings. When trigger/resource identity is uncertain, report the missing evidence. No universal fixed script can accurately infer arbitrary framework semantics.
+- Test coverage or a matching requirement does not guarantee minimal implementation. Intentional retry, recovery, fallback and idempotent reads are counterexamples.
 
 ## Coupling and Dependencies
 
