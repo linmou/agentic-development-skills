@@ -18,9 +18,19 @@ The bundled AST adapter parses `.py` files without importing project code. It in
 
 Mixed projects preserve per-adapter statuses and findings. One successful adapter cannot hide another unavailable adapter. `--fail-on-tool-error` fails on incomplete architecture coverage; without that flag incomplete coverage is a warning. Metrics and requirement associations never trigger enforcement. Raw summaries and the Markdown report preserve the actual analysis scope and limitations.
 
-## Requirement-aware interpretation
+## Agent-led architectural interpretation (default)
 
-Pass `--requirements requirements.json` with `--architecture` or `--architecture-only`. Paths inside the manifest are relative to `--repo`; the manifest path itself is relative to the calling directory. Version 1 requires explicit existing module files, requirement type, exact source lines, mapping rationale and uncertainty:
+The script emits structural evidence, **not** a verdict against the repository's design decisions. The agent reads [agent-interpretation.md](agent-interpretation.md) and discovers the appropriate current ADRs, BMAD Architecture Spine, PRD, or other local documentation itself. It investigates code responsibility, quotes exact evidence, marks status (`ADOPTED`, `TARGET`, superseded/assumption), and explains competing interpretations. The agent may do this with **no** JSON manifest.
+
+Report an absent optional requirements manifest as `not_provided` for the machine evidence adapter only; it does not mean agent interpretation was not performed.
+
+## Optional requirement evidence adapter (legacy API)
+
+Pass `--requirements requirements.json` with `--architecture` or `--architecture-only` **only** when a preauthored v1 JSON mapping is available or a downstream machine consumer explicitly needs one. This JSON is **not** the input format for arbitrary ADRs or a required output of the skill. It does not discover documents, interpret semantics, or decide whether the document is approved.
+
+Paths in `modules` are relative to the analyzed `--repo`. Source `path` references are relative to `--workspace-root`, which defaults to `--repo`; the workspace must contain the analyzed repository. This allows a package-local analysis to cite a parent-workspace ADR without altering analyzer resolution or accepting path traversal. The manifest path itself is resolved from the caller's working directory.
+
+The adapter requires explicit existing module files, `kind: functional|quality`, exact source lines, rationale and uncertainty, e.g.:
 
 ```json
 {
@@ -41,6 +51,5 @@ Pass `--requirements requirements.json` with `--architecture` or `--architecture
 }
 ```
 
-Use `kind: "quality"` for an explicitly documented quality requirement. Do not relabel an inferred benefit as a requirement. An analyst supplies the mapping after reading the source and implementation; names and directories do not establish responsibility or violation. Check whether the quoted source is authoritative and current, especially when a spec contains historical sections. Quote verification does not establish authority.
+An analyst supplies the source and mapping. Names or directories do not prove responsibilities. The validator verifies quote text, line bounds, hash, module existence and allowed paths; it does **not** establish source authority, document status, or semantic correctness. Only findings touching a mapped source/target/cycle member get associations, labeled `impact_hypothesis` with `confidence: association_only`. Missing mappings remain unmapped; absent manifest returns `not_provided`. Invalid/stale quotes, missing uncertainty, escaping paths and duplicate IDs fail. Associations never change CI enforcement.
 
-Only findings touching an explicitly mapped source, target or cycle member receive associations. Each association retains finding ID, structural evidence, requirement ID, exact source and SHA-256, rationale and uncertainty, with `classification: impact_hypothesis` and `confidence: association_only`. Missing mappings leave findings unmapped; absent requirements report `not_provided`. No findings does not prove requirement satisfaction. JSON and Markdown preserve source records and associations. Invalid/stale quotes, escaping paths, duplicate IDs or missing uncertainty produce a failed report and exit 2. Requirements never change configured rule enforcement.
