@@ -341,6 +341,8 @@ def run_js_checks(repo: Path, paths: list[str], raw_dir: Path, has_typescript: b
         commands.append(("knip_dead_code", node_runner(repo, "knip", ["--reporter", "json"], install_mode), 600))
         commands.append(("knip_production", node_runner(repo, "knip", ["--production", "--reporter", "json"], install_mode), 600))
         commands.append(("madge_circular", node_runner(repo, "madge", ["--circular", "--json", *paths], install_mode), 600))
+    if paths:
+        commands.append(("behavioral_redundancy", ["node", str(Path(__file__).with_name("behavioral_redundancy.cjs")), "--repo", str(repo)], 600))
     commands.append(("depcheck", node_runner(repo, "depcheck", ["--json"], install_mode), 600))
     commands.append(("package_audit", audit_command(repo), 600))
     if "typecheck" in scripts:
@@ -439,6 +441,11 @@ def extract_headlines(raw_dir: Path) -> dict[str, Any]:
                 "Candidates are reported by production-mode Knip but not ordinary Knip; "
                 "this does not prove test-only references or exclude dynamic/public consumers."
             )
+    behavioral = load_json(raw_dir / "behavioral_redundancy.json")
+    if isinstance(behavioral, dict):
+        findings = behavioral.get("findings", [])
+        headlines["behavioral_redundancy_findings"] = findings if isinstance(findings, list) else []
+        headlines["behavioral_redundancy_status"] = behavioral.get("status", "unknown")
     return headlines
 
 
@@ -495,7 +502,7 @@ FINDINGS_CODES = {
 }
 JSON_RESULTS = {
     "ruff", "radon_cc", "radon_mi", "bandit", "eslint",
-    "madge_circular", "depcheck", "knip_dead_code", "knip_production",
+    "madge_circular", "depcheck", "knip_dead_code", "knip_production", "behavioral_redundancy",
 }
 CATEGORIES = {
     "ruff": ("complexity", "dead_code", "static_safety"),
@@ -505,6 +512,7 @@ CATEGORIES = {
     "eslint": ("complexity", "dead_code", "static_safety"),
     "jscpd": ("duplication",), "knip_dead_code": ("dead_code",),
     "knip_production": ("production_reachability",),
+    "behavioral_redundancy": ("behavioral_redundancy",),
     "madge_circular": ("coupling",), "depcheck": ("dependency_health",),
     "package_audit": ("dependency_health",), "package_typecheck": ("static_safety",),
     "tsc_no_emit": ("static_safety",), "gitleaks": ("security",),
@@ -521,6 +529,15 @@ def detector_status(item: dict[str, Any], raw: Path) -> str:
         return "failed"
     if name in JSON_RESULTS and load_json(raw / (name + ".json")) is None:
         return "failed"
+    if name == "behavioral_redundancy":
+        result = load_json(raw / "behavioral_redundancy.json")
+        if not isinstance(result, dict) or result.get("status") == "failed":
+            return "failed"
+        if result.get("status") == "partial":
+            return "partial"
+        if result.get("status") != "covered" or not isinstance(result.get("findings"), list):
+            return "failed"
+        return "findings" if result["findings"] else "clean"
     if name == "gitleaks" and code == 1 and load_json(raw / "gitleaks.json") is None:
         return "failed"
     return "findings" if code else "clean"
@@ -582,6 +599,21 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
     lines.append("- Investigate circular dependencies before moving shared code.")
     lines.append("- Keep security/dependency findings separate from maintainability findings.")
     lines.append("- Re-run the same scope after changes and compare this report with the new one.")
+    behavioral = load_json(out_dir / "raw" / "behavioral_redundancy.json")
+    if isinstance(behavioral, dict):
+        lines.append("")
+        lines.append("## Behavioral redundancy candidates (advisory)")
+        lines.append(f"- coverage: `{behavioral.get('status', 'unknown')}`; files analyzed: `{behavioral.get('scanned_files', 0)}`")
+        for finding in behavioral.get("findings", []):
+            if not isinstance(finding, dict):
+                continue
+            location = finding.get("source") or finding.get("at") or {}
+            if not isinstance(location, dict):
+                location = {}
+            lines.append(f"- `{finding.get('type', 'unknown')}`: `{location.get('file', 'unknown')}:{location.get('line', '?')}`; resource `{finding.get('resource', 'unknown')}`; classification `candidate`")
+            lines.append(f"  - details: {json.dumps(finding, ensure_ascii=False)}")
+        if behavioral.get("omissions"):
+            lines.append(f"- omissions: {json.dumps(behavioral['omissions'], ensure_ascii=False)}")
     lines.append("")
     (out_dir / "code_smell_report.md").write_text("\n".join(lines), encoding="utf-8")
 
@@ -798,6 +830,7 @@ def main() -> int:
         headlines["knip_production_comparison"] = "incomplete: both normal and production Knip must run successfully"
     summary = {
         "coverage": coverage,
+        "behavioral_redundancy": load_json(raw_dir / "behavioral_redundancy.json"),
         "architecture": architecture,
         "requirement_interpretation": interpretation,
         "repo": str(repo),
