@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 PYTHON_TOOLS = {
@@ -70,7 +70,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--changed-only", action="store_true", help="Replace scope with git changed files under the repo.")
     parser.add_argument("--architecture", action="store_true", help="Run optional universal architecture graph checks.")
     parser.add_argument("--architecture-only", action="store_true", help="Run architecture adapters without unrelated detectors.")
-    parser.add_argument("--requirements", type=Path, help="Versioned JSON requirement-to-module mappings with exact source quotes; requires architecture analysis.")
+    parser.add_argument("--requirements", type=Path, help="Optional preauthored JSON evidence mappings (legacy); not required for agent-led interpretation.")
+    parser.add_argument("--workspace-root", type=Path, help="Root for optional requirement document citations; defaults to --repo and must contain it.")
     parser.add_argument("--architecture-max-degree", type=int, default=12, help="Fan-in/out review threshold.")
     parser.add_argument("--fail-on-tool-error", action="store_true", help="Exit non-zero when any tool cannot run cleanly.")
     return parser.parse_args()
@@ -338,7 +339,10 @@ def run_js_checks(repo: Path, paths: list[str], raw_dir: Path, has_typescript: b
         commands.append(("eslint", node_runner(repo, "eslint", ["--format", "json", *paths], install_mode), 600))
         commands.append(("jscpd", node_runner(repo, "jscpd", jscpd_args(paths, raw_dir), install_mode), 600))
         commands.append(("knip_dead_code", node_runner(repo, "knip", ["--reporter", "json"], install_mode), 600))
+        commands.append(("knip_production", node_runner(repo, "knip", ["--production", "--reporter", "json"], install_mode), 600))
         commands.append(("madge_circular", node_runner(repo, "madge", ["--circular", "--json", *paths], install_mode), 600))
+    if paths:
+        commands.append(("behavioral_redundancy", ["node", str(Path(__file__).with_name("behavioral_redundancy.cjs")), "--repo", str(repo)], 600))
     commands.append(("depcheck", node_runner(repo, "depcheck", ["--json"], install_mode), 600))
     commands.append(("package_audit", audit_command(repo), 600))
     if "typecheck" in scripts:
@@ -408,7 +412,7 @@ def extract_headlines(raw_dir: Path) -> dict[str, Any]:
         categories = ("files", "dependencies", "devDependencies", "unlisted", "exports", "types", "duplicates")
         issues = knip.get("issues")
         if isinstance(issues, list):
-            findings: dict[str, int] = {}
+            findings = {}
             for issue in issues:
                 if not isinstance(issue, dict):
                     continue
@@ -424,7 +428,63 @@ def extract_headlines(raw_dir: Path) -> dict[str, Any]:
                 if isinstance(knip.get(category), list)
             }
 
+    production = load_json(raw_dir / "knip_production.json")
+    if isinstance(production, dict):
+        headlines["knip_production_findings"] = knip_counts(production)
+        if isinstance(knip, dict):
+            only = sorted(knip_records(production) - knip_records(knip))
+            headlines["knip_production_only_candidates"] = [
+                {"file": file, "category": category, "symbol": symbol}
+                for file, category, symbol in only
+            ]
+            headlines["knip_production_only_note"] = (
+                "Candidates are reported by production-mode Knip but not ordinary Knip; "
+                "this does not prove test-only references or exclude dynamic/public consumers."
+            )
+    behavioral = load_json(raw_dir / "behavioral_redundancy.json")
+    if isinstance(behavioral, dict):
+        findings = behavioral.get("findings", [])
+        headlines["behavioral_redundancy_findings"] = findings if isinstance(findings, list) else []
+        headlines["behavioral_redundancy_status"] = behavioral.get("status", "unknown")
     return headlines
+
+
+def knip_counts(payload: dict[str, Any]) -> dict[str, int]:
+    """Count unused-code categories across supported Knip JSON reporter shapes."""
+    categories = ("files", "exports", "types", "dependencies", "devDependencies", "unlisted", "duplicates")
+    issues = payload.get("issues")
+    groups = issues if isinstance(issues, list) else [payload]
+    counts: dict[str, int] = {}
+    for group in groups:
+        if isinstance(group, dict):
+            for category in categories:
+                entries = group.get(category)
+                if isinstance(entries, list):
+                    counts[category] = counts.get(category, 0) + len(entries)
+    return counts
+
+
+def knip_records(payload: dict[str, Any]) -> set[tuple[str, str, str]]:
+    """Stable exact comparison, not a claim of reachability completeness."""
+    categories = ("files", "exports", "types")
+    issues = payload.get("issues")
+    groups = issues if isinstance(issues, list) else [payload]
+    records: set[tuple[str, str, str]] = set()
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        file = str(group.get("file", ""))
+        for category in categories:
+            entries = group.get(category)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if isinstance(entry, str):
+                    records.add((file if category != "files" else entry, category, entry if category != "files" else ""))
+                elif isinstance(entry, dict):
+                    symbol = str(entry.get("name", entry.get("file", entry.get("path", ""))))
+                    records.add((file if category != "files" else symbol, category, symbol if category != "files" else ""))
+    return records
 
 
 def top_counts(values: Any) -> list[dict[str, Any]]:
@@ -436,13 +496,13 @@ def top_counts(values: Any) -> list[dict[str, Any]]:
 
 FINDINGS_CODES = {
     "ruff": {1}, "vulture": {3}, "bandit": {1}, "mypy": {1},
-    "package_lint": {1}, "eslint": {1}, "knip_dead_code": {1},
+    "package_lint": {1}, "eslint": {1}, "knip_dead_code": {1}, "knip_production": {1},
     "depcheck": {1}, "package_audit": {1}, "package_typecheck": {1},
     "tsc_no_emit": {1}, "gitleaks": {1},
 }
 JSON_RESULTS = {
     "ruff", "radon_cc", "radon_mi", "bandit", "eslint",
-    "madge_circular", "depcheck", "knip_dead_code",
+    "madge_circular", "depcheck", "knip_dead_code", "knip_production", "behavioral_redundancy",
 }
 CATEGORIES = {
     "ruff": ("complexity", "dead_code", "static_safety"),
@@ -451,6 +511,8 @@ CATEGORIES = {
     "package_lint": ("static_safety",),
     "eslint": ("complexity", "dead_code", "static_safety"),
     "jscpd": ("duplication",), "knip_dead_code": ("dead_code",),
+    "knip_production": ("production_reachability",),
+    "behavioral_redundancy": ("behavioral_redundancy",),
     "madge_circular": ("coupling",), "depcheck": ("dependency_health",),
     "package_audit": ("dependency_health",), "package_typecheck": ("static_safety",),
     "tsc_no_emit": ("static_safety",), "gitleaks": ("security",),
@@ -467,6 +529,15 @@ def detector_status(item: dict[str, Any], raw: Path) -> str:
         return "failed"
     if name in JSON_RESULTS and load_json(raw / (name + ".json")) is None:
         return "failed"
+    if name == "behavioral_redundancy":
+        result = load_json(raw / "behavioral_redundancy.json")
+        if not isinstance(result, dict) or result.get("status") == "failed":
+            return "failed"
+        if result.get("status") == "partial":
+            return "partial"
+        if result.get("status") != "covered" or not isinstance(result.get("findings"), list):
+            return "failed"
+        return "findings" if result["findings"] else "clean"
     if name == "gitleaks" and code == 1 and load_json(raw / "gitleaks.json") is None:
         return "failed"
     return "findings" if code else "clean"
@@ -482,7 +553,7 @@ def coverage_status(results: list[dict[str, Any]]) -> dict[str, Any]:
         covered = sum(status in ("clean", "findings") for status in statuses)
         out[cat] = (
             "covered" if covered == len(statuses) else
-            "partial" if covered else
+            "partial" if covered or "partial" in statuses else
             "unavailable" if all(v == "unavailable" for v in statuses) else "failed"
         )
     return {"complete": bool(out) and all(v == "covered" for v in out.values()),
@@ -523,9 +594,26 @@ def write_report(out_dir: Path, summary: dict[str, Any], results: list[dict[str,
     lines.append("## Review Prompts")
     lines.append("- Check highest-complexity functions before extracting abstractions.")
     lines.append("- Treat dead-code reports as suspected when routing, decorators, plugins, or dynamic imports exist.")
+    lines.append("- Compare Knip normal vs production-mode candidates without deleting or excluding tests from the repository.")
+    lines.append("- For reachable implementation or repeated-execution overlap, review call paths, event triggers, and resource reads; imports alone are insufficient.")
     lines.append("- Investigate circular dependencies before moving shared code.")
     lines.append("- Keep security/dependency findings separate from maintainability findings.")
     lines.append("- Re-run the same scope after changes and compare this report with the new one.")
+    behavioral = load_json(out_dir / "raw" / "behavioral_redundancy.json")
+    if isinstance(behavioral, dict):
+        lines.append("")
+        lines.append("## Behavioral redundancy candidates (advisory)")
+        lines.append(f"- coverage: `{behavioral.get('status', 'unknown')}`; files analyzed: `{behavioral.get('scanned_files', 0)}`")
+        for finding in behavioral.get("findings", []):
+            if not isinstance(finding, dict):
+                continue
+            location = finding.get("source") or finding.get("at") or {}
+            if not isinstance(location, dict):
+                location = {}
+            lines.append(f"- `{finding.get('type', 'unknown')}`: `{location.get('file', 'unknown')}:{location.get('line', '?')}`; resource `{finding.get('resource', 'unknown')}`; classification `candidate`")
+            lines.append(f"  - details: {json.dumps(finding, ensure_ascii=False)}")
+        if behavioral.get("omissions"):
+            lines.append(f"- omissions: {json.dumps(behavioral['omissions'], ensure_ascii=False)}")
     lines.append("")
     (out_dir / "code_smell_report.md").write_text("\n".join(lines), encoding="utf-8")
 
@@ -543,7 +631,7 @@ def run_architecture(repo: Path, raw_dir: Path, install_mode: str, max_degree: i
         options.extend(['--ts-config', 'tsconfig.json'])
     command = node_runner(repo, "depcruise", [*options, "."], install_mode)
     if command is None:
-        result = {"cmd": ["depcruise"], "exit_code": 127, "stdout": "",
+        result: dict[str, Any] = {"cmd": ["depcruise"], "exit_code": 127, "stdout": "",
                   "stderr": "dependency-cruiser is unavailable", "duration_seconds": 0, "timed_out": False}
     else:
         result = run_command(command, repo, timeout=600)
@@ -608,7 +696,7 @@ def analyze_architecture(repo: Path, raw: Path, stack: dict[str, bool],
         js, _ = run_architecture(repo, raw, install_mode, max_degree)
         adapters.append(js)
     if stack['python']:
-        python = {'detector': 'python-ast', 'analysis_scope': 'repository',
+        python: dict[str, Any] = {'detector': 'python-ast', 'analysis_scope': 'repository',
                   'status': 'failed', 'findings': [], 'graph': None, 'enforced_violations': 0}
         try:
             payload, evidence = bundled_module('python_architecture').collect(repo)
@@ -664,8 +752,8 @@ def write_architecture_report(out: Path, architecture: dict[str, Any], interpret
 def main() -> int:
     args = parse_args()
     args.architecture = args.architecture or args.architecture_only
-    if args.architecture_max_degree < 1 or (args.requirements and not args.architecture):
-        print('positive architecture threshold and --architecture for --requirements are required', file=sys.stderr)
+    if args.architecture_max_degree < 1 or (args.requirements and not args.architecture) or (args.workspace_root and not args.requirements):
+        print('positive architecture threshold, --architecture for --requirements, and --requirements for --workspace-root are required', file=sys.stderr)
         return 2
     repo = Path(args.repo).resolve()
     if not repo.exists():
@@ -714,14 +802,15 @@ def main() -> int:
     if args.architecture:
         architecture = analyze_architecture(repo, raw_dir, stack, args.install, args.architecture_max_degree)
         try:
-            interpretation = bundled_module('requirement_interpretation').interpret(repo, architecture, args.requirements)
+            interpretation = bundled_module('requirement_interpretation').interpret(
+                repo, architecture, args.requirements, workspace_root=args.workspace_root)
         except (ValueError, TypeError, OSError) as exc:
             interpretation = {'status': 'failed', 'error': str(exc), 'requirements': [],
                               'associations': [], 'unmapped_findings': [f['id'] for f in architecture['findings']]}
         (raw_dir / 'requirement_interpretation.json').write_text(json.dumps(interpretation, indent=2), encoding='utf-8')
 
 
-    package_detectors = {"knip_dead_code", "depcheck", "package_audit",
+    package_detectors = {"knip_dead_code", "knip_production", "depcheck", "package_audit",
                          "package_typecheck", "tsc_no_emit", "package_lint"}
     for item in results:
         item["status"] = detector_status(item, raw_dir)
@@ -733,8 +822,15 @@ def main() -> int:
     if architecture is not None:
         coverage['categories']['architecture'] = architecture['status']
         coverage['complete'] = all(v == 'covered' for v in coverage['categories'].values())
+    headlines = extract_headlines(raw_dir)
+    knip_statuses = {item["name"]: item["status"] for item in results if item["name"] in ("knip_dead_code", "knip_production")}
+    if any(knip_statuses.get(name) not in ("clean", "findings") for name in ("knip_dead_code", "knip_production")):
+        headlines.pop("knip_production_only_candidates", None)
+        headlines.pop("knip_production_only_note", None)
+        headlines["knip_production_comparison"] = "incomplete: both normal and production Knip must run successfully"
     summary = {
         "coverage": coverage,
+        "behavioral_redundancy": load_json(raw_dir / "behavioral_redundancy.json"),
         "architecture": architecture,
         "requirement_interpretation": interpretation,
         "repo": str(repo),
@@ -742,14 +838,14 @@ def main() -> int:
         "out_dir": str(out_dir),
         "stack": stack,
         "install_mode": args.install,
-        "headlines": extract_headlines(raw_dir),
+        "headlines": headlines,
         "results": [{key: value for key, value in item.items() if key not in {"stdout", "stderr"}} for item in results],
         "install_results": [{key: value for key, value in item.items() if key not in {"stdout", "stderr"}} for item in install_results],
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     write_report(out_dir, summary, results, install_results)
     if architecture is not None:
-        write_architecture_report(out_dir, architecture, interpretation)
+        write_architecture_report(out_dir, architecture, cast(dict[str, Any], interpretation))
 
     print(str(out_dir))
     if not coverage["complete"]:

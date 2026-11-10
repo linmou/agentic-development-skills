@@ -1,13 +1,21 @@
 ---
 name: code-smell-monitor
-description: Build and run objective code quality smell monitoring for a repository. Use when you need scoped, tool-based feedback on complexity, duplication, dead code, dependency coupling, type/static safety, security, dependency health, observability risks, or general maintainability signals for a small module, changed files, a package, or the whole repo.
+description: Build and run objective code quality smell monitoring for a repository. Use for scoped tool-based analysis of complexity, duplication, dead or production-unused code, possibly redundant implementations and execution paths, dependency coupling, static safety, security, dependency health, or maintainability across files, packages, and repositories.
 ---
+
+<!-- Updated 2026-11-09; base commit 75c68c941da3b5ffe4f31ef730d5c99d7aa86697: promote tested M3 redundancy review, evidence pagination and source navigation. -->
 
 # Code Smell Monitor
 
 ## Purpose
 
-Use this skill to produce reproducible code-quality evidence for a repository. The monitor reports signals and suspected risks while leaving contextual judgment to the user.
+Produce reproducible code-quality **evidence**, then use repository-specific context to decide which findings deserve review. The bundled runner collects deterministic signals; **you**, the agent, own repository discovery, tool selection, source authority, interpretation, and the final issue-oriented report. No user-authored requirements manifest or configured architecture rules are prerequisites for an advisory scan.
+
+Use judgment to adapt to repositories with different stacks and document systems. For interpretation details and evidence classification, read [references/agent-interpretation.md](references/agent-interpretation.md) when reporting architectural or requirements-aware findings.
+
+## Focused redundancy review
+
+For a direct advisory request about redundant code, unused implementations or repeated execution, follow [references/focused-review.md](references/focused-review.md). Its focused runner prepares complete bounded evidence pages and source-navigation spans; perform the independent breadth pass, then triage all candidate families before deeper investigation. Write detailed findings once. The general monitor workflow below applies to broader quality scans and versioned caller-contract requests.
 
 ## Quick Start
 
@@ -25,7 +33,7 @@ python3 ~/.agents/skills/code-smell-monitor/scripts/code_smell_monitor.py --repo
 
 When dependency-cruiser is installed, this mode generates package-wide JS/TS dependency graph findings. Python uses a bundled static AST import adapter without executing target code. Mixed projects report both adapters. Cycles are structural facts; high fan-in/out are review candidates, not confirmed design violations. Only explicitly configured `error` rule violations are CI-blocking. Missing tools or unresolved imports produce unavailable or partial coverage, not a clean scan. See `references/architecture-analysis.md`.
 
-Use `--architecture-only` to run architecture adapters without unrelated detectors. Add `--requirements path/to/requirements.json` for functional/quality requirement associations grounded in exact source quotations and explicit module mappings. The monitor validates quotations, line ranges and source hashes; it preserves rationale and uncertainty. Associations are impact hypotheses, never proof of a requirement violation and never CI-blocking. No requirements are invented when the mapping is absent.
+Use `--architecture-only` to run architecture adapters without unrelated detectors. The legacy `--requirements path/to/requirements.json` flag is an **optional evidence-mapping adapter**, not a way to discover or interpret repository design intent. Do not ask the user to author that JSON to run a review. When legacy mappings cite documents above a nested package root, use `--workspace-root path/to/workspace` (the workspace must contain `--repo`). Its quote/hash/path checks do not establish decision authority or semantic correctness. Neither mapped nor agent-interpreted requirements alone trigger CI enforcement.
 
 For a full repository pass:
 
@@ -40,7 +48,7 @@ Use `--install never` in locked-down environments and in offline regression test
 The monitor requires Python 3.10 or newer to run. It uses these external tools:
 
 - Python repositories: `ruff`, `radon`, `vulture`, `bandit`, and `mypy`.
-- JavaScript/TypeScript repositories: Node.js with `npm`/`npx`, plus the project's package manager when a lockfile or package script requires it. The application dependencies must already be installed for project-local lint, typecheck, and dependency resolution.
+- JavaScript/TypeScript repositories: Node.js with `npm`/`npx`, plus the project's package manager when a lockfile or package script requires it. The application dependencies must already be installed for project-local lint, typecheck, and dependency resolution. The JS/TS behavioral adapter additionally requires `typescript` resolvable from the analyzed package or the monitor Node environment; if unavailable it reports unavailable coverage.
 
 By default, `--install missing` checks for the Python tools and installs missing ones with `python3 -m pip install --user`. For JavaScript/TypeScript tools, it uses a local `node_modules/.bin` tool first, then a tool on `PATH`, and otherwise fetches the tool through `npx --yes` for that run. This requires network access. The installation commands and their exit codes are recorded in the report.
 
@@ -56,14 +64,18 @@ Use the command appropriate for the repository and do not run all three. For a l
 
 ## Workflow
 
-1. Choose the smallest meaningful scope first: changed files, touched module, or package boundary.
-2. Run `scripts/code_smell_monitor.py` with that scope.
-3. Check coverage before interpreting results. A JavaScript/TypeScript pass must include lint, type safety, duplication, dead or unused code, dependency coupling, and dependency health when the relevant tools can run.
-4. Read `code_smell_report.md` first, then inspect `raw/*.json` or `raw/*.txt` for exact tool output.
-5. Treat type/static safety, dead-code, security, and dependency findings as higher priority than style-only findings.
-6. Check `summary.json` coverage (`complete` and per-category statuses) before trusting any clean results. Mark the pass incomplete when a required detector is missing, fails to start, runs from the wrong package root, or scans generated/dependency/history files.
-7. Escalate to a wider scope only when the change affects shared abstractions, imports, package boundaries, build config, or dependency versions.
-8. Re-run the same scoped command after changes and compare summaries.
+1. **Discover before selecting tools.** Inspect the repository structure, package/build roots, language stacks, existing check commands and analyzer configurations, and any agent/project instructions. Identify what is actually in scope; never assume a fixed JavaScript/Python-only script covers every repository.
+2. **Discover relevant project intent without assuming a documentation framework.** Inspect the repository's own instructions, tracked decisions, source, tests, configuration, and navigation to determine what evidence exists and which sources actually govern the area being reviewed. Repositories may use unconventional names, formats, directories, approval processes, or no design documents at all. Determine each source's applicability, provenance, currency, and authority from repository evidence; do not presume a fixed hierarchy or label vocabulary. Surface conflicts or missing authority rather than inventing rules. Relevant documents may live above package roots.
+3. **Select the smallest meaningful analysis scope and available tools.** Prefer the repository's established linters, build scripts and graph analyzers. Use `scripts/code_smell_monitor.py` for supported deterministic checks; use another existing analyzer directly when the bundled runner cannot cover the stack. Install tools only with permitted environment changes.
+4. **Execute and assess coverage.** Inspect detector statuses, effective package roots, unresolved imports, omitted source files and raw evidence. Missing or failed checks mean incomplete coverage, never clean findings. Graph-wide checks may cover a wider scope than file-level checks. For JS/TS compare normal Knip with production-only Knip: report candidates absent from normal results but present in production results, without deleting tests or claiming that they are necessarily only test-referenced.
+   For initial JS/TS redundancy output inspection, run `python3 <this-skill>/scripts/compact_redundancy.py --report-dir <out> --scope-from-report --section checks`, then inspect the `knip`, `behavioral` and `clones` sections as relevant. This index preserves candidate locations and raw-record links, reports scope exclusions and failures, and leaves source/caller validation to you; expand linked evidence as needed rather than dumping complete raw reports.
+5. **Inspect redundant implementations and execution candidates.** The bundled `behavioral_redundancy.cjs` runs automatically for supported JavaScript/TypeScript packages using the TypeScript compiler API. It follows statically resolved cross-file calls, React custom-hook state/effect wiring, database resource reads, repeated calls and periodic state allocations. Read `summary.json.behavioral_redundancy`, `raw/behavioral_redundancy.json` and the existing Markdown report. Follow [references/redundancy-review.md](references/redundancy-review.md) for interpretation and other repo/language-specific analyzers. Imports alone do not prove execution; repeated reads may provide recovery or idempotency. Do not claim safe deletion.
+6. **Interpret structural findings against real code and the project's own intent.** Distinguish measured facts from universal review candidates; investigate actual module responsibilities before relating a finding to any applicable source. Cite code locations, import/tool evidence, and exact source paths/locations where available. Explain plausible impact, alternatives, and discriminating checks. Distinguish an enforceable current decision from proposed, uncertain, historical, or superseded intent using the repository's own conventions, not preselected status labels.
+7. **Report within the existing code_smell_report.md and summary.json, not a new issue-generation pipeline.** Group repeated symptoms, prioritize consequential candidates, preserve uncertainty, and propose follow-up investigation/verification separately. No semantic interpretation alone constitutes a configured-rule or behavioral violation. Issue creation requires an explicit request.
+   For redundancy reviews, retain source-supported in-scope findings even when their impact is small; group them concisely by priority, with location, consequence and caveat. Keep candidates lacking source or consumer validation separate and state the missing evidence; low priority and insufficient evidence are different dispositions.
+8. **Re-run objective tools on the same scope after changes** and compare like-for-like reports. Never claim the skill has automatically created requirement mappings, enforced an undocumented design rule, or proved behavior.
+
+**Done when:** Each surfaced issue has observable evidence, a confidence/epistemic label, grounded repository context when available, and the unverified portion stated; coverage gaps and document-authority gaps are visible. A repository with no authoritative requirements can still receive a useful structural report.
 
 ## Scope Selection
 
@@ -81,7 +93,7 @@ Do not run whole-repo monitoring just because the script can. Focused reports ar
 The script writes reports under `--out` or `.code-smell-monitor/<timestamp>/`:
 
 - `code_smell_report.md`: human-readable summary, category coverage, commands, exit codes, and ranked signals.
-- `summary.json`: optional `architecture` results when `--architecture` is requested; stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
+- `summary.json`: automatic `behavioral_redundancy` findings/status for JS/TS when TypeScript is available, plus optional `architecture` results when `--architecture` is requested; stack detection, detector `status` (`clean`, `findings`, `failed`, `unavailable`, `timed_out`), effective analysis scope, category coverage, command metadata, and headline metrics. Nonzero analyzer exit codes can mean findings rather than an execution failure.
 - `raw/`: exact tool outputs for auditability.
 - Exclude `.code-smell-monitor/` from local Git tracking as needed.
 
@@ -91,15 +103,19 @@ Use common external tools instead of hand-rolled pattern matching:
 
 - Python: `ruff`, `radon`, `vulture`, `bandit`, `mypy`.
 - JavaScript/TypeScript: project `lint` or `typecheck` scripts, `eslint`, `tsc --noEmit`, `jscpd`, `knip`, `madge`, `depcheck`, and package-manager audit.
-- JavaScript/TypeScript dead code: use `knip` for unused files, exports, types, and dependencies. Treat findings as suspected when routing, dynamic imports, registries, plugin hooks, or framework conventions can hide consumers.
+- JavaScript/TypeScript dead code: run normal and `--production` Knip to distinguish general unused code from candidates unused by production. Keep tests intact. Treat findings as suspected when routing, dynamic imports, registries, external consumers, plugin hooks, or framework conventions hide callers.
 - Hard-coded secrets: use Gitleaks or an equivalent repository secret scanner when available. A regex search or a clean result from another tool is not evidence that hard-coded secrets are absent.
 - The bundled monitor records `gitleaks` as covered, failed, or unavailable. Treat exit `1` as findings requiring inspection and exit `127` as unavailable coverage.
 
 For nested applications or monorepos, run the monitor once per package root so project config, local binaries, lockfiles, and package scripts resolve in the correct directory. Aggregate the reports only after each package pass has a valid coverage status.
 
-Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category.
+Read `references/tool_matrix.md` when deciding whether to add another tool or interpret a smell category. For redundant code or execution review, read `references/redundancy-review.md`. The built-in JS/TS detector reports statically visible candidates; use alternate analyzers for unsupported stacks and mark incomplete coverage. For cross-repo agent-level interpretation examples and boundary tests, read `references/agent-interpretation.md`.
 
 ## Interpretation Rules
+
+- An agent's source-backed architectural interpretation is **not** the same as the optional JSON adapter's path-match association; label them separately.
+- Treat proposals and future-state decisions as intent, not automatically as current enforcement policy. Use repository evidence to distinguish known migration debt from newly introduced violations.
+- Do not manufacture an authoritative design record, responsibility mapping, requirement, or enforcement contract from filenames, layout, or language/framework conventions.
 
 - Report suspected dead code, not certain dead code, in framework-heavy or plugin-based projects.
 - Keep semantic responsibility issues as review prompts unless a tool gives direct evidence.
