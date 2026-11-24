@@ -41,20 +41,23 @@ partial entry as `ok`.
 ```json
 {
   "skill": "rubric-construction",
-  "version": 1,
+  "version": 2,
   "status": "ok",
   "entry": {"id": "RUB-SHORT-COMMITS", "...": "..."},
   "check": {
     "verdict": "pass",
     "gates": {"G1": "pass", "G2": "pass", "G3": "pass", "G4": "pass", "G5": "pass", "G6": "pass",
               "S1": "pass", "S2": "pass", "S3": "pass", "S4": "pass", "S5": "pass"},
-    "dimensions": {"grounding": 3, "scope": 3, "single_axis": 3, "rule_testability": 3, "boundary_sharpness": 3},
+    "grades": {"grounding": 3, "scope": 3, "single_axis": 3, "rule_testability": 3, "boundary_sharpness": 3},
     "issues": []
   },
   "missing": [],
   "errors": []
 }
 ```
+
+Several criteria in one call → `entries`: a list of `{entry, check}`, built in order,
+each joining `set` for the next; `status` is the worst of the list.
 
 | `status` | Meaning |
 |----------|---------|
@@ -84,5 +87,5 @@ are never changed.
 ```
 
 ## Changelog
-- **2** — Set gates S1–S5 in every check: `set`, `set_intents`, required `aggregation`.
+- **2** — Set gates S1–S5 in every check: `set`, `set_intents`, required `aggregation`; `check.dimensions` renamed `check.grades`.
 - **1** — Initial; extracted from a memory-write skill's rubric fill paths.

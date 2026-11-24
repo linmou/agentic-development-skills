@@ -34,7 +34,7 @@ finish with a Response.
    applying `references/construction-principles.md` P1–P7 in order. With `entry`,
    refine it and keep its `id`.
 4. **Check** — run `scripts/validate_rubric_entry.py` (mechanical gates), then score
-   `references/rubric-quality-rubric.md` (judgment gates + dimensions) and
+   `references/rubric-quality-rubric.md` (judgment gates + grades) and
    `references/rubric-set-gates.md` (S1–S5 against `set`).
    In `construct`, repair and re-check at most 2 rounds; stop early on `pass` or
    when the gap needs human input (`needs_input`). Rubric text in `audit` gets
@@ -42,8 +42,8 @@ finish with a Response.
 5. **Respond** — Response JSON per contract. Stop.
 
 ## Rules
-1. One entry per call. Several criteria in `criteria` → construct the first, list
-   the rest in `issues` as `split:` items.
+1. Several criteria in `criteria` → run steps 2–4 for each in order; every built
+   entry joins `set` for the next. Respond with `entries` (one `entry`+`check` each).
 2. Do not invent examples that contradict the feedback; synthesized examples must
    satisfy the level rule they illustrate.
 3. Never write files outside the caller's explicit path; never touch project memory.
