@@ -1,9 +1,8 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "code-smell-monitor",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "capability": "Run scoped, tool-based code smell monitoring and report findings with explicit coverage.",
-  "prose_contract": "references/call-contract.md",
   "request": {
     "type": "object",
     "additionalProperties": false,
@@ -95,6 +94,16 @@
     "blocking_violations",
     "error"
   ],
+  "rules": [
+    "changed_only replaces scope; architecture_only implies architecture; requirements requires architecture.",
+    "Status is the first match in order: error (exit 2, invalid request or failed requirement interpretation; no result is trustworthy), blocking_violations (architecture.enforced_violations > 0), incomplete (coverage.complete is false, or architecture requested and not covered), complete otherwise.",
+    "Only explicitly configured error rules count as enforced violations; cycles and high fan-in/out are review candidates.",
+    "fail_on_tool_error only changes exit_code; derive status from the rules, never from the exit code alone.",
+    "incomplete is partial evidence: absence of findings is not evidence of a clean scope; complete may still have findings.",
+    "out_dir and coverage are absent only on error before analysis.",
+    "With install missing the skill may install monitor tools into the user's Python environment; it never installs project dependencies or edits source files.",
+    "Compare two runs only when they used the same request; callers never edit the report directory."
+  ],
   "writes": [
     {
       "store": "code-smell-reports",
@@ -106,6 +115,10 @@
     {
       "version": "1.0.0",
       "note": "First contract: CLI flags as Request fields; status derived from exit code, coverage and enforced architecture violations."
+    },
+    {
+      "version": "1.0.1",
+      "note": "Fold prose call-contract rules into rules; drop prose_contract. No behavior change."
     }
   ]
 }

@@ -4,7 +4,7 @@
 
 ## Version
 
-`1.0.0`. [`../contract.json`](../contract.json) is the checkable projection of this file; callers declare `review-with-multi-debate@^1.0.0`. Add optional fields for compatible changes. Removing a field, a status, or a gate check, or changing a meaning, is a new major version.
+`1.0.0`. [`../contract.json`](../contract.json) is the authoritative contract (fields, statuses, `rules`); this file explains it, and on conflict `contract.json` wins; callers declare `review-with-multi-debate@^1.0.0`. Add optional fields for compatible changes. Removing a field, a status, or a gate check, or changing a meaning, is a new major version.
 
 ## Request
 
