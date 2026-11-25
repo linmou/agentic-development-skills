@@ -1,9 +1,8 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "review-with-multi-debate",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "capability": "Audit an artifact against a claim with three independent reviewers and criterion-level convergence.",
-  "prose_contract": "references/call-contract.md",
   "request": {
     "type": "object",
     "additionalProperties": false,
@@ -110,6 +109,19 @@
     "unresolved",
     "error"
   ],
+  "rules": [
+    "The claim is decomposed into 3-7 checkable criteria; evidence adds inputs but never changes the claim; missing test output is reported as unverified execution.",
+    "converged: every blocking criterion converged (same verdict, confidence spread <= 0.2, no unanswered counterevidence); non-blocking disputes may remain and are listed.",
+    "unresolved: blocking disagreement remains after iteration 3; consensus is never forced.",
+    "error: the claim could not be decomposed, a reviewer file stayed malformed after regeneration by its owning reviewer, or the aggregator returned invalid_contract; nothing is converged.",
+    "overall_verdict is pass only if every blocking criterion converged on pass, fail if any converged on fail, else insufficient_evidence.",
+    "With require_reviewer_provenance, every reviewer file carries distinct reviewer_agent_id and reviewer_source; still missing after regeneration makes the status error.",
+    "not_converged is a per-round summary status, never a final status.",
+    "Gated callers advance only when scripts/validate_audit_transition.py advance_phase returns accepted; the gate commands in references/call-contract.md change only with this contract's version.",
+    "Each reviewer writes only its own file; in a Git repository the skill may add a repository-local exclude rule for audit_dir and never changes the index.",
+    "Callers never write or repair a reviewer file, never transcribe a reviewer's opinion, and never treat unresolved or error as a pass; they may tighten optional fields but not add required reviewer fields.",
+    "phase and caller_tag are opaque labels, never control."
+  ],
   "writes": [
     {
       "store": "review-audits",
@@ -121,6 +133,10 @@
     {
       "version": "1.0.0",
       "note": "First contract. Phase default becomes the neutral label review; reviewer provenance is a caller-requested option owned by this skill; gate commands are part of the contract; frozen review bundles are removed (no caller used them)."
+    },
+    {
+      "version": "1.0.1",
+      "note": "Fold prose call-contract rules into rules; drop prose_contract. No behavior change."
     }
   ]
 }

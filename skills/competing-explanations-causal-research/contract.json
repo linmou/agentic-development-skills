@@ -1,9 +1,8 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "competing-explanations-causal-research",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "capability": "Compare rival causal explanations for a specified outcome and return a bounded ruling.",
-  "prose_contract": "references/call-contract.md",
   "request": {
     "type": "object",
     "additionalProperties": false,
@@ -119,12 +118,27 @@
     "needs_clarification",
     "blocked"
   ],
+  "rules": [
+    "outcome fixes the target; scope narrows inferred context; constraints govern method and access but never change outcome; evidence_seeds are leads, not proof.",
+    "A material boundary still unknown, or an outcome not identifiable enough to research, returns needs_clarification naming the missing item; never invent it or substitute another outcome.",
+    "An unsupported contract_version major fails closed with an error.",
+    "evidence_status is required when execution_status is completed and omitted when clarification or blocking happens before evidence assessment.",
+    "A completed report uses references/report-template.md with six headings in order: Scope and outcome; Evidence roles and quality; Competing models; Process and counterfactual assessment; Relative ruling; Limitations, residuals, and next evidence. A free-form narrative is invalid.",
+    "detail brief may shorten entries but not drop a heading or field label; standard and full mark unavailable or unrun work explicitly; full adds evidence_ledger per references/evidence-ledger.md.",
+    "artifacts is [] unless the direct user separately requests a persistent output.",
+    "caller_tag is echoed exactly and never controls research.",
+    "A caller needing more research makes a new request; it never rewrites the causal comparison itself."
+  ],
   "writes": [],
   "high_stakes": true,
   "changes": [
     {
       "version": "2.0.0",
       "note": "Projection of call-contract.md Version 2. Conditional rules (evidence_status when completed, report sections, ledger for full) stay in the prose contract."
+    },
+    {
+      "version": "2.0.1",
+      "note": "Fold prose call-contract rules into rules; drop prose_contract. No behavior change."
     }
   ]
 }

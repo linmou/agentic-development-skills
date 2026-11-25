@@ -1,9 +1,8 @@
 {
   "contract_format": "skill-contract/1",
   "skill": "experiment-log-writer",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "capability": "Create or update a Markdown experiment log from one event entry, as the log's single writer.",
-  "prose_contract": "references/call-contract.md",
   "request": {
     "type": "object",
     "additionalProperties": false,
@@ -479,6 +478,21 @@
     "needs_input",
     "error"
   ],
+  "rules": [
+    "Create versus update is inferred from log_path; an absent file is created from the template, but a non-plan entry against a nonexistent log returns needs_input asking for a plan entry.",
+    "plan.prior_log and plan.prior_result are supplied together or not at all; a missing half returns needs_input.",
+    "A hypothesis addresses the new RQ unless it names an existing rq_id; a reference to an RQ or hypothesis ID absent from the log is rejected.",
+    "Executed and Modified during execution commands also need timestamp, working_directory, environment, exit_status and output_path; Modified during execution also needs planned_command and reason; Planned commands record execution fields as Not executed.",
+    "Qualitative or model-generated results need representative_pair or a durable pair path; metric_value may be Not measured with a reason.",
+    "no_result_reason is valid only when execution produced neither a result nor diagnostic evidence.",
+    "External raw evidence in artifacts also needs location, content_hash with algorithm, generation_command, run_id, file_count and size_bytes; bulk output is never copied into Git.",
+    "source_commit is the revision the experiment ran on; iteration_commit is recorded only in a later dated entry, never in the commit that creates it.",
+    "A supplied record missing a required key returns needs_input listing it in missing; the writer never infers an unobserved execution outcome or invents hypotheses, commands or results.",
+    "Unsupplied template facts are written Unknown with reason and recovery action, or Not supplied / Not produced; history is preserved and corrections append dated notes.",
+    "entry_id is the new RQ ID for plan, the new Iteration ID for iteration, null otherwise; hypothesis_ids lists plan hypothesis IDs in request order, else [].",
+    "On needs_input or error nothing was written; the caller must not claim the entry was written.",
+    "caller_tag is opaque: never branched on and never written as a research fact."
+  ],
   "writes": [
     {
       "store": "experiment-log",
@@ -494,6 +508,10 @@
     {
       "version": "1.1.0",
       "note": "Add hypothesis_ids to the Response (additive)."
+    },
+    {
+      "version": "1.1.1",
+      "note": "Fold prose call-contract rules into rules; drop prose_contract. No behavior change."
     }
   ]
 }
