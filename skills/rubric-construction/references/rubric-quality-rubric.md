@@ -19,10 +19,10 @@ Judgment:
 - G5 top, middle and bottom anchors have rules; counters target X±1 (P5, P7)
 - G6 no level rule relies on an unquantified qualifier (P4)
 
-## Dimensions (scale: 1 fail · 2 weak · 3 meets)
+## Grades (scale: 1 fail · 2 weak · 3 meets)
 Each row is a one-feature ladder: L2 removes one feature from L3, L1 one from L2.
 
-| Dimension | 3 — meets | 2 — weak | 1 — fail |
+| Grade | 3 — meets | 2 — weak | 1 — fail |
 |-----------|-----------|----------|----------|
 | Grounding (P1) | intent + context refs each name a concrete goal / fact, and the rule visibly serves the goal | refs concrete, but the rule does not visibly serve the goal | refs are restated criterion text, not goal / fact |
 | Scope (P2) | exclude names the nearest misapplication | exclude present but generic ("other cases") | exclude is the negation of include |
@@ -35,6 +35,6 @@ decomposition rubric · L2 "exclude: other tasks" · L1 "exclude: not multi-step
 
 ## Verdict
 "All gates" includes set gates S1–S5 (`rubric-set-gates.md`).
-- `pass` — all gates pass, every dimension 3
-- `revise` — all gates pass, some dimension 2
-- `fail` — any gate fails or any dimension 1
+- `pass` — all gates pass, every grade 3
+- `revise` — all gates pass, some grade 2
+- `fail` — any gate fails or any grade 1
