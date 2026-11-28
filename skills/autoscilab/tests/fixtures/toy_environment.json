@@ -1,0 +1,14 @@
+{
+  "spec_version": "autoscilab-env/1",
+  "goal": "Recover how y depends on x1, x2 and mode.",
+  "description": "Toy test system with one categorical input.",
+  "budget": 20,
+  "inputs": [
+    {"name": "x1", "kind": "continuous", "bounds": [0.01, 10.0], "scale": "log"},
+    {"name": "x2", "kind": "continuous", "bounds": [-1.0, 1.0]},
+    {"name": "mode", "kind": "categorical", "levels": ["a", "b"]}
+  ],
+  "observables": [{"name": "y", "positive": true}],
+  "oracle": {"command": "PYTHON fixtures/toy_oracle.py"},
+  "target": {"representation": "equation", "output_format": "Python expression for y in x1, x2, mode"}
+}

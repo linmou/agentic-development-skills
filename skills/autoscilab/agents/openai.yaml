@@ -1,0 +1,4 @@
+interface:
+  display_name: "AutoSciLab"
+  short_description: "Closed-loop mechanism discovery under an experiment budget"
+  default_prompt: "Use $autoscilab to design experiments, test competing hypotheses written as models, and recover the governing mechanism of the system within budget."

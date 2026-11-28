@@ -4,3 +4,6 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 .codex/
+
+# Ignore local benchmark environments and evaluation run records.
+/evals/
