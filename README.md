@@ -32,6 +32,7 @@ Included skills:
 - `experiment-log-writer`
 - `rubric-construction`
 - `persist-rubrics-context`
+- `autoscilab`
 
 `persist-rubrics-context` calls `rubric-construction` to build rubric entries; install both directories together.
 

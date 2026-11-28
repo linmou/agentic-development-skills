@@ -1,0 +1,110 @@
+{
+  "contract_format": "skill-contract/1",
+  "skill": "autoscilab",
+  "version": "2.0.0",
+  "capability": "Recover a governing mechanism from a queryable experimental system within a fixed experiment budget.",
+  "request": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "workdir",
+      "environment"
+    ],
+    "properties": {
+      "workdir": {
+        "type": "string",
+        "minLength": 1,
+        "description": "Caller-selected directory for the workspace: environment.json, models/, observations, ledger and final_result.json."
+      },
+      "environment": {
+        "type": [
+          "object",
+          "string"
+        ],
+        "description": "The autoscilab-env/1 spec (references/environment-spec.md) as an object, or a path to an environment.json file. It defines inputs, observables, budget, oracle command and target output format."
+      },
+      "confidence_threshold": {
+        "type": "number",
+        "description": "Bootstrap confidence threshold tau for switching from disambiguate to refine mode; default 0.9."
+      },
+      "caller_tag": {
+        "type": "string",
+        "description": "Log-only opaque caller identifier echoed in the response."
+      }
+    }
+  },
+  "response": {
+    "type": "object",
+    "required": [
+      "status",
+      "errors"
+    ],
+    "properties": {
+      "status": {
+        "enum": [
+          "completed",
+          "needs_input",
+          "error"
+        ],
+        "description": "Outcome of the closed-loop discovery run."
+      },
+      "queries_used": {
+        "type": "integer",
+        "description": "Total oracle queries or manual measurements consumed."
+      },
+      "budget": {
+        "type": "integer",
+        "description": "Budget from the environment spec."
+      },
+      "final_mechanism": {
+        "description": "The recovered mechanism, written in the environment's target.output_format."
+      },
+      "result_path": {
+        "type": "string",
+        "description": "Path to <workdir>/final_result.json, which also holds the winning model's source, fitted parameters and the protocol audit."
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Blocking problems on error, or what is missing on needs_input."
+      },
+      "caller_tag": {
+        "type": "string",
+        "description": "Log-only echo of request.caller_tag."
+      }
+    }
+  },
+  "status_field": "status",
+  "statuses": [
+    "completed",
+    "needs_input",
+    "error"
+  ],
+  "rules": [
+    "An environment that fails validate-env returns needs_input with the validation errors and writes nothing.",
+    "An environment without oracle.command and no way to obtain manual measurements returns needs_input before any workspace is created.",
+    "completed means final_result.json exists with audit.passed true; queries_used never exceeds budget.",
+    "queries_used, budget, final_mechanism and result_path are present when status is completed; final_mechanism and result_path are omitted on needs_input and error.",
+    "The system under study is accessed only through the environment spec and oracle responses; its implementation, task metadata and ground truth are never read.",
+    "caller_tag is log-only and never affects experiment selection or mechanism arbitration."
+  ],
+  "writes": [
+    {
+      "store": "autoscilab-workdir",
+      "location": "request.workdir"
+    }
+  ],
+  "high_stakes": false,
+  "changes": [
+    {
+      "version": "1.0.0",
+      "note": "Initial contract for closed-loop active scientific mechanism discovery."
+    },
+    {
+      "version": "2.0.0",
+      "note": "Request takes an autoscilab-env/1 environment instead of inline parameters and representation-specific fields; hypotheses are agent-written model modules; final_mechanism follows the environment's target.output_format."
+    }
+  ]
+}
